@@ -1,4 +1,4 @@
 rt-torrent
 ==========
 
-A Metro-style BitTorrent client.
+A Metro-style BitTorrent client, created as a diploma thesis by Maxim Harizanov and Dimitar Pankov.
