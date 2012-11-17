@@ -18,15 +18,27 @@ namespace Torrent.Client.Bencoding
     public class BencodedStreamParser
     {
         private BinaryReader reader;
+        private Stream stream;
 
-        public BencodedStreamParser(BinaryReader reader)
+        public BencodedStreamParser(Stream stream)
         {
-            this.reader = reader;
+            this.stream = stream;
         }
 
         public IBencodedElement Parse()
         {
-            return ParseElement();
+            try
+            {
+                using (reader = new BinaryReader(stream))
+                {
+                    return ParseElement();
+                }
+            }
+            catch (Exception e)
+            {
+                throw new ParserException("Unable to parse stream.", e);
+            }
+            
         }
 
         private IBencodedElement ParseElement()
