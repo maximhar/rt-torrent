@@ -17,9 +17,9 @@ namespace Torrent.Client.Bencoding
 
     public class BencodedStreamParser
     {
-        private TextReader reader;
+        private BinaryReader reader;
 
-        public BencodedStreamParser(TextReader reader)
+        public BencodedStreamParser(BinaryReader reader)
         {
             this.reader = reader;
         }
@@ -51,14 +51,15 @@ namespace Torrent.Client.Bencoding
             char endChar = 'e';
             char beginChar = 'd';
             BencodedDictionary list = new BencodedDictionary();
-            if (reader.Peek() != beginChar) throw new ParserException("Expected dictionary.");
+            if (reader.PeekChar() != beginChar) throw new ParserException("Expected dictionary.");
 
             reader.Read();
-            while ((char)reader.Peek() != endChar)
+            while ((char)reader.PeekChar() != endChar)
             {
                 string key = ParseElement() as BencodedString;
                 if (key == null) throw new ParserException("Key is expected to be a string.");
-                list.Add(key, ParseElement());
+                if(key!="pieces") list.Add(key, ParseElement());
+                else list.Add(key, ParseString(readBytes:true));
                 
             }
             reader.Read();
@@ -70,10 +71,10 @@ namespace Torrent.Client.Bencoding
             char endChar = 'e';
             char beginChar = 'l';
             BencodedList list = new BencodedList();
-            if (reader.Peek() != beginChar) throw new ParserException("Expected list.");
+            if (reader.PeekChar() != beginChar) throw new ParserException("Expected list.");
 
             reader.Read();
-            while ((char)reader.Peek() != endChar)
+            while ((char)reader.PeekChar() != endChar)
             {
                 list.Add(ParseElement());
             }
@@ -81,23 +82,35 @@ namespace Torrent.Client.Bencoding
             return list;
         }
 
-        private BencodedString ParseString()
+        private BencodedString ParseString(bool readBytes = false)
         {
             char lenEndChar = ':';
-            if (!char.IsDigit((char)reader.Peek()))throw new ParserException("Expected to read string length.");
+            if (!char.IsDigit((char)reader.PeekChar())) throw new ParserException("Expected to read string length.");
             int length = ReadIntegerValue(lenEndChar);
-            char[] result = new char[length];
+            
             int len;
-            if((len = reader.Read(result, 0, length)) != length) 
-                throw new ParserException(string.Format("Did not read the expected amount of {0} characters, {1} instead.", length, len));
-            return new string(result);
+            if (!readBytes)
+            {
+                char[] result = new char[length];
+                if ((len = reader.Read(result, 0, length)) != length)
+                    throw new ParserException(string.Format("Did not read the expected amount of {0} characters, {1} instead.", length, len));
+                return new string(result);
+            }
+            else
+            {
+                byte[] byteResult = new byte[length];
+                if ((len = reader.Read(byteResult, 0, length)) != length)
+                    throw new ParserException(string.Format("Did not read the expected amount of {0} bytes, {1} instead.", length, len));
+                return Encoding.ASCII.GetString(byteResult);
+            }
+            
         }
 
         private BencodedInteger ParseInteger()
         {
             char endChar = 'e';
             char beginChar = 'i';
-            if (reader.Peek() != beginChar) throw new ParserException("Expected integer.");
+            if (reader.PeekChar() != beginChar) throw new ParserException("Expected integer.");
             reader.Read();
             int result = ReadIntegerValue(endChar);
             return result;
@@ -108,7 +121,7 @@ namespace Torrent.Client.Bencoding
             char c;
             int result = 0;
             int negative = 1;
-            if ((char)reader.Peek() == '-')
+            if ((char)reader.PeekChar() == '-')
             {
                 reader.Read();
                 negative = -1;
@@ -125,7 +138,7 @@ namespace Torrent.Client.Bencoding
         private BencodedNodeType CurrentNodeType()
         {
             char c;
-            switch (c = (char)reader.Peek())
+            switch (c = (char)reader.PeekChar())
             {
                 case 'l':
                     return BencodedNodeType.List;

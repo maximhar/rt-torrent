@@ -18,7 +18,7 @@ namespace Torrent.ConsoleTest
 
         private void Run()
         {
-            BencodedStreamParser parser = new BencodedStreamParser(new StreamReader(File.Open("C:/test.torrent", FileMode.Open, FileAccess.Read), Encoding.ASCII));
+            BencodedStreamParser parser = new BencodedStreamParser(new BinaryReader(File.OpenRead("C:/test.torrent")));
             Console.WriteLine(parser.Parse());
             Console.Read();
         }
