@@ -58,8 +58,8 @@ namespace Torrent.Client.Bencoding
             {
                 string key = ParseElement() as BencodedString;
                 if (key == null) throw new ParserException("Key is expected to be a string.");
-
                 list.Add(key, ParseElement());
+                
             }
             reader.Read();
             return list;
@@ -87,8 +87,9 @@ namespace Torrent.Client.Bencoding
             if (!char.IsDigit((char)reader.Peek()))throw new ParserException("Expected to read string length.");
             int length = ReadIntegerValue(lenEndChar);
             char[] result = new char[length];
-            if(reader.Read(result, 0, length) != length) 
-                throw new ParserException(string.Format("Did not read the expected amount of {0} characters."));
+            int len;
+            if((len = reader.Read(result, 0, length)) != length) 
+                throw new ParserException(string.Format("Did not read the expected amount of {0} characters, {1} instead.", length, len));
             return new string(result);
         }
 
@@ -106,13 +107,19 @@ namespace Torrent.Client.Bencoding
         {
             char c;
             int result = 0;
+            int negative = 1;
+            if ((char)reader.Peek() == '-')
+            {
+                reader.Read();
+                negative = -1;
+            }
             while ((c = (char)reader.Read()) != endChar)
             {
-                if (!char.IsDigit(c)) throw new ParserException(string.Format("Expected a digit, got {0}.", c));
+                if (!char.IsDigit(c)) throw new ParserException(string.Format("Expected a digit, got '{0}'.", c));
                 result *= 10;
                 result += ((int)char.GetNumericValue(c));
             }
-            return result;
+            return result * negative;
         }
 
         private BencodedNodeType CurrentNodeType()
