@@ -7,6 +7,6 @@ namespace Torrent.Client.Bencoding
 {
     public interface IBencodedElement
     {
-        public string ToBencodedString();
+        string ToBencodedString();
     }
 }

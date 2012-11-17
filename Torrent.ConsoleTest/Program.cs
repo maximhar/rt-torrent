@@ -20,6 +20,7 @@ namespace Torrent.ConsoleTest
         {
             try
             {
+                
                 Console.WriteLine("Torrent path: ");
                 string path = Console.ReadLine();
                 TorrentData torrent = new TorrentData(path);
