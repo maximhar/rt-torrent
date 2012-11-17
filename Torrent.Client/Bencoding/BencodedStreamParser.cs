@@ -58,9 +58,7 @@ namespace Torrent.Client.Bencoding
             {
                 string key = ParseElement() as BencodedString;
                 if (key == null) throw new ParserException("Key is expected to be a string.");
-                if(key!="pieces") list.Add(key, ParseElement());
-                else list.Add(key, ParseString(readBytes:true));
-                
+                list.Add(key, ParseElement());
             }
             reader.Read();
             return list;
@@ -82,28 +80,17 @@ namespace Torrent.Client.Bencoding
             return list;
         }
 
-        private BencodedString ParseString(bool readBytes = false)
+        private BencodedString ParseString()
         {
             char lenEndChar = ':';
             if (!char.IsDigit((char)reader.PeekChar())) throw new ParserException("Expected to read string length.");
             int length = ReadIntegerValue(lenEndChar);
             
             int len;
-            if (!readBytes)
-            {
-                char[] result = new char[length];
-                if ((len = reader.Read(result, 0, length)) != length)
-                    throw new ParserException(string.Format("Did not read the expected amount of {0} characters, {1} instead.", length, len));
-                return new string(result);
-            }
-            else
-            {
-                byte[] byteResult = new byte[length];
-                if ((len = reader.Read(byteResult, 0, length)) != length)
-                    throw new ParserException(string.Format("Did not read the expected amount of {0} bytes, {1} instead.", length, len));
-                return Encoding.ASCII.GetString(byteResult);
-            }
-            
+            byte[] byteResult = new byte[length];
+            if ((len = reader.Read(byteResult, 0, length)) != length)
+                throw new ParserException(string.Format("Did not read the expected amount of {0} bytes, {1} instead.", length, len));
+            return Encoding.UTF8.GetString(byteResult);
         }
 
         private BencodedInteger ParseInteger()
