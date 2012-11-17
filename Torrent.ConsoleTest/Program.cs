@@ -20,7 +20,6 @@ namespace Torrent.ConsoleTest
         {
             try
             {
-                
                 Console.WriteLine("Torrent path: ");
                 string path = Console.ReadLine();
                 TorrentData torrent = new TorrentData(path);
@@ -29,6 +28,9 @@ namespace Torrent.ConsoleTest
                 Console.WriteLine("Piece length: {0}", torrent.PieceLength);
                 Console.WriteLine("Piece count: {0}", torrent.Checksums.Count);
                 Console.WriteLine("Files: (count: {0})", torrent.Files.Count);
+
+                
+
                 foreach (var file in torrent.Files)
                 {
                     Console.WriteLine("    {0,-50} {1}", file.Name, file.Length);

@@ -24,7 +24,10 @@ namespace Torrent.Client.Bencoding
         {
             this.stream = stream;
         }
-
+        public BencodedStreamParser(string content)
+        {
+            stream = new MemoryStream(Encoding.UTF8.GetBytes(content));
+        }
         public IBencodedElement Parse()
         {
             try
@@ -37,6 +40,11 @@ namespace Torrent.Client.Bencoding
             catch (Exception e)
             {
                 throw new ParserException("Unable to parse stream.", e);
+            }
+            finally
+            {
+                if (stream is MemoryStream)
+                    stream.Dispose();
             }
             
         }
