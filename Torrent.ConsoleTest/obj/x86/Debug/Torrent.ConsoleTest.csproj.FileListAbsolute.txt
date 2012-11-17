@@ -6,3 +6,5 @@ C:\Users\maximhar\Documents\GitHub\rt-torrent\Torrent.ConsoleTest\obj\x86\Debug\
 C:\Users\maximhar\Documents\GitHub\rt-torrent\Torrent.ConsoleTest\obj\x86\Debug\Torrent.ConsoleTest.exe
 C:\Users\maximhar\Documents\GitHub\rt-torrent\Torrent.ConsoleTest\obj\x86\Debug\Torrent.ConsoleTest.pdb
 C:\Users\maximhar\Documents\GitHub\rt-torrent\Torrent.ConsoleTest\bin\Debug\test.torrent
+C:\Users\Dimitar\Documents\GitHub\rt-torrent\Torrent.ConsoleTest\obj\x86\Debug\Torrent.ConsoleTest.exe
+C:\Users\Dimitar\Documents\GitHub\rt-torrent\Torrent.ConsoleTest\obj\x86\Debug\Torrent.ConsoleTest.pdb
