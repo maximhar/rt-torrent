@@ -85,7 +85,7 @@ namespace Torrent.Client.Bencoding
             char lenEndChar = ':';
             if (!char.IsDigit((char)reader.PeekChar())) throw new ParserException("Expected to read string length.");
             int length = ReadIntegerValue(lenEndChar);
-            
+            if (length < 0) string.Format("String can not have a negative length of {0}.", length);
             int len;
             byte[] byteResult = new byte[length];
             if ((len = reader.Read(byteResult, 0, length)) != length)
