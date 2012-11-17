@@ -1,0 +1,26 @@
+﻿В проекта Torrent.Client има 4 класа, които репрезентират 4те основни типа в bencoded формата:
+dictionary, list, string, и integer. В момента мога да декодирам bencoded file чрез класа BencodedStreamParser,
+който връща граф от IBencodedElement(интерфейс, който се имплементира от BencodedString, BencodedInteger, BencodedDictionary,
+BencodedList).
+Искам в интерфейса IBencodedElement да се добави дефиниция на метода string ToBencodedString() и да се имплементира
+в 4-те класа: BencodedString, BencodedInteger, BencodedDictionary, BencodedList.
+
+Примери:
+имам BencodedString със съдържание "hello"
+ToBencodedString() трябва да изведе "5:hello"
+
+имам BencodedInteger със съдържание 20
+ToBencodedString трябва да изведе "i20e"
+
+имам BencodedList със съдържание:
+	BencodedString: "item"
+	BencodedInteger: 120
+ToBencodedString трябва да изведе:
+"l4:itemi120ee"
+
+имам BencodedDictionary със съдържание:
+	"count"->10
+	"files"->BencodedList {"item1", "item2"}
+ToBencodedString трябва да изведе:
+"d5:counti10e5:filesl5:item15:item2ee"
+		
