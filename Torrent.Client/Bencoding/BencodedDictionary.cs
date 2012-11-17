@@ -45,5 +45,16 @@ namespace Torrent.Client.Bencoding
             buff.Append(" } ");
             return buff.ToString();
         }
+
+        public string ToBencodedString()
+        {
+            StringBuilder str = new StringBuilder("d");
+            foreach (var item in innerDictionary)
+            {
+                str.Append(((BencodedString)item.Key).ToBencodedString()).Append(item.Value.ToBencodedString());
+            }
+            str.Append("e");
+            return str.ToString();
+        }
     }
 }

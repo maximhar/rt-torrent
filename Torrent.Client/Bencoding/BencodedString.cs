@@ -28,5 +28,10 @@ namespace Torrent.Client.Bencoding
         {
             return new BencodedString(value);
         }
+
+        public string ToBencodedString()
+        {
+            return String.Format("{0}:{1}", innerString.Length, innerString);
+        }
     }
 }

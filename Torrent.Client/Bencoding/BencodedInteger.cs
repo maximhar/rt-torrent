@@ -28,5 +28,10 @@ namespace Torrent.Client.Bencoding
         {
             return new BencodedInteger(value);
         }
+
+        public string ToBencodedString()
+        {
+            return String.Format("i{0}e", innerInteger);
+        }
     }
 }

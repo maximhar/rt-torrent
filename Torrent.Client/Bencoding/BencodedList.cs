@@ -40,5 +40,16 @@ namespace Torrent.Client.Bencoding
             buff.Append(" } ");
             return buff.ToString();
         }
+
+        public string ToBencodedString()
+        {
+            StringBuilder str = new StringBuilder("l");
+            foreach (var item in innerList)
+            {
+                str.Append(item.ToBencodedString());
+            }
+            str.Append("e");
+            return str.ToString();
+        }
     }
 }
