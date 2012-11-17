@@ -1,0 +1,44 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Collections;
+
+namespace Torrent.Client.Bencoding
+{
+    public class BencodedList : IBencodedElement, IEnumerable
+    {
+        private List<IBencodedElement> innerList;
+
+        public BencodedList()
+        {
+            innerList = new List<IBencodedElement>();
+        }
+
+        public void Add(IBencodedElement value)
+        {
+            innerList.Add(value);
+        }
+
+        public bool Remove(IBencodedElement value)
+        {
+            return innerList.Remove(value);
+        }
+
+        public IEnumerator GetEnumerator()
+        {
+            return innerList.GetEnumerator();
+        }
+
+        public override string ToString()
+        {
+            StringBuilder buff = new StringBuilder();
+            buff.Append("list: { ");
+            foreach (var el in innerList)
+                buff.Append(el + ", ");
+            buff.Remove(buff.Length - 2, 2);
+            buff.Append(" } ");
+            return buff.ToString();
+        }
+    }
+}

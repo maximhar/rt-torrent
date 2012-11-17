@@ -1,0 +1,7 @@
+C:\Users\maximhar\Documents\GitHub\rt-torrent\Torrent.ConsoleTest\bin\Debug\Torrent.ConsoleTest.exe
+C:\Users\maximhar\Documents\GitHub\rt-torrent\Torrent.ConsoleTest\bin\Debug\Torrent.ConsoleTest.pdb
+C:\Users\maximhar\Documents\GitHub\rt-torrent\Torrent.ConsoleTest\bin\Debug\Torrent.Client.dll
+C:\Users\maximhar\Documents\GitHub\rt-torrent\Torrent.ConsoleTest\bin\Debug\Torrent.Client.pdb
+C:\Users\maximhar\Documents\GitHub\rt-torrent\Torrent.ConsoleTest\obj\x86\Debug\Torrent.ConsoleTest.csprojResolveAssemblyReference.cache
+C:\Users\maximhar\Documents\GitHub\rt-torrent\Torrent.ConsoleTest\obj\x86\Debug\Torrent.ConsoleTest.exe
+C:\Users\maximhar\Documents\GitHub\rt-torrent\Torrent.ConsoleTest\obj\x86\Debug\Torrent.ConsoleTest.pdb
