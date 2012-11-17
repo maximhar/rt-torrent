@@ -6,13 +6,19 @@ using System.Collections;
 
 namespace Torrent.Client.Bencoding
 {
-    public class BencodedDictionary : IBencodedElement, IEnumerable
+    public class BencodedDictionary : IBencodedElement, IEnumerable<KeyValuePair<string, IBencodedElement>>
     {
         private Dictionary<string, IBencodedElement> innerDictionary;
 
         public BencodedDictionary()
         {
             innerDictionary = new Dictionary<string, IBencodedElement>();
+        }
+
+        public IBencodedElement this[string key]
+        {
+            get { return innerDictionary[key]; }
+            set { innerDictionary[key] = value; }
         }
 
         public void Add(string key, IBencodedElement value)
@@ -30,7 +36,7 @@ namespace Torrent.Client.Bencoding
             return innerDictionary.ContainsKey(key);
         }
 
-        public IEnumerator GetEnumerator()
+        IEnumerator IEnumerable.GetEnumerator()
         {
             return innerDictionary.GetEnumerator();
         }
@@ -44,6 +50,11 @@ namespace Torrent.Client.Bencoding
             buff.Remove(buff.Length - 2, 2);
             buff.Append(" } ");
             return buff.ToString();
+        }
+
+        public IEnumerator<KeyValuePair<string, IBencodedElement>> GetEnumerator()
+        {
+            return innerDictionary.GetEnumerator();
         }
     }
 }

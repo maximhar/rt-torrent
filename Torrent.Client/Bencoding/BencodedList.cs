@@ -6,7 +6,7 @@ using System.Collections;
 
 namespace Torrent.Client.Bencoding
 {
-    public class BencodedList : IBencodedElement, IEnumerable
+    public class BencodedList : IBencodedElement, IEnumerable<IBencodedElement>
     {
         private List<IBencodedElement> innerList;
 
@@ -25,11 +25,10 @@ namespace Torrent.Client.Bencoding
             return innerList.Remove(value);
         }
 
-        public IEnumerator GetEnumerator()
+        public IEnumerator<IBencodedElement> GetEnumerator()
         {
             return innerList.GetEnumerator();
         }
-
         public override string ToString()
         {
             StringBuilder buff = new StringBuilder();
@@ -39,6 +38,11 @@ namespace Torrent.Client.Bencoding
             buff.Remove(buff.Length - 2, 2);
             buff.Append(" } ");
             return buff.ToString();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return innerList.GetEnumerator();
         }
     }
 }

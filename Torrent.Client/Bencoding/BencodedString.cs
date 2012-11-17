@@ -23,7 +23,6 @@ namespace Torrent.Client.Bencoding
         {
             return value.innerString;
         }
-
         public static implicit operator BencodedString(string value)
         {
             return new BencodedString(value);

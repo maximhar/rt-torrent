@@ -7,9 +7,9 @@ namespace Torrent.Client.Bencoding
 {
     public class BencodedInteger:IBencodedElement
     {
-        private int innerInteger;
+        private long innerInteger;
 
-        public BencodedInteger(int value)
+        public BencodedInteger(long value)
         {
             innerInteger = value;
         }
@@ -19,11 +19,18 @@ namespace Torrent.Client.Bencoding
             return innerInteger.ToString();
         }
 
-        public static implicit operator int(BencodedInteger value)
+        public static implicit operator long(BencodedInteger value)
         {
             return value.innerInteger;
         }
-
+        public static implicit operator int(BencodedInteger value)
+        {
+            return (int)value.innerInteger;
+        }
+        public static implicit operator BencodedInteger(long value)
+        {
+            return new BencodedInteger(value);
+        }
         public static implicit operator BencodedInteger(int value)
         {
             return new BencodedInteger(value);

@@ -102,7 +102,7 @@ namespace Torrent.Client.Bencoding
             byte[] byteResult = new byte[length];
             if ((len = reader.Read(byteResult, 0, length)) != length)
                 throw new ParserException(string.Format("Did not read the expected amount of {0} bytes, {1} instead.", length, len));
-            return Encoding.UTF8.GetString(byteResult);
+            return Encoding.ASCII.GetString(byteResult);
         }
 
         private BencodedInteger ParseInteger()
