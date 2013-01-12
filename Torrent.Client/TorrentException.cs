@@ -5,6 +5,9 @@ using System.Text;
 
 namespace Torrent.Client
 {
+    /// <summary>
+    /// A BitTorrent-related exception.
+    /// </summary>
     class TorrentException : Exception
     {
         public TorrentException() : base() { }

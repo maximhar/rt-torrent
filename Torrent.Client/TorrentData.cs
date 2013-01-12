@@ -5,10 +5,14 @@ using System.Text;
 using System.IO;
 using Torrent.Client.Bencoding;
 using System.Collections.ObjectModel;
+using System.Diagnostics.Contracts;
 using MoreLinq;
 
 namespace Torrent.Client
 {
+    /// <summary>
+    /// Represents the BitTorrent metadata contained in a .torrent file.
+    /// </summary>
     public class TorrentData
     {
         private const int CHECKSUM_SIZE = 20;
@@ -16,13 +20,17 @@ namespace Torrent.Client
         public string AnnounceURL { get; private set; }
         public int PieceLength { get; private set; }
         public string Name { get; private set; }
-        public ReadOnlyCollection<TorrentFile> Files { get; private set; }
+        public ReadOnlyCollection<FileEntry> Files { get; private set; }
         public ReadOnlyCollection<byte[]> Checksums { get; private set; }
 
         private string path;
-        
+        /// <summary>
+        /// Loads the metadata from a .torrent file.
+        /// </summary>
+        /// <param name="path">The path to the file.</param>
         public TorrentData(string path)
         {
+            Contract.Requires<TorrentException>(path != null);
             this.path = path;
             LoadMetadata();
         }
@@ -63,9 +71,9 @@ namespace Torrent.Client
             return name;
         }
 
-        private List<TorrentFile> DecodeFiles(BencodedDictionary info, BencodedString name)
+        private List<FileEntry> DecodeFiles(BencodedDictionary info, BencodedString name)
         {
-            var decodedFiles = new List<TorrentFile>();
+            var decodedFiles = new List<FileEntry>();
             if (info.ContainsKey("files")) //multiple-file torrent
             {
                 var files = info["files"] as BencodedList;
@@ -80,18 +88,18 @@ namespace Torrent.Client
             {
                 var fileLength = info["length"] as BencodedInteger;
                 CheckFileLength(fileLength); 
-                decodedFiles.Add(new TorrentFile(name, fileLength));
+                decodedFiles.Add(new FileEntry(name, fileLength));
             }
             return decodedFiles;
         }
 
-        private TorrentFile CreateTorrentFile(BencodedDictionary file)
+        private FileEntry CreateTorrentFile(BencodedDictionary file)
         {
             var filePathList = (file["path"] as BencodedList).Select(s => (string)(s as BencodedString)).ToArray();
             var fileLength = file["length"] as BencodedInteger;
             CheckFileProperties(filePathList, fileLength);
             string filePath = Path.Combine(filePathList);
-            var torrentFile = new TorrentFile(filePath, fileLength);
+            var torrentFile = new FileEntry(filePath, fileLength);
             return torrentFile;
         }
 
@@ -117,8 +125,8 @@ namespace Torrent.Client
         {
             byte[] rawChecksums = Encoding.ASCII.GetBytes(info["pieces"] as BencodedString);
             if (pieceLength == null || rawChecksums == null || rawChecksums.Length % CHECKSUM_SIZE != 0) throw new TorrentException(string.Format("Invalid metadata in file {0}, 'piece length'/'pieces' not of expected type, or invalid length of 'pieces'.", path));
-            var checksumList = rawChecksums.Batch(CHECKSUM_SIZE).Select(e=>e.ToArray()).ToList();
-            return checksumList;
+            var slicedChecksums = rawChecksums.Batch(CHECKSUM_SIZE).Select(e=>e.ToArray());
+            return slicedChecksums.ToList();
         }
 
         private BencodedDictionary GetMetadata()

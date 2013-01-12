@@ -21,6 +21,8 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <RunCodeAnalysis>false</RunCodeAnalysis>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -49,11 +51,15 @@
     <Compile Include="Bencoding\BencodedString.cs" />
     <Compile Include="Bencoding\IBencodedElement.cs" />
     <Compile Include="Bencoding\BencodedStreamParser.cs" />
-    <Compile Include="Bencoding\ParserException.cs" />
+    <Compile Include="Bencoding\BencodedParserException.cs" />
+    <Compile Include="EventType.cs" />
     <Compile Include="TorrentData.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TorrentException.cs" />
-    <Compile Include="TorrentFile.cs" />
+    <Compile Include="FileEntry.cs" />
+    <Compile Include="TrackerClient.cs" />
+    <Compile Include="TrackerRequest.cs" />
+    <Compile Include="TrackerResponse.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Todos\Task 1.txt" />
