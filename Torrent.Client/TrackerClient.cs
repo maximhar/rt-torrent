@@ -14,6 +14,7 @@ namespace Torrent.Client
         /// The announce URL of the tracker.
         /// </summary>
         public string AnnounceURL { get; private set; }
+
         /// <summary>
         /// The class constructor.
         /// </summary>
@@ -24,6 +25,7 @@ namespace Torrent.Client
 
             this.AnnounceURL = announceUrl;
         }
+
         /// <summary>
         /// Sends a HTTP request to the tracker and returns the response.
         /// </summary>
