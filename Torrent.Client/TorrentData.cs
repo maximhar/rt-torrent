@@ -5,6 +5,7 @@ using System.Text;
 using System.IO;
 using Torrent.Client.Bencoding;
 using System.Collections.ObjectModel;
+using MoreLinq;
 
 namespace Torrent.Client
 {
@@ -116,12 +117,7 @@ namespace Torrent.Client
         {
             byte[] rawChecksums = Encoding.ASCII.GetBytes(info["pieces"] as BencodedString);
             if (pieceLength == null || rawChecksums == null || rawChecksums.Length % CHECKSUM_SIZE != 0) throw new TorrentException(string.Format("Invalid metadata in file {0}, 'piece length'/'pieces' not of expected type, or invalid length of 'pieces'.", path));
-            var checksumList = new List<byte[]>(rawChecksums.Length / CHECKSUM_SIZE);
-            int piececount = rawChecksums.Length / CHECKSUM_SIZE;
-            for (var pi = 0; pi < rawChecksums.Length - CHECKSUM_SIZE; pi += CHECKSUM_SIZE)
-            {
-                checksumList.Add(rawChecksums.Skip(pi).Take(CHECKSUM_SIZE).ToArray());
-            }
+            var checksumList = rawChecksums.Batch(CHECKSUM_SIZE).Select(e=>e.ToArray()).ToList();
             return checksumList;
         }
 

@@ -7,3 +7,7 @@ C:\Users\Dimitar\Documents\GitHub\rt-torrent\Torrent.Client\bin\Debug\Torrent.Cl
 C:\Users\Dimitar\Documents\GitHub\rt-torrent\Torrent.Client\obj\Debug\Torrent.Client.csprojResolveAssemblyReference.cache
 C:\Users\Dimitar\Documents\GitHub\rt-torrent\Torrent.Client\obj\Debug\Torrent.Client.dll
 C:\Users\Dimitar\Documents\GitHub\rt-torrent\Torrent.Client\obj\Debug\Torrent.Client.pdb
+C:\Users\maximhar\Documents\GitHub\rt-torrent\Torrent.Client\obj\Debug\Torrent.Client.csprojResolveAssemblyReference.cache
+C:\Users\maximhar\Documents\GitHub\rt-torrent\Torrent.Client\bin\Debug\MoreLinq.dll
+C:\Users\maximhar\Documents\GitHub\rt-torrent\Torrent.Client\bin\Debug\MoreLinq.pdb
+C:\Users\maximhar\Documents\GitHub\rt-torrent\Torrent.Client\bin\Debug\MoreLinq.xml
