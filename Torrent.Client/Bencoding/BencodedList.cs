@@ -45,6 +45,7 @@ namespace Torrent.Client.Bencoding
         {
             return innerList.GetEnumerator();
         }
+
         public string ToBencodedString()
         {
             StringBuilder str = new StringBuilder("l");

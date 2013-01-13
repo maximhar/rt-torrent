@@ -9,6 +9,7 @@ namespace Torrent.Client.Bencoding
     public class BencodedString : IBencodedElement
     {
         private string innerString;
+        public int Length { get { return innerString.Length; } }
 
         public BencodedString(string value)
         {

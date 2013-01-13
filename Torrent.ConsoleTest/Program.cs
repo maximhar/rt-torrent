@@ -20,6 +20,9 @@ namespace Torrent.ConsoleTest
         {
             try
             {
+                //var somestring = "d9:publisher3:bob14:failure reason15:www.example.com18:publisher.location4:homee";
+                //var tr = new TrackerResponse(somestring);
+                /////////
                 Console.WriteLine("Torrent path: ");
                 string path = Console.ReadLine();
                 TorrentData torrent = new TorrentData(path);

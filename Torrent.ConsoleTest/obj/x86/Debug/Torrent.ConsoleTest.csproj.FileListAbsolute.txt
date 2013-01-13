@@ -16,3 +16,5 @@ C:\Users\Dimitar\Documents\GitHub\rt-torrent\Torrent.ConsoleTest\bin\Debug\Torre
 C:\Users\Dimitar\Documents\GitHub\rt-torrent\Torrent.ConsoleTest\obj\x86\Debug\Torrent.ConsoleTest.csprojResolveAssemblyReference.cache
 C:\Users\maximhar\Documents\GitHub\rt-torrent\Torrent.ConsoleTest\bin\Debug\MoreLinq.dll
 C:\Users\maximhar\Documents\GitHub\rt-torrent\Torrent.ConsoleTest\bin\Debug\MoreLinq.xml
+C:\Users\Dimitar\Documents\GitHub\rt-torrent\Torrent.ConsoleTest\bin\Debug\MoreLinq.dll
+C:\Users\Dimitar\Documents\GitHub\rt-torrent\Torrent.ConsoleTest\bin\Debug\MoreLinq.xml
