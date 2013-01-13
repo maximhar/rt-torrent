@@ -30,7 +30,7 @@ namespace Torrent.Client
         /// <param name="path">The path to the file.</param>
         public TorrentData(string path)
         {
-            Contract.Requires<TorrentException>(path != null);
+            Contract.Requires(path != null);
             this.path = path;
             LoadMetadata();
         }
@@ -131,9 +131,8 @@ namespace Torrent.Client
 
         private BencodedDictionary GetMetadata()
         {
-            var torrentFile = File.OpenRead(path);
-            var decoder = new BencodedStreamParser(torrentFile);
-            var metadata = decoder.Parse() as BencodedDictionary;
+            var torrentFile = File.ReadAllText(path, Encoding.ASCII);
+            var metadata = BencodingParser.Decode(torrentFile) as BencodedDictionary;
             CheckMetadata(metadata);
             return metadata;
         }

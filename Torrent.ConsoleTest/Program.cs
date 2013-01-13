@@ -22,7 +22,7 @@ namespace Torrent.ConsoleTest
             {
                 Console.WriteLine("Torrent path: ");
                 string path = Console.ReadLine();
-                TorrentData torrent = new TorrentData(path);
+                TorrentData torrent = new TorrentData(null);
                 Console.WriteLine("Torrent name: {0}", torrent.Name);
                 Console.WriteLine("Announce URL: {0}", torrent.AnnounceURL);
                 Console.WriteLine("Piece length: {0}", torrent.PieceLength);

@@ -11,3 +11,5 @@ C:\Users\Dimitar\Documents\GitHub\rt-torrent\Torrent.Client\bin\Debug\MoreLinq.d
 C:\Users\Dimitar\Documents\GitHub\rt-torrent\Torrent.Client\bin\Debug\MoreLinq.xml
 C:\Users\Dimitar\Documents\GitHub\rt-torrent\Torrent.Client\obj\Debug\Torrent.Client.dll
 C:\Users\Dimitar\Documents\GitHub\rt-torrent\Torrent.Client\obj\Debug\Torrent.Client.pdb
+C:\Users\maximhar\Documents\GitHub\rt-torrent\Torrent.Client\bin\Debug\CodeContracts\Torrent.Client.noReferenceAssembly
+C:\Users\maximhar\Documents\GitHub\rt-torrent\Torrent.Client\obj\Debug\Torrent.Client.rewritten

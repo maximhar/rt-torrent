@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using Torrent.Client.Bencoding;
 using MoreLinq;
+using System.Diagnostics.Contracts;
 
 namespace Torrent.Client
 {
@@ -62,8 +63,9 @@ namespace Torrent.Client
         /// <param name="bencoded">A bencoded string containing the tracker response.</param>
         public TrackerResponse(string bencoded)
         {
-            var parser = new BencodedStreamParser(bencoded);
-            var response = (BencodedDictionary)parser.Parse();
+            Contract.Requires(bencoded != null);
+
+            var response = (BencodedDictionary)BencodingParser.Decode(bencoded);
 
             if (response.ContainsKey("failure reason"))
             {

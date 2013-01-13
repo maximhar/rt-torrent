@@ -16,27 +16,22 @@ namespace Torrent.Client.Bencoding
         Dictionary
     }
 
-    public class BencodedStreamParser
+    public static class BencodingParser
     {
-        private BinaryReader reader;
-        private Stream stream;
-
-        public BencodedStreamParser(Stream stream)
+        private static BinaryReader reader;
+        private static Stream stream;
+        /// <summary>
+        /// Parses the bencoded string into a tree of bencoded elements.
+        /// </summary>
+        /// <param name="bencoded">The bencoded string to parse.</param>
+        /// <returns>The <c>IBencodedElement</c> representing the top node of the returned tree.</returns>
+        /// <exception cref="BencodingParserException"></exception>
+        public static IBencodedElement Decode(string bencoded)
         {
-            Contract.Requires(stream != null);
-
-            this.stream = stream;
-        }
-        public BencodedStreamParser(string content)
-        {
-            Contract.Requires(content != null);
-
-            stream = new MemoryStream(Encoding.UTF8.GetBytes(content));
-        }
-        public IBencodedElement Parse()
-        {
+            Contract.Requires(bencoded != null);
             try
             {
+                using (stream = new MemoryStream(Encoding.UTF8.GetBytes(bencoded)))
                 using (reader = new BinaryReader(stream))
                 {
                     return ParseElement();
@@ -44,17 +39,11 @@ namespace Torrent.Client.Bencoding
             }
             catch (Exception e)
             {
-                throw new BencodedParserException("Unable to parse stream.", e);
+                throw new BencodingParserException("Unable to parse stream.", e);
             }
-            finally
-            {
-                if (stream is MemoryStream)
-                    stream.Dispose();
-            }
-            
         }
 
-        private IBencodedElement ParseElement()
+        private static IBencodedElement ParseElement()
         {
             switch(CurrentNodeType())
             {
@@ -67,34 +56,34 @@ namespace Torrent.Client.Bencoding
                 case BencodedNodeType.Dictionary:
                     return ParseDictionary();
                 default:
-                    throw new BencodedParserException("Unrecognized node type.");
+                    throw new BencodingParserException("Unrecognized node type.");
             }
         }
 
-        private BencodedDictionary ParseDictionary()
+        private static BencodedDictionary ParseDictionary()
         {
             char endChar = 'e';
             char beginChar = 'd';
             BencodedDictionary list = new BencodedDictionary();
-            if (reader.PeekChar() != beginChar) throw new BencodedParserException("Expected dictionary.");
+            if (reader.PeekChar() != beginChar) throw new BencodingParserException("Expected dictionary.");
 
             reader.Read();
             while ((char)reader.PeekChar() != endChar)
             {
                 string key = ParseElement() as BencodedString;
-                if (key == null) throw new BencodedParserException("Key is expected to be a string.");
+                if (key == null) throw new BencodingParserException("Key is expected to be a string.");
                 list.Add(key, ParseElement());
             }
             reader.Read();
             return list;
         }
 
-        private BencodedList ParseList()
+        private static BencodedList ParseList()
         {
             char endChar = 'e';
             char beginChar = 'l';
             BencodedList list = new BencodedList();
-            if (reader.PeekChar() != beginChar) throw new BencodedParserException("Expected list.");
+            if (reader.PeekChar() != beginChar) throw new BencodingParserException("Expected list.");
 
             reader.Read();
             while ((char)reader.PeekChar() != endChar)
@@ -105,30 +94,30 @@ namespace Torrent.Client.Bencoding
             return list;
         }
 
-        private BencodedString ParseString()
+        private static BencodedString ParseString()
         {
             char lenEndChar = ':';
-            if (!char.IsDigit((char)reader.PeekChar())) throw new BencodedParserException("Expected to read string length.");
+            if (!char.IsDigit((char)reader.PeekChar())) throw new BencodingParserException("Expected to read string length.");
             int length = ReadIntegerValue(lenEndChar);
             if (length < 0) string.Format("String can not have a negative length of {0}.", length);
             int len;
             byte[] byteResult = new byte[length];
             if ((len = reader.Read(byteResult, 0, length)) != length)
-                throw new BencodedParserException(string.Format("Did not read the expected amount of {0} bytes, {1} instead.", length, len));
+                throw new BencodingParserException(string.Format("Did not read the expected amount of {0} bytes, {1} instead.", length, len));
             return Encoding.ASCII.GetString(byteResult);
         }
 
-        private BencodedInteger ParseInteger()
+        private static BencodedInteger ParseInteger()
         {
             char endChar = 'e';
             char beginChar = 'i';
-            if (reader.PeekChar() != beginChar) throw new BencodedParserException("Expected integer.");
+            if (reader.PeekChar() != beginChar) throw new BencodingParserException("Expected integer.");
             reader.Read();
             int result = ReadIntegerValue(endChar);
             return result;
         }
 
-        private int ReadIntegerValue(char endChar)
+        private static int ReadIntegerValue(char endChar)
         {
             char c;
             int result = 0;
@@ -140,14 +129,14 @@ namespace Torrent.Client.Bencoding
             }
             while ((c = (char)reader.Read()) != endChar)
             {
-                if (!char.IsDigit(c)) throw new BencodedParserException(string.Format("Expected a digit, got '{0}'.", c));
+                if (!char.IsDigit(c)) throw new BencodingParserException(string.Format("Expected a digit, got '{0}'.", c));
                 result *= 10;
                 result += ((int)char.GetNumericValue(c));
             }
             return result * negative;
         }
 
-        private BencodedNodeType CurrentNodeType()
+        private static BencodedNodeType CurrentNodeType()
         {
             char c;
             switch (c = (char)reader.PeekChar())
@@ -170,7 +159,7 @@ namespace Torrent.Client.Bencoding
                 case '9': 
                     return BencodedNodeType.String;
                 default:
-                    throw new BencodedParserException(string.Format("Node type not recognized: '{0}'.", c));
+                    throw new BencodingParserException(string.Format("Node type not recognized: '{0}'.", c));
             }
         }
     }
