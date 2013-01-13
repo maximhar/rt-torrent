@@ -41,6 +41,10 @@ namespace Torrent.Client
         /// </summary>
         public bool OmitPeerIds { get; private set; }
         /// <summary>
+        /// The number of peers the tracker should return. Optional.
+        /// </summary>
+        public int? NumWant { get; private set; }
+        /// <summary>
         /// Specifies the event that caused the request.
         /// </summary>
         public EventType Event { get; private set; }
@@ -57,7 +61,7 @@ namespace Torrent.Client
         /// <param name="omitPeerIds">Whether to request that the tracker should omit peer IDs in the peers dictionary.</param>
         /// <param name="event">Specifies the event that caused the request. None by default.</param>
         public TrackerRequest(byte[] infoHash, byte[] peerId, short port, long uploaded, long downloaded,
-            long left, bool compact, bool omitPeerIds, EventType @event = EventType.None)
+            long left, bool compact, bool omitPeerIds, EventType @event = EventType.None, int? numWant = null)
         {
             Contract.Requires(infoHash != null);
             Contract.Requires(peerId != null);
@@ -75,6 +79,7 @@ namespace Torrent.Client
             this.Compact = compact;
             this.OmitPeerIds = omitPeerIds;
             this.Event = @event;
+            this.NumWant = numWant;
         }
     }
 }

@@ -20,18 +20,22 @@ namespace Torrent.Client.Bencoding
     {
         private static BinaryReader reader;
         private static Stream stream;
+        public static IBencodedElement Decode(string bencoded)
+        {
+            return Decode(bencoded.Select(c=>(byte)c).ToArray());
+        }
         /// <summary>
         /// Parses the bencoded string into a tree of bencoded elements.
         /// </summary>
         /// <param name="bencoded">The bencoded string to parse.</param>
         /// <returns>The <c>IBencodedElement</c> representing the top node of the returned tree.</returns>
         /// <exception cref="BencodingParserException"></exception>
-        public static IBencodedElement Decode(string bencoded)
+        public static IBencodedElement Decode(byte[] bencoded)
         {
             Contract.Requires(bencoded != null);
             try
             {
-                using (stream = new MemoryStream(Encoding.UTF8.GetBytes(bencoded)))
+                using (stream = new MemoryStream(bencoded))
                 using (reader = new BinaryReader(stream))
                 {
                     return ParseElement();
@@ -98,13 +102,13 @@ namespace Torrent.Client.Bencoding
         {
             char lenEndChar = ':';
             if (!char.IsDigit((char)reader.PeekChar())) throw new BencodingParserException("Expected to read string length.");
-            int length = ReadIntegerValue(lenEndChar);
+            long length = ReadIntegerValue(lenEndChar);
             if (length < 0) string.Format("String can not have a negative length of {0}.", length);
             int len;
             byte[] byteResult = new byte[length];
-            if ((len = reader.Read(byteResult, 0, length)) != length)
+            if ((len = reader.Read(byteResult, 0, (int)length)) != length)
                 throw new BencodingParserException(string.Format("Did not read the expected amount of {0} bytes, {1} instead.", length, len));
-            return Encoding.ASCII.GetString(byteResult);
+            return new BencodedString(new string(byteResult.Select(b => (char)b).ToArray()));
         }
 
         private static BencodedInteger ParseInteger()
@@ -113,14 +117,14 @@ namespace Torrent.Client.Bencoding
             char beginChar = 'i';
             if (reader.PeekChar() != beginChar) throw new BencodingParserException("Expected integer.");
             reader.Read();
-            int result = ReadIntegerValue(endChar);
+            long result = ReadIntegerValue(endChar);
             return result;
         }
 
-        private static int ReadIntegerValue(char endChar)
+        private static long ReadIntegerValue(char endChar)
         {
             char c;
-            int result = 0;
+            long result = 0;
             int negative = 1;
             if ((char)reader.PeekChar() == '-')
             {
@@ -131,7 +135,7 @@ namespace Torrent.Client.Bencoding
             {
                 if (!char.IsDigit(c)) throw new BencodingParserException(string.Format("Expected a digit, got '{0}'.", c));
                 result *= 10;
-                result += ((int)char.GetNumericValue(c));
+                result += ((long)char.GetNumericValue(c));
             }
             return result * negative;
         }

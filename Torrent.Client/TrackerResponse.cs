@@ -61,7 +61,7 @@ namespace Torrent.Client
         /// </summary>
         /// <exception cref="Torrent.Client.TorrentException">Thrown when the string containing the tracker response is invalid.</exception>
         /// <param name="bencoded">A bencoded string containing the tracker response.</param>
-        public TrackerResponse(string bencoded)
+        public TrackerResponse(byte[] bencoded)
         {
             Contract.Requires(bencoded != null);
 
@@ -79,19 +79,15 @@ namespace Torrent.Client
                     MinInterval = (BencodedInteger)response["min interval"];
                 if (response.ContainsKey("tracker id"))
                     TrackerID = (BencodedString)response["tracker id"];
+                if (response.ContainsKey("complete"))
+                    Complete = (BencodedInteger)response["complete"];
+                if (response.ContainsKey("incomplete"))
+                    Incomplete = (BencodedInteger)response["incomplete"];
+                if (response.ContainsKey("interval"))
+                    Interval = (BencodedInteger)response["interval"];
 
-                if (!response.ContainsKey("interval"))
-                    throw new TorrentException("Tracker response does not contain interval value.");
-                if (!response.ContainsKey("complete"))
-                    throw new TorrentException("Tracker response does not contain complete value.");
-                if (!response.ContainsKey("incomplete"))
-                    throw new TorrentException("Tracker response does not contain incomplete value.");
                 if (!response.ContainsKey("peers"))
                     throw new TorrentException("Tracker response does not contain peers list.");
-
-                Interval = (BencodedInteger)response["interval"];
-                Complete = (BencodedInteger)response["complete"];
-                Incomplete = (BencodedInteger)response["incomplete"];
 
                 if (response["peers"] is BencodedList)
                 {
@@ -116,6 +112,12 @@ namespace Torrent.Client
                     throw new TorrentException("Cannot read peers list.");
                 }
             }
+        }
+        public override string ToString()
+        {
+            return string.Format("Failure reason: {0}, Peers: {2}{1}", FailureReason??"None",
+                PeerEndpoints.Select(p=>p.IP.ToString()+":"+p.Port).ToDelimitedString(Environment.NewLine),
+                Environment.NewLine);
         }
     }
 }

@@ -22,7 +22,7 @@ namespace Torrent.Client
         public string Name { get; private set; }
         public ReadOnlyCollection<FileEntry> Files { get; private set; }
         public ReadOnlyCollection<byte[]> Checksums { get; private set; }
-
+        public BencodedDictionary Info { get; private set; }
         private string path;
         /// <summary>
         /// Loads the metadata from a .torrent file.
@@ -67,7 +67,7 @@ namespace Torrent.Client
         {
             var name = info["name"] as BencodedString;
             if (name == null) throw new TorrentException(string.Format("Invalid metadata in file {0}, 'name' not of expected type.", path));
-
+            this.Info = info;
             return name;
         }
 
@@ -131,7 +131,7 @@ namespace Torrent.Client
 
         private BencodedDictionary GetMetadata()
         {
-            var torrentFile = File.ReadAllText(path, Encoding.ASCII);
+            var torrentFile = File.ReadAllBytes(path);
             var metadata = BencodingParser.Decode(torrentFile) as BencodedDictionary;
             CheckMetadata(metadata);
             return metadata;
