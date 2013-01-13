@@ -40,8 +40,6 @@ namespace Torrent.Client.Bencoding
                 using (reader = new BinaryReader(stream))
                 {
                     return ParseElement();
-                    var l = new List<byte>();
-                    l.SingleOrFallback(() => { throw new Exception(); });
                 }
             }
             catch (Exception e)
