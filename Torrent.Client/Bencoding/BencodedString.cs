@@ -6,9 +6,10 @@ using System.Text;
 
 namespace Torrent.Client.Bencoding
 {
-    public class BencodedString : IBencodedElement
+    public class BencodedString : IBencodedElement, IEnumerable<char>
     {
         private string innerString;
+        public int Length { get { return innerString.Length; } }
 
         public BencodedString(string value)
         {
@@ -32,6 +33,16 @@ namespace Torrent.Client.Bencoding
             return new BencodedString(value);
         }
 
+
+        public IEnumerator<char> GetEnumerator()
+        {
+            return innerString.GetEnumerator();
+        }
+
+        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
+        {
+            return innerString.GetEnumerator();
+        }
     }
 }
 
