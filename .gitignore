@@ -42,8 +42,8 @@ local.properties
 *.sln.docstates
 
 # Build results
-[Dd]ebug/
-[Rr]elease/
+[Dd]ebug\
+[Rr]elease\
 *_i.c
 *_p.c
 *.ilk
@@ -161,3 +161,19 @@ pip-log.txt
 
 # Mac crap
 .DS_Store
+
+
+# c#
+[Oo]bj
+[Bb]in
+*.user
+*.suo
+*.[Cc]ache
+*.bak
+*.ncb
+*.log 
+*.DS_Store
+[Tt]humbs.db 
+_ReSharper.*
+*.resharper
+Ankh.NoLoad
