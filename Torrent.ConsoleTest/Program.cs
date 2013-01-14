@@ -19,7 +19,7 @@ namespace Torrent.ConsoleTest
             program.Run();
         }
 
-        private void Run()
+        private async void Run()
         {
             try
             {
@@ -50,10 +50,11 @@ namespace Torrent.ConsoleTest
                     
                     var request = new TrackerRequest(hash,
                         Encoding.ASCII.GetBytes("-UT3230-761290182730"), 8910, 0, 0, (long)torrent.Files.Sum(f => f.Length),
-                        true, true, numWant: 200, @event: EventType.Started);
+                        false, false, numWant: 200, @event: EventType.Started);
                     var client = new TrackerClient(torrent.AnnounceURL);
-                    var res = client.GetResponse(request);
-                    Console.WriteLine(res);
+                    var res = client.GetResponseAsync(request);
+                    res.Wait();
+                    Console.WriteLine(res.Result);
                 }
             }
             finally

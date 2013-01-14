@@ -27,7 +27,7 @@ namespace Torrent.Client
         /// <summary>
         /// Contains the port number of the peer.
         /// </summary>
-        public short Port { get; private set; }
+        public ushort Port { get; private set; }
 
         /// <summary>
         /// Initializes a new instance of the Torrent.Client.PeerEndpoint class.
@@ -35,10 +35,9 @@ namespace Torrent.Client
         /// <param name="ip">The IP address of the peer.</param>
         /// <param name="port">The port number of the peer.</param>
         /// <param name="id">The ID of the peer.</param>
-        public PeerEndpoint(IPAddress ip, short port, string id="")
+        public PeerEndpoint(IPAddress ip, ushort port, string id="")
         {
             Contract.Requires(ip != null);
-            Contract.Requires(port >= 0);
             Contract.Requires(id != null);
 
             this.PeerID = id;
@@ -51,8 +50,8 @@ namespace Torrent.Client
         /// </summary>
         /// <param name="peer">A BencodedDictionary containing the peer's info.</param>
         public PeerEndpoint(BencodedDictionary peer):
-            this(new IPAddress(Encoding.ASCII.GetBytes((BencodedString)peer["ip"])),
-            (short)(BencodedInteger)peer["port"],
+            this(IPAddress.Parse((BencodedString)peer["ip"]),
+            (ushort)(BencodedInteger)peer["port"],
             (BencodedString)peer["peer id"])
         {  }
 
@@ -62,7 +61,12 @@ namespace Torrent.Client
         /// <param name="peer">Binary data containing the peer's info</param>
         public PeerEndpoint(Byte[] peer):
             this(new IPAddress(peer.Take(4).ToArray()),
-            BitConverter.ToInt16(peer, 4))
+            BitConverter.ToUInt16(peer, 4))
         {  }
+
+        public override string ToString()
+        {
+            return string.Format("{0}:{1} {2}", IP, Port, PeerID ?? string.Empty);
+        }
     }
 }

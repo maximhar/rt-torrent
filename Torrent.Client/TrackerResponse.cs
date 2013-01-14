@@ -94,6 +94,8 @@ namespace Torrent.Client
                     if (((BencodedList)response["peers"]).Count() == 0)
                         throw new TorrentException("Peers list is empty.");
 
+                    PeerEndpoints = new List<PeerEndpoint>();
+
                     foreach (BencodedDictionary peer in (BencodedList)response["peers"])
                     {
                         PeerEndpoints.Add(new PeerEndpoint(peer));
@@ -116,7 +118,7 @@ namespace Torrent.Client
         public override string ToString()
         {
             return string.Format("Failure reason: {0}, Peers: {2}{1}", FailureReason??"None",
-                PeerEndpoints.Select(p=>p.IP.ToString()+":"+p.Port).ToDelimitedString(Environment.NewLine),
+                PeerEndpoints.ToDelimitedString(Environment.NewLine),
                 Environment.NewLine);
         }
     }

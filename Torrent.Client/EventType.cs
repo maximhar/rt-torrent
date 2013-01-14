@@ -5,6 +5,9 @@ using System.Text;
 
 namespace Torrent.Client
 {
+    /// <summary>
+    /// Represents a BitTorrent Tracker Protocol event.
+    /// </summary>
     public enum EventType
     {
         Started,

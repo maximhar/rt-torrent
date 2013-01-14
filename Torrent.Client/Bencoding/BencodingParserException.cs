@@ -5,6 +5,9 @@ using System.Text;
 
 namespace Torrent.Client.Bencoding
 {
+    /// <summary>
+    /// Represents an exception raised by the bencoding parser.
+    /// </summary>
     class BencodingParserException : Exception
     {
         public BencodingParserException() : base() { }

@@ -8,6 +8,9 @@ using System.Diagnostics.Contracts;
 using MoreLinq;
 namespace Torrent.Client.Bencoding
 {
+    /// <summary>
+    /// Represents a bencoded node type.
+    /// </summary>
     enum BencodedNodeType
     {
         String, 
@@ -15,24 +18,34 @@ namespace Torrent.Client.Bencoding
         List,
         Dictionary
     }
-
+    /// <summary>
+    /// Parses bencoded data.
+    /// </summary>
     public static class BencodingParser
     {
         private static BinaryReader reader;
         private static Stream stream;
-        public static IBencodedElement Decode(string bencoded)
-        {
-            return Decode(bencoded.Select(c=>(byte)c).ToArray());
-        }
         /// <summary>
         /// Parses the bencoded string into a tree of bencoded elements.
         /// </summary>
+        /// <remarks>If byte data is contained the the string, refrain from using this method and use Decode(byte[]) instead.</remarks>
         /// <param name="bencoded">The bencoded string to parse.</param>
+        /// <returns></returns>
+        public static IBencodedElement Decode(string bencoded)
+        {
+            Contract.Requires(bencoded != null);
+            return Decode(bencoded.Select(c=>(byte)c).ToArray());
+        }
+        /// <summary>
+        /// Parses the bencoded bytestring into a tree of bencoded elements.
+        /// </summary>
+        /// <param name="bencoded">The bencoded bytestring to parse.</param>
         /// <returns>The <c>IBencodedElement</c> representing the top node of the returned tree.</returns>
         /// <exception cref="BencodingParserException"></exception>
         public static IBencodedElement Decode(byte[] bencoded)
         {
             Contract.Requires(bencoded != null);
+
             try
             {
                 using (stream = new MemoryStream(bencoded))

@@ -1,9 +1,11 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 11.00
-# Visual C# Express 2010
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Torrent.Client", "Torrent.Client.csproj", "{B3B090D3-A30F-4DA5-8F5A-92AD983E7D6E}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Torrent.ConsoleTest", "..\Torrent.ConsoleTest\Torrent.ConsoleTest.csproj", "{CC64981D-7E53-40AC-8C89-41D70337DFD6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Torrent.GuiTest", "..\Torrent.GuiTest\Torrent.GuiTest.csproj", "{8F7DBB17-4100-4756-977C-CD34AA2D096E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -35,6 +37,16 @@ Global
 		{CC64981D-7E53-40AC-8C89-41D70337DFD6}.Release|Mixed Platforms.Build.0 = Release|x86
 		{CC64981D-7E53-40AC-8C89-41D70337DFD6}.Release|x86.ActiveCfg = Release|x86
 		{CC64981D-7E53-40AC-8C89-41D70337DFD6}.Release|x86.Build.0 = Release|x86
+		{8F7DBB17-4100-4756-977C-CD34AA2D096E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8F7DBB17-4100-4756-977C-CD34AA2D096E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8F7DBB17-4100-4756-977C-CD34AA2D096E}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{8F7DBB17-4100-4756-977C-CD34AA2D096E}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{8F7DBB17-4100-4756-977C-CD34AA2D096E}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{8F7DBB17-4100-4756-977C-CD34AA2D096E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8F7DBB17-4100-4756-977C-CD34AA2D096E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8F7DBB17-4100-4756-977C-CD34AA2D096E}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{8F7DBB17-4100-4756-977C-CD34AA2D096E}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{8F7DBB17-4100-4756-977C-CD34AA2D096E}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
