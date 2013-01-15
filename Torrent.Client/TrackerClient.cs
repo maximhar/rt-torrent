@@ -45,7 +45,7 @@ namespace Torrent.Client
         /// </summary>
         /// <param name="request">The data for the request that will be sent to the tracker.</param>
         /// <returns>The tracker's response.</returns>
-        async public Task<TrackerResponse> GetResponseAsync(TrackerRequest requestData)
+        public TrackerResponse GetResponse(TrackerRequest requestData)
         {
             Contract.Requires(requestData != null);
 
@@ -83,7 +83,7 @@ namespace Torrent.Client
             
             try
             {
-                var response = await request.GetResponseAsync();
+                var response = request.GetResponse();
                 byte[] trackerResponse;
                 using (var reader = new BinaryReader(response.GetResponseStream()))
                 {

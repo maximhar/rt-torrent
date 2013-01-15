@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using Torrent.Client;
 using MoreLinq;
+using System.Windows.Threading;
 
 namespace Torrent.GuiTest
 {
@@ -23,6 +24,7 @@ namespace Torrent.GuiTest
         ObservableCollection<string> announces;
         string hash;
         Window mainWindow;
+        Dispatcher dispatcher;
         string name;
         
         int pieceLength;
@@ -133,6 +135,8 @@ namespace Torrent.GuiTest
             }
         }
 
+        private TorrentTransfer torrent;
+
         /// <summary>
         /// Initializes an instance of the Torrent.GuiTest.PeersViewModel class vie a Window object.
         /// </summary>
@@ -143,41 +147,52 @@ namespace Torrent.GuiTest
             Files = new ObservableCollection<FileEntry>();
             Announces = new ObservableCollection<string>();
             mainWindow = window;
+            dispatcher = window.Dispatcher;
         }
 
-        public async void GetPeers(string path)
+        public void GetPeers(string path)
         {
             try
             {
                 Peers.Clear();
-               
-                var torrent = new TorrentData(path);
-                var hasher = SHA1.Create();
-                PieceLength = torrent.PieceLength;
-                PieceCount = torrent.Checksums.Count;
-                Name=torrent.Name;
-                PieceLength = torrent.PieceLength;
-                AnnounceURL = torrent.AnnounceURL;
-                torrent.Files.ForEach(f => Files.Add(f));
-                if (torrent.AnnounceList != null)
-                    torrent.AnnounceList.ForEach(a => Announces.Add(a));
+                Announces.Clear();
 
-                Hash = BitConverter.ToString(torrent.InfoHash).Replace("-", string.Empty);
+                torrent = new TorrentTransfer(path);
+                PieceLength = torrent.Data.PieceLength;
+                PieceCount = torrent.Data.Checksums.Count;
+                Name=torrent.Data.Name;
+                PieceLength = torrent.Data.PieceLength;
+                AnnounceURL = torrent.Data.AnnounceURL;
 
-                var request = new TrackerRequest(torrent.InfoHash,
-                    Encoding.ASCII.GetBytes("-UT3230-761290182730"), 8910, 0, 0, (long)torrent.Files.Sum(f => f.Length),
-                    false, false, numWant: 200, @event: EventType.Started);
-                var client = new TrackerClient(torrent.AnnounceURL);
-                var res = await client.GetResponseAsync(request);
-                if (res.PeerEndpoints != null)
-                    res.PeerEndpoints.ForEach(p => Peers.Add(p));
-                if (res.FailureReason != null)
-                    MessageBox.Show(mainWindow, string.Format("Failure reason: {0}", res.FailureReason));
+                torrent.Data.Files.ForEach(f => Files.Add(f));
+                if (torrent.Data.AnnounceList != null)
+                    torrent.Data.AnnounceList.ForEach(a => Announces.Add(a));
+
+                torrent.GotPeers += torrent_GotPeers;
+                torrent.RaisedException += torrent_RaisedException;
+                torrent.Start();
+                
             }
             catch (Exception e)
             {
-                MessageBox.Show(mainWindow, string.Format("Ooops. Something bad happened. {0}", e.Message));
+                HandleException(e);
             }
+        }
+
+        private void HandleException(Exception e)
+        {
+            MessageBox.Show(mainWindow, string.Format("Ooops. Something bad happened. {0}", e.Message));
+        }
+
+        void torrent_RaisedException(object sender, Exception e)
+        {
+            dispatcher.Invoke(new Action(() => HandleException(e)));
+        }
+
+        void torrent_GotPeers(object sender, EventArgs e)
+        {
+            if (torrent.PeerEndpoints != null)
+                dispatcher.Invoke(() => torrent.PeerEndpoints.ForEach(p => Peers.Add(p)));
         }
 
         private void OnPropertyChanged(string name)
