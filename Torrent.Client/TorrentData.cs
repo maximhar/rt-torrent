@@ -7,6 +7,7 @@ using Torrent.Client.Bencoding;
 using System.Collections.ObjectModel;
 using System.Diagnostics.Contracts;
 using MoreLinq;
+using System.Security.Cryptography;
 
 namespace Torrent.Client
 {
@@ -40,17 +41,23 @@ namespace Torrent.Client
         /// A read-only list of the raw SHA1 checksums of the pieces in the torrent.
         /// </summary>
         public ReadOnlyCollection<byte[]> Checksums { get; private set; }
-        public BencodedDictionary Info { get; private set; }
-        private string path;
+        
         /// <summary>
-        /// Loads the metadata from a .torrent file.
+        /// The SHA1 hash of the info dictionary of the torrent.
         /// </summary>
-        /// <param name="path">The path to the file.</param>
-        public TorrentData(string path)
-        {
-            Contract.Requires(path != null);
+        public byte[] InfoHash { get; private set; }
 
-            this.path = path;
+        private byte[] data;
+        /// <summary>
+        /// Initializes a new instance of the Torrent.Client.TorrentData class with data from a byte array.
+        /// </summary>
+        /// <param name="data">The binary representation of the metadata.</param>
+        public TorrentData(byte[] data)
+        {
+            Contract.Requires(data != null);
+
+            this.data = data;
+
             try
             {
                 LoadMetadata();
@@ -59,6 +66,16 @@ namespace Torrent.Client
             {
                 throw new TorrentException("Unable to read torrent metadata.", e);
             }
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the Torrent.Client.TorrentData class with data from a specified .torrent file.
+        /// </summary>
+        /// <param name="path">The path to the file.</param>
+        public TorrentData(string path)
+            : this(File.ReadAllBytes(path))
+        {
+            Contract.Requires(path != null);
         }
 
         private void LoadMetadata()
@@ -86,6 +103,16 @@ namespace Torrent.Client
             this.Files = decodedFiles.AsReadOnly();
             this.PieceLength = pieceLength;
             this.Name = name;
+            this.InfoHash = ComputeInfoHash(info);
+        }
+
+        private byte[] ComputeInfoHash(BencodedDictionary info)
+        {
+            var hasher = SHA1.Create();
+            string bencoded = info.ToBencodedString();
+            byte[] bytes = bencoded.Select(c => (byte)c).ToArray();
+            byte[] hash = hasher.ComputeHash(bytes);
+            return hash;
         }
 
         private List<string> DecodeAnnounceList(BencodedList announceList)
@@ -101,7 +128,7 @@ namespace Torrent.Client
         private void CheckMetadata(BencodedString announce, BencodedDictionary info)
         {
             if (announce == null || info == null) 
-                throw new TorrentException(string.Format("Invalid metadata in file {0}, 'announce'/'info' not of expected type.", path));
+                throw new TorrentException(string.Format("Invalid metadata, 'announce'/'info' not of expected type."));
 
         }
 
@@ -109,8 +136,7 @@ namespace Torrent.Client
         {
             var name = info["name"] as BencodedString;
             if (name == null) 
-                throw new TorrentException(string.Format("Invalid metadata in file {0}, 'name' not of expected type.", path));
-            this.Info = info;
+                throw new TorrentException(string.Format("Invalid metadata in file {0}, 'name' not of expected type."));
             return name;
         }
 
@@ -149,21 +175,21 @@ namespace Torrent.Client
         private void CheckFileLength(BencodedInteger fileLength)
         {
             if (fileLength == null) 
-                throw new TorrentException(string.Format("Invalid metadata in file {0}, 'length' not of expected type.", path));
+                throw new TorrentException(string.Format("Invalid metadata, 'length' not of expected type."));
 
         }
 
         private void CheckFileProperties(string[] filePathList, BencodedInteger fileLength)
         {
             if (filePathList == null || fileLength == null) 
-                throw new TorrentException(string.Format("Invalid metadata in file {0}, 'path'/'length' not of expected type.", path));
+                throw new TorrentException(string.Format("Invalid metadata, 'path'/'length' not of expected type."));
 
         }
 
         private void CheckInfoFiles(BencodedList files)
         {
             if (files == null) 
-                throw new TorrentException(string.Format("Invalid metadata in file {0}, 'files' not of expected type.", path));
+                throw new TorrentException(string.Format("Invalid metadata, 'files' not of expected type."));
 
         }
 
@@ -171,15 +197,14 @@ namespace Torrent.Client
         {
             byte[] rawChecksums = Encoding.ASCII.GetBytes(info["pieces"] as BencodedString);
             if (pieceLength == null || rawChecksums == null || rawChecksums.Length % CHECKSUM_SIZE != 0)
-                throw new TorrentException(string.Format("Invalid metadata in file {0}, 'piece length'/'pieces' not of expected type, or invalid length of 'pieces'.", path));
+                throw new TorrentException(string.Format("Invalid metadata, 'piece length'/'pieces' not of expected type, or invalid length of 'pieces'."));
             var slicedChecksums = rawChecksums.Batch(CHECKSUM_SIZE).Select(e=>e.ToArray());
             return slicedChecksums.ToList();
         }
 
         private BencodedDictionary GetMetadata()
         {
-            var torrentFile = File.ReadAllBytes(path);
-            var metadata = BencodingParser.Decode(torrentFile) as BencodedDictionary;
+            var metadata = BencodingParser.Decode(this.data) as BencodedDictionary;
             CheckMetadata(metadata);
             return metadata;
         }
@@ -187,11 +212,11 @@ namespace Torrent.Client
         private void CheckMetadata(BencodedDictionary metadata)
         {
             if (metadata == null) 
-                throw new TorrentException(string.Format("Invalid metadata in file {0}.", path));
+                throw new TorrentException(string.Format("Invalid metadata."));
             if (!metadata.ContainsKey("announce")) 
-                throw new TorrentException(string.Format("Invalid metadata in file {0}, 'announce' not found.", path));
+                throw new TorrentException(string.Format("Invalid metadata, 'announce' not found."));
             if (!metadata.ContainsKey("info")) 
-                throw new TorrentException(string.Format("Invalid metadata in file {0}, 'info' not found.", path));
+                throw new TorrentException(string.Format("Invalid metadata, 'info' not found."));
 
         }
     }

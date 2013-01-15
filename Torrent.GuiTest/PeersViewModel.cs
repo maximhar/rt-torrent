@@ -129,13 +129,11 @@ namespace Torrent.GuiTest
                 torrent.Files.ForEach(f => Files.Add(f));
                 if (torrent.AnnounceList != null)
                     torrent.AnnounceList.ForEach(a => Announces.Add(a));
-                string bencoded = torrent.Info.ToBencodedString();
-                byte[] bytes = bencoded.Select(c => (byte)c).ToArray();
-                byte[] hash = hasher.ComputeHash(bytes);
                 
-                Hash = BitConverter.ToString(hash).Replace("-", string.Empty);
+                
+                Hash = BitConverter.ToString(torrent.InfoHash).Replace("-", string.Empty);
 
-                var request = new TrackerRequest(hash,
+                var request = new TrackerRequest(torrent.InfoHash,
                     Encoding.ASCII.GetBytes("-UT3230-761290182730"), 8910, 0, 0, (long)torrent.Files.Sum(f => f.Length),
                     false, false, numWant: 200, @event: EventType.Started);
                 var client = new TrackerClient(torrent.AnnounceURL);
