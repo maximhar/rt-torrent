@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -13,12 +14,17 @@ namespace Torrent.Client
     public class TorrentTransfer
     {
         /// <summary>
+        /// The metadata decribing the torrent.
+        /// </summary>
+        public TorrentData Data { get; private set; }
+
+        /// <summary>
         /// Initialize a torrent transfer with metadata from a file on the filesystem.
         /// </summary>
         /// <param name="torrentPath">Path to the torrent file.</param>
         public TorrentTransfer(string torrentPath):this(File.OpenRead(torrentPath))
         {
-            throw new NotImplementedException();
+            Contract.Requires(torrentPath != null);
         }
 
         /// <summary>
@@ -27,7 +33,14 @@ namespace Torrent.Client
         /// <param name="torrentStream">The stream to read the torrent metadata from.</param>
         public TorrentTransfer(Stream torrentStream)
         {
-            throw new NotImplementedException();
+            Contract.Requires(torrentStream != null);
+            using (torrentStream)
+            using (var reader = new BinaryReader(torrentStream))
+            {
+                var bytes = reader.ReadBytes((int)reader.BaseStream.Length);
+                this.Data = new TorrentData(bytes);
+            }
+
         }
     }
 }

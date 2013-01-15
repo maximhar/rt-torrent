@@ -56,7 +56,7 @@ namespace Torrent.Client
         {  }
 
         /// <summary>
-        /// Initializes a new instance of the Torrent.Client.PeerEndpoint class via a binary data.
+        /// Initializes a new instance of the Torrent.Client.PeerEndpoint class via binary data.
         /// </summary>
         /// <param name="peer">Binary data containing the peer's info</param>
         public PeerEndpoint(Byte[] peer):
