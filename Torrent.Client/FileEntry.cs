@@ -31,7 +31,10 @@ namespace Torrent.Client
             this.Name = name;
             this.Length = length;
         }
-
+        /// <summary>
+        /// Returns a string that represents the content of the FileEntry object.
+        /// </summary>
+        /// <returns></returns>
         public override string ToString()
         {
             string[] sizes = { "B", "KB", "MB", "GB" };

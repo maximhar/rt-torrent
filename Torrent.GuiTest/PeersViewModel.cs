@@ -13,6 +13,9 @@ using MoreLinq;
 
 namespace Torrent.GuiTest
 {
+    /// <summary>
+    /// A class providing human-readable representation of a .torrent file.
+    /// </summary>
     class PeersViewModel:INotifyPropertyChanged
     {
         ObservableCollection<PeerEndpoint> peers;
@@ -26,6 +29,9 @@ namespace Torrent.GuiTest
         string announceURL;
         private int pieceCount;
 
+        /// <summary>
+        /// Gets or sets an ObservableCollection of FileEntries representing the files in the the torrent.
+        /// </summary>
         public ObservableCollection<FileEntry> Files
         {
             get { return files; }
@@ -36,6 +42,9 @@ namespace Torrent.GuiTest
             }
         }
 
+        /// <summary>
+        /// Gets or sets an ObservableCollection of strings representing the announce URLs of the torrent.
+        /// </summary>
         public ObservableCollection<string> Announces
         {
             get { return announces; }
@@ -46,6 +55,9 @@ namespace Torrent.GuiTest
             }
         }
 
+        /// <summary>
+        /// Gets or sets the number of pieces of the torrent.
+        /// </summary>
         public int PieceCount
         {
             get { return pieceCount; }
@@ -56,6 +68,9 @@ namespace Torrent.GuiTest
             }
         }
 
+        /// <summary>
+        /// Gets or sets the Announce URL of the torrent.
+        /// </summary>
         public string AnnounceURL
         {
             get { return announceURL; }
@@ -66,6 +81,9 @@ namespace Torrent.GuiTest
             }
         }
 
+        /// <summary>
+        /// Gets or sets the length of a peice of the torrent.
+        /// </summary>
         public int PieceLength
         {
             get { return pieceLength; }
@@ -76,6 +94,9 @@ namespace Torrent.GuiTest
             }
         }
         
+        /// <summary>
+        /// Gets or sets the name of the torrent
+        /// </summary>
         public string Name
         {
             get { return name; }
@@ -86,6 +107,9 @@ namespace Torrent.GuiTest
             }
         }
 
+        /// <summary>
+        /// Gets or sets and ObservableCollection of PeerEndpoints of the torrent.
+        /// </summary>
         public ObservableCollection<PeerEndpoint> Peers
         {
             get { return peers; }
@@ -95,6 +119,10 @@ namespace Torrent.GuiTest
                 OnPropertyChanged("Peers");
             }
         }
+
+        /// <summary>
+        /// Gets or sets the hash of the torrent.
+        /// </summary>
         public string Hash
         {
             get { return hash; }
@@ -105,6 +133,10 @@ namespace Torrent.GuiTest
             }
         }
 
+        /// <summary>
+        /// Initializes an instance of the Torrent.GuiTest.PeersViewModel class vie a Window object.
+        /// </summary>
+        /// <param name="window">The Window object.</param>
         public PeersViewModel(Window window)
         {
             Peers = new ObservableCollection<PeerEndpoint>();
@@ -134,7 +166,7 @@ namespace Torrent.GuiTest
                 byte[] hash = hasher.ComputeHash(bytes);
                 
                 Hash = BitConverter.ToString(hash).Replace("-", string.Empty);
-
+                
                 var request = new TrackerRequest(hash,
                     Encoding.ASCII.GetBytes("-UT3230-761290182730"), 8910, 0, 0, (long)torrent.Files.Sum(f => f.Length),
                     false, false, numWant: 200, @event: EventType.Started);

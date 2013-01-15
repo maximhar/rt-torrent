@@ -64,6 +64,10 @@ namespace Torrent.Client
             BitConverter.ToUInt16(peer, 4))
         {  }
 
+        /// <summary>
+        /// Returns a string that represents the content of the PeerEndpoint object.
+        /// </summary>
+        /// <returns></returns>
         public override string ToString()
         {
             return string.Format("{0,15} : {1,-5} {2}", IP, Port, BitConverter.ToString(Encoding.ASCII.GetBytes(PeerID)).Replace("-", "") ?? string.Empty);

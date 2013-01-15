@@ -6,19 +6,34 @@ using System.Text;
 
 namespace Torrent.Client.Bencoding
 {
+    /// <summary>
+    /// Provides a class for representing Bencoded integers.
+    /// </summary>
     public class BencodedInteger:IBencodedElement
     {
         private long innerInteger;
 
+        /// <summary>
+        /// Initializes a new instance of the Torrent.Client.Bencoding.BencodedInteger class via a long value.
+        /// </summary>
+        /// <param name="value">A long value containing the Bencoded data.</param>
         public BencodedInteger(long value)
         {
             innerInteger = value;
         }
 
+        /// <summary>
+        /// Returns a string that represents the content of the Bencoded integer.
+        /// </summary>
+        /// <returns></returns>
         public override string ToString()
         {
             return innerInteger.ToString();
         }
+        /// <summary>
+        /// Returns a Bencoded string that represents the content of the Bencoded integer.
+        /// </summary>
+        /// <returns></returns>
         public string ToBencodedString()
         {
             return String.Format("i{0}e", innerInteger);

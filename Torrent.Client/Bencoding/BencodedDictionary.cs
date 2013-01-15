@@ -7,31 +7,57 @@ using System.Collections;
 
 namespace Torrent.Client.Bencoding
 {
+    /// <summary>
+    /// Provides a class for representing Bencoded dictionaries.
+    /// </summary>
     public class BencodedDictionary : IBencodedElement, IEnumerable<KeyValuePair<string, IBencodedElement>>
     {
         private Dictionary<string, IBencodedElement> innerDictionary;
 
+        /// <summary>
+        /// Initializes a new instance of the Torrent.Client.Bencoding.BencodedDictionary class that is empty.
+        /// </summary>
         public BencodedDictionary()
         {
             innerDictionary = new Dictionary<string, IBencodedElement>();
         }
 
+        /// <summary>
+        /// Gets or sets the value associated with the specified key.
+        /// </summary>
+        /// <param name="key">The key of the value to get or set.</param>
+        /// <returns></returns>
         public IBencodedElement this[string key]
         {
             get { return innerDictionary[key]; }
             set { innerDictionary[key] = value; }
         }
 
+        /// <summary>
+        /// Adds the specified key and value to the Bencoded dictionary.
+        /// </summary>
+        /// <param name="key">The key of the element to add. MUST be a string.</param>
+        /// <param name="value">The value of the element to add. MUST be of type IBencodedElement</param>
         public void Add(string key, IBencodedElement value)
         {
             innerDictionary.Add(key, value);
         }
 
+        /// <summary>
+        /// Removes the value associated with the specified key from the Bencoded dictionary.
+        /// </summary>
+        /// <param name="key">The key of the element to remove.</param>
+        /// <returns></returns>
         public bool Remove(string key)
         {
             return innerDictionary.Remove(key);
         }
 
+        /// <summary>
+        /// Determines whether the Bencoded dictionary contains the specified element by key.
+        /// </summary>
+        /// <param name="key">The key to locate in the Bencoded dictionary.</param>
+        /// <returns></returns>
         public bool ContainsKey(string key)
         {
             return innerDictionary.ContainsKey(key);
@@ -42,6 +68,10 @@ namespace Torrent.Client.Bencoding
             return innerDictionary.GetEnumerator();
         }
 
+        /// <summary>
+        /// Returns a string that represents the content of the Bencoded dictionary.
+        /// </summary>
+        /// <returns></returns>
         public override string ToString()
         {
             StringBuilder buff = new StringBuilder();
@@ -57,6 +87,11 @@ namespace Torrent.Client.Bencoding
         {
             return innerDictionary.GetEnumerator();
         }
+
+        /// <summary>
+        /// Returns a Bencoded string that represents the content of the Bencoded dictionary.
+        /// </summary>
+        /// <returns></returns>
         public string ToBencodedString()
         {
             StringBuilder str = new StringBuilder("d");

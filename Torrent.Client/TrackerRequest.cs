@@ -6,6 +6,9 @@ using System.Text;
 
 namespace Torrent.Client
 {
+    /// <summary>
+    /// Provides a container class for the BitTorrent tracker request data.
+    /// </summary>
     public class TrackerRequest
     {
         /// <summary>
