@@ -37,6 +37,7 @@ namespace Torrent.GuiTest
         {
             var str = (string[])e.Data.GetData(DataFormats.FileDrop);
             AnnounceUrlTextBox.Text = str.FirstOrDefault();
+            model.GetPeers(AnnounceUrlTextBox.Text);
         }
     }
 }

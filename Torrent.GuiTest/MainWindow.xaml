@@ -2,26 +2,58 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:Torrent.GuiTest"
-        Title="MainWindow" Height="350" Width="525" AllowDrop="True" Drop="Window_Drop">
+        Title="Torrent Data" Height="605" Width="723" AllowDrop="True" Drop="Window_Drop">
+    <StackPanel>
     <Grid Margin="3">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*"/>
-            <ColumnDefinition Width="2*" MinWidth="200"/>
+            <ColumnDefinition Width="6*" MinWidth="200"/>
         </Grid.ColumnDefinitions>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition/>
-            <RowDefinition Height="Auto"/>
-        </Grid.RowDefinitions>
         <Label Grid.Column="0">Torrent path:</Label>
-        <TextBox Grid.Column="1" Name="AnnounceUrlTextBox"
-                 AllowDrop="True"/>
-        <Label Grid.Row="1" Grid.Column="0">Torrent hash:</Label>
-        <TextBox Name="HashTextBox" Grid.Row="1" Grid.Column="1" IsEnabled="False" Text="{Binding Hash}"/>
-        <ListBox Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" ItemsSource="{Binding Peers}" >
-            
-        </ListBox>
-        <Button Name="GetPeersButton" Grid.Row="3" Grid.ColumnSpan="2" Click="GetPeersButton_Click">Get peers from tracker</Button>
+        <TextBox Grid.Column="1" Name="AnnounceUrlTextBox" AllowDrop="True"/>
     </Grid>
+    <Grid Margin="3">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="6*" MinWidth="200"/>
+        </Grid.ColumnDefinitions>
+        <Label Grid.Column="0">Torrent hash:</Label>
+        <TextBox Name="HashTextBox" Grid.Column="1" IsEnabled="False" Text="{Binding Hash}"/>
+    </Grid>
+    <Grid Margin="3">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="6*" MinWidth="200"/>
+        </Grid.ColumnDefinitions>
+        <Label Grid.Column="0">Torrent name:</Label>
+        <TextBox Name="NameTextBox" Grid.Column="1" IsEnabled="False" Text="{Binding Name}"/>
+    </Grid>
+    <Grid Margin="3">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="6*" MinWidth="200"/>
+        </Grid.ColumnDefinitions>
+        <Label Grid.Column="0">Piece length:</Label>
+        <TextBox Name="PieceLengthTextBox" Grid.Column="1" IsEnabled="False" Text="{Binding PieceLength}"/>
+    </Grid>
+    <Grid Margin="3">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="6*" MinWidth="200"/>
+        </Grid.ColumnDefinitions>
+        <Label Grid.Column="0">Announce URL:</Label>
+        <TextBox Name="AnnounceURLTextBox" Grid.Column="1" IsEnabled="False" Text="{Binding AnnounceURL}"/>
+    </Grid>
+    <Grid Margin="3">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="6*" MinWidth="200"/>
+        </Grid.ColumnDefinitions>
+        <Label Grid.Column="0">Piece count:</Label>
+        <TextBox Name="PieceCountTextBox" Grid.Column="1" IsEnabled="False" Text="{Binding PieceCount}"/>
+    </Grid>
+        <ListBox Height="127" ItemsSource="{Binding Files}" FontFamily="Courier New" />
+        <ListBox Height="127" ItemsSource="{Binding Announces}" FontFamily="Courier New" />
+        <ListBox Height="127" ItemsSource="{Binding Peers}" FontFamily="Courier New" />
+    </StackPanel>
 </Window>

@@ -66,7 +66,8 @@ namespace Torrent.Client
 
         public override string ToString()
         {
-            return string.Format("{0}:{1} {2}", IP, Port, PeerID ?? string.Empty);
+            return string.Format("{0,15} : {1,-5} {2}", IP, Port, BitConverter.ToString(Encoding.ASCII.GetBytes(PeerID)).Replace("-", "") ?? string.Empty);
         }
     }
 }
+    

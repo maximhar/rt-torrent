@@ -89,7 +89,7 @@ namespace Torrent.Client
                 if (!response.ContainsKey("peers"))
                     throw new TorrentException("Tracker response does not contain peers list.");
 
-                if (response["peers"] is BencodedList)
+                if (response["peers"] is BencodedList) // Peers Dictionary model 
                 {
                     if (((BencodedList)response["peers"]).Count() == 0)
                         throw new TorrentException("Peers list is empty.");
@@ -101,7 +101,7 @@ namespace Torrent.Client
                         PeerEndpoints.Add(new PeerEndpoint(peer));
                     }
                 }
-                else if (response["peers"] is BencodedString)
+                else if (response["peers"] is BencodedString) // Peers Binary model
                 {
                     if (!((BencodedString)response["peers"]).Any())
                         throw new TorrentException("Peers list is empty.");

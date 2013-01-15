@@ -31,5 +31,18 @@ namespace Torrent.Client
             this.Name = name;
             this.Length = length;
         }
+
+        public override string ToString()
+        {
+            string[] sizes = { "B", "KB", "MB", "GB" };
+            double len = Length;
+            int order = 0;
+            while (len >= 1024 && order + 1 < sizes.Length)
+            {
+                order++;
+                len = len / 1024;
+            }
+            return String.Format("{2} | Size:{0:0.##} {1}", len, sizes[order], Name);
+        }
     }
 }
