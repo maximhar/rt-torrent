@@ -156,6 +156,7 @@ namespace Torrent.GuiTest
             {
                 Peers.Clear();
                 Announces.Clear();
+                Files.Clear();
 
                 torrent = new TorrentTransfer(path);
                 PieceLength = torrent.Data.PieceLength;

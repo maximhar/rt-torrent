@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Collections;
+using MoreLinq;
 
 namespace Torrent.Client.Bencoding
 {
@@ -20,6 +21,15 @@ namespace Torrent.Client.Bencoding
         public BencodedList()
         {
             innerList = new List<IBencodedElement>();
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the Torrent.Client.Bencoding.BencodedList class from a IEnumerable collection of elements.
+        /// </summary>
+        /// <param name="collection">The IEnumerable collection to add to the Bencoded list.</param>
+        public BencodedList(IEnumerable<string> collection)
+        {
+            collection.ForEach(e => innerList.Add(new BencodedString(e)));
         }
 
         /// <summary>
