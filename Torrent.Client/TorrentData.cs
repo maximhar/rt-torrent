@@ -89,7 +89,8 @@ namespace Torrent.Client
         /// <param name="pieceLength">The number of bytes in each piece.</param>
         /// <param name="pieces">A list of strings consisting of the concatenation of all 20-byte SHA1 hash values.</param>
         /// <param name="savePath">A path to save the .torrent file to.</param>
-        public static void Create(string name, List<FileEntry> inputFiles, string filesDir, string announce, List<string> announceList, int pieceLength, List<byte[]> pieces, string savePath)
+        /// <returns>A string representig the content of the .torrent file.</returns>
+        public static string Create(string name, List<FileEntry> inputFiles, string filesDir, string announce, List<string> announceList, int pieceLength, List<byte[]> pieces, string savePath)
         {
             Contract.Requires(name != null);
             Contract.Requires(inputFiles != null);
@@ -111,10 +112,10 @@ namespace Torrent.Client
 
             info.Add("piece length", new BencodedInteger(pieceLength));
 
-            string piecesString = "";
-            pieces.ForEach(piece => piece.ForEach(b => piecesString += (char)b));
+            StringBuilder piecesString = new StringBuilder();
+            pieces.ForEach(piece => piece.ForEach(b => piecesString.Append((char)b)));
 
-            info.Add("pieces", new BencodedString(piecesString));
+            info.Add("pieces", new BencodedString(piecesString.ToString()));
 
             //"1" - the client MUST publish its presence to get other peers ONLY via the trackers explicitly described in the metainfo file
             //"0" - the client may obtain peer from other means, e.g. PEX peer exchange, dht. Here, "private" may be read as "no external peer source".
@@ -144,7 +145,7 @@ namespace Torrent.Client
                 info.Add("files", files);
             }
             res.Add("info", info);
-
+            return res.ToString();
         }
         
         private static long GetUnixTime()
