@@ -78,7 +78,18 @@ namespace Torrent.Client
             Contract.Requires(path != null);
         }
 
-        public static void Create(string name, List<FileEntry> inputFiles, string announce, List<string> announceList, int pieceLength, List<byte[]> pieces, string savePath)
+        /// <summary>
+        /// Creates a .torrent file with the given data.
+        /// </summary>
+        /// <param name="name">The name of the file.</param>
+        /// <param name="inputFiles">A List<string> containing all the files to be added to the .torrent file.</param>
+        /// <param name="filesDir">The root directory of all the files in the .torrent file.</param>
+        /// <param name="announce">The announce URL of the tracker, in which the .torrent file will be uploaded to.</param>
+        /// <param name="announceList">A list of announce URLs.</param>
+        /// <param name="pieceLength">The number of bytes in each piece.</param>
+        /// <param name="pieces">A list of strings consisting of the concatenation of all 20-byte SHA1 hash values.</param>
+        /// <param name="savePath">A path to save the .torrent file to.</param>
+        public static void Create(string name, List<FileEntry> inputFiles, string filesDir, string announce, List<string> announceList, int pieceLength, List<byte[]> pieces, string savePath)
         {
             Contract.Requires(name != null);
             Contract.Requires(inputFiles != null);
@@ -86,28 +97,28 @@ namespace Torrent.Client
             Contract.Requires(announce != null);
             Contract.Requires(pieces != null);
 
-
-            string clientVersion = "1000";
+            string clientVersion = "0200";
             var res = new BencodedDictionary();
             res.Add("announce", new BencodedString(announce));
             var alist = new BencodedList();
             announceList.ForEach(a => alist.Add(new BencodedList() { new BencodedString(a) }));
             res.Add("announce-list", alist);
             res.Add("created by", new BencodedString("rtTorrent/" + clientVersion));
-            res.Add("creation date", new BencodedInteger(GetTimeSince1970Epoch()));
+            res.Add("creation date", new BencodedInteger(GetUnixTime()));
             res.Add("encoding", new BencodedString("UTF-8"));
 
             var info = new BencodedDictionary();
-            
+
             info.Add("piece length", new BencodedInteger(pieceLength));
 
             string piecesString = "";
             pieces.ForEach(piece => piece.ForEach(b => piecesString += (char)b));
 
             info.Add("pieces", new BencodedString(piecesString));
+
             //"1" - the client MUST publish its presence to get other peers ONLY via the trackers explicitly described in the metainfo file
             //"0" - the client may obtain peer from other means, e.g. PEX peer exchange, dht. Here, "private" may be read as "no external peer source".
-            //info.Add("private", new BencodedInteger(1));
+            //info.Add("private", new BencodedInteger(0));
 
             if (inputFiles.Count == 1)
             {
@@ -117,45 +128,26 @@ namespace Torrent.Client
             }
             else
             {
-                //name
+                info.Add("name", new BencodedString(filesDir));
                 var files = new BencodedList();
 
                 foreach (var inputFile in inputFiles)
                 {
                     var aFile = new BencodedDictionary();
                     aFile.Add("length", new BencodedInteger(inputFile.Length));
-                    //Add path HERE!
 
+                    var filePath = new BencodedList();
+                    inputFile.Name.Split(Path.DirectorySeparatorChar).ForEach(dir => filePath.Add(new BencodedString(dir)));
+                    aFile.Add("path", filePath);
                     files.Add(aFile);
                 }
-
-
-
                 info.Add("files", files);
             }
-
-
-
             res.Add("info", info);
+
         }
         
-        public string CalculateMD5Hash(string input)
-        {
-            // step 1, calculate MD5 hash from input
-            MD5 md5 = System.Security.Cryptography.MD5.Create();
-            byte[] inputBytes = System.Text.Encoding.ASCII.GetBytes(input);
-            byte[] hash = md5.ComputeHash(inputBytes);
-
-            // step 2, convert byte array to hex string
-            StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < hash.Length; i++)
-            {
-                sb.Append(hash[i].ToString("X2"));
-            }
-            return sb.ToString();
-        }
-
-        public static long GetTimeSince1970Epoch()
+        private static long GetUnixTime()
         {
             var epoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
             return Convert.ToInt64((DateTime.Now - epoch).TotalSeconds);

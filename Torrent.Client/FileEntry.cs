@@ -14,6 +14,7 @@ namespace Torrent.Client
         /// The name of the file enter. (in BitTorrent, includes full path)
         /// </summary>
         public string Name { get; private set; }
+
         /// <summary>
         /// The length of the file in bytes.
         /// </summary>
