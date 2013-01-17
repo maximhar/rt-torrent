@@ -162,6 +162,7 @@ namespace Torrent.GuiTest
                 PieceLength = torrent.Data.PieceLength;
                 PieceCount = torrent.Data.Checksums.Count;
                 Name=torrent.Data.Name;
+                Hash = BitConverter.ToString(torrent.Data.InfoHash).Replace("-", string.Empty);
                 PieceLength = torrent.Data.PieceLength;
                 AnnounceURL = torrent.Data.AnnounceURL;
 
