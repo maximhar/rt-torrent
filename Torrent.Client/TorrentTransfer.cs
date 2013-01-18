@@ -24,7 +24,7 @@ namespace Torrent.Client
     {
         private const int PSTR_LENGTH = 19;
         private volatile bool stop = false;
-
+        private TcpListener listener = new TcpListener(IPAddress.Any, LocalInfo.Instance.ListeningPort);
         /// <summary>
         /// The metadata decribing the torrent.
         /// </summary>
@@ -93,8 +93,10 @@ namespace Torrent.Client
                 while (true)
                 {
                     Thread.Sleep(200);
-                    if (stop) break;
+                    if (stop || listen.IsCompleted) break;
                 }
+                stop = true;
+                listener.Stop();
             }
             catch (Exception e)
             {
@@ -107,26 +109,33 @@ namespace Torrent.Client
 
         private void Listen()
         {
-            var listener = new TcpListener(IPAddress.Any, LocalInfo.Instance.ListeningPort);
-            listener.Start();
-            while (true)
+            try
             {
-                if (stop) return;
-                var client = listener.AcceptTcpClient();
-                var endpoint = client.Client.RemoteEndPoint;
-                var stream = client.GetStream();
-                byte[] buffer = new byte[1024];
-                int count;
-                using (var bstr = new MemoryStream())
+                listener.Start();
+                while (true)
                 {
-                    while ((count = stream.Read(buffer, 0, buffer.Length)) != 0)
+                    if (stop) break;
+                    var client = listener.AcceptTcpClient();
+                    var endpoint = client.Client.RemoteEndPoint;
+                    var stream = client.GetStream();
+                    byte[] buffer = new byte[1024];
+                    int count;
+                    using (var bstr = new MemoryStream())
                     {
-                        bstr.Write(buffer, 0, count);
+                        while ((count = stream.Read(buffer, 0, buffer.Length)) != 0)
+                        {
+                            bstr.Write(buffer, 0, count);
+                        }
+                        client.Close();
+                        if (stop) break;
+                        ProcessMessage(bstr.ToArray(), endpoint);
                     }
-                    client.Close();
-                    if (stop) return;
-                    ProcessMessage(bstr.ToArray(), endpoint);
                 }
+                listener.Stop();
+            }
+            catch (Exception e)
+            {
+                OnRaisedException(e);
             }
         }
 
@@ -157,6 +166,8 @@ namespace Torrent.Client
             {
                 try
                 {
+                    if (stop) return;
+
                     var client = new TcpClient();
                     client.Connect(new IPEndPoint(peer.IP, peer.Port));
                     var stream = client.GetStream();
@@ -176,7 +187,8 @@ namespace Torrent.Client
 
                     stream.Write(msg.ToArray(), 0, msg.Count);
                     client.Close();
-                    OnSentHandshake(peer);
+                    if(!stop)
+                        OnSentHandshake(peer);
                 }
                 catch { }
             });
