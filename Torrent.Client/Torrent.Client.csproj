@@ -90,6 +90,7 @@
     <Compile Include="Bencoding\BencodingParser.cs" />
     <Compile Include="Bencoding\BencodingParserException.cs" />
     <Compile Include="EventType.cs" />
+    <Compile Include="LocalInfo.cs" />
     <Compile Include="PeerEndpoint.cs" />
     <Compile Include="TorrentData.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
