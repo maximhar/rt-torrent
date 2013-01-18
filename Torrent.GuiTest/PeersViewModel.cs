@@ -22,6 +22,7 @@ namespace Torrent.GuiTest
         ObservableCollection<PeerEndpoint> peers;
         ObservableCollection<FileEntry> files;
         ObservableCollection<string> announces;
+        ObservableCollection<string> messages;
         string hash;
         Window mainWindow;
         Dispatcher dispatcher;
@@ -54,6 +55,16 @@ namespace Torrent.GuiTest
             {
                 announces = value;
                 OnPropertyChanged("Announces");
+            }
+        }
+
+        public ObservableCollection<string> Messages
+        {
+            get { return messages; }
+            set
+            {
+                messages = value;
+                OnPropertyChanged("Messages");
             }
         }
 
@@ -146,6 +157,8 @@ namespace Torrent.GuiTest
             Peers = new ObservableCollection<PeerEndpoint>();
             Files = new ObservableCollection<FileEntry>();
             Announces = new ObservableCollection<string>();
+            Messages = new ObservableCollection<string>();
+
             mainWindow = window;
             dispatcher = window.Dispatcher;
         }
@@ -172,6 +185,7 @@ namespace Torrent.GuiTest
 
                 torrent.GotPeers += torrent_GotPeers;
                 torrent.RaisedException += torrent_RaisedException;
+                torrent.Stopping += torrent_Stopping;
                 torrent.Start();
                 
             }
@@ -181,9 +195,32 @@ namespace Torrent.GuiTest
             }
         }
 
+        public void Stop()
+        {
+            if (torrent != null && torrent.Running)
+            {
+                AddMessage("Stopping...");
+                torrent.Stop();
+            }
+            else
+            {
+                AddMessage("Torrent not running.");
+            }
+        }
+
+        void torrent_Stopping(object sender, EventArgs e)
+        {
+            dispatcher.Invoke(() => AddMessage("Torrent said it's stopping."));
+        }
+
+        private void AddMessage(string message)
+        {
+            Messages.Add(message);
+        }
+
         private void HandleException(Exception e)
         {
-            MessageBox.Show(mainWindow, string.Format("Ooops. Something bad happened. {0}", e.Message));
+            AddMessage(string.Format("Ooops. Something bad happened. {0}", e.Message));
         }
 
         void torrent_RaisedException(object sender, Exception e)
@@ -194,7 +231,10 @@ namespace Torrent.GuiTest
         void torrent_GotPeers(object sender, EventArgs e)
         {
             if (torrent.PeerEndpoints != null)
+            {
                 dispatcher.Invoke(() => torrent.PeerEndpoints.ForEach(p => Peers.Add(p)));
+                dispatcher.Invoke(() => AddMessage("Got peers from tracker!"));
+            }
         }
 
         private void OnPropertyChanged(string name)

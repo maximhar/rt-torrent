@@ -39,5 +39,10 @@ namespace Torrent.GuiTest
             AnnounceUrlTextBox.Text = str.FirstOrDefault();
             model.GetPeers(AnnounceUrlTextBox.Text);
         }
+
+        private void StopButton_Click(object sender, RoutedEventArgs e)
+        {
+            model.Stop();
+        }
     }
 }

@@ -5,6 +5,9 @@ using System.Text;
 
 namespace Torrent.Client
 {
+    /// <summary>
+    /// Holds globally available information.
+    /// </summary>
     public sealed class LocalInfo
     {
         private const int ID_LENGTH = 20;
@@ -13,8 +16,14 @@ namespace Torrent.Client
         private static volatile LocalInfo instance = new LocalInfo();
         private static object syncRoot = new object();
 
+        /// <summary>
+        /// The current peer ID.
+        /// </summary>
         public byte[] PeerId { get; private set; }
 
+        /// <summary>
+        /// Holds the single instance of the Torrent.Client.LocalInfo class.
+        /// </summary>
         public static LocalInfo Instance
         {
             get
@@ -44,8 +53,5 @@ namespace Torrent.Client
             id.AddRange(Enumerable.Repeat(0, ID_LENGTH - ID_HEAD.Length).Select(i => (byte)random.Next(128)));
             return id.ToArray();
         }
-
-        
-
     }
 }
