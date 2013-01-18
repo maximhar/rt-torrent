@@ -12,7 +12,7 @@ namespace Torrent.Client
     {
         private const int ID_LENGTH = 20;
         private const string ID_HEAD = "-RT1000-";
-
+        private const ushort LISTEN_PORT = 8912;
         private static volatile LocalInfo instance = new LocalInfo();
         private static object syncRoot = new object();
 
@@ -20,6 +20,10 @@ namespace Torrent.Client
         /// The current peer ID.
         /// </summary>
         public byte[] PeerId { get; private set; }
+        /// <summary>
+        /// The port the client listens on;
+        /// </summary>
+        public ushort ListeningPort { get; private set; }
 
         /// <summary>
         /// Holds the single instance of the Torrent.Client.LocalInfo class.
@@ -42,6 +46,7 @@ namespace Torrent.Client
         private LocalInfo()
         {
             PeerId = GeneratePeerId();
+            ListeningPort = LISTEN_PORT;
         }
 
         private byte[] GeneratePeerId()

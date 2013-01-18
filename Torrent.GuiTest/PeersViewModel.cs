@@ -11,6 +11,7 @@ using System.Windows;
 using Torrent.Client;
 using MoreLinq;
 using System.Windows.Threading;
+using System.Net;
 
 namespace Torrent.GuiTest
 {
@@ -186,6 +187,9 @@ namespace Torrent.GuiTest
                 torrent.GotPeers += torrent_GotPeers;
                 torrent.RaisedException += torrent_RaisedException;
                 torrent.Stopping += torrent_Stopping;
+                torrent.GotTcpMessage += torrent_GotTcpMessage;
+                torrent.SentHandshake += torrent_SentHandshake;
+                torrent.ReceivedHandshake += torrent_ReceivedHandshake;
                 torrent.Start();
                 
             }
@@ -193,6 +197,21 @@ namespace Torrent.GuiTest
             {
                 HandleException(e);
             }
+        }
+
+        void torrent_ReceivedHandshake(object sender, EndPoint e)
+        {
+            dispatcher.Invoke(() => AddMessage("Handshake received from: " + ((IPEndPoint)e).ToString()));
+        }
+
+        void torrent_SentHandshake(object sender, PeerEndpoint e)
+        {
+            dispatcher.Invoke(() => AddMessage("Handshake sent to: " + e));
+        }
+
+        void torrent_GotTcpMessage(object sender, string e)
+        {
+            dispatcher.Invoke(() => AddMessage("Message from client: " + e));
         }
 
         public void Stop()
