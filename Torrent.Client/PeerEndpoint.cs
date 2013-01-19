@@ -72,6 +72,42 @@ namespace Torrent.Client
         {
             return string.Format("{0,15} : {1,-5} {2}", IP, Port, BitConverter.ToString(Encoding.ASCII.GetBytes(PeerID)).Replace("-", "") ?? string.Empty);
         }
+
+        public override bool Equals(System.Object obj)
+        {
+            if (obj == null)
+                return false;
+
+            PeerEndpoint p = obj as PeerEndpoint;
+            if ((System.Object)p == null)
+                return false;
+
+            return (PeerID == p.PeerID) && (IP == p.IP) && (Port == p.Port);
+        }
+
+        public bool Equals(PeerEndpoint p)
+        {
+            if ((object)p == null)
+                return false;
+
+            return (PeerID == p.PeerID) && (IP == p.IP) && (Port == p.Port);
+        }
+
+        public static bool operator ==(PeerEndpoint a, PeerEndpoint b)
+        {
+            if (System.Object.ReferenceEquals(a, b))
+                return true;
+
+            if (((object)a == null) || ((object)b == null))
+                return false;
+            
+            return a.PeerID == b.PeerID && a.IP == b.IP && a.Port == b.Port;
+        }
+
+        public static bool operator !=(PeerEndpoint a, PeerEndpoint b)
+        {
+            return !(a == b);
+        }
     }
 }
     
