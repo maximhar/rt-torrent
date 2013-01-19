@@ -108,6 +108,11 @@ namespace Torrent.Client
         {
             return !(a == b);
         }
+
+        public override int GetHashCode()
+        {
+            return PeerID.GetHashCode() ^ (IP.GetHashCode() ^ Port);
+        }
     }
 }
     
