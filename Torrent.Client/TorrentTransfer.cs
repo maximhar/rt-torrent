@@ -24,7 +24,7 @@ namespace Torrent.Client
     {
         private const int PSTR_LENGTH = 19;
         private volatile bool stop = false;
-        private TcpListener listener = new TcpListener(IPAddress.Any, LocalInfo.Instance.ListeningPort);
+
         /// <summary>
         /// The metadata decribing the torrent.
         /// </summary>
@@ -67,9 +67,6 @@ namespace Torrent.Client
         {
             if (Running) throw new TorrentException("Already started.");
 
-            stop = false;
-            Running = true;
-
             var torrentThread = new Thread(StartThread);
             torrentThread.IsBackground = true;
             torrentThread.Start();
@@ -84,37 +81,58 @@ namespace Torrent.Client
 
         private void StartThread()
         {
+            StartActions();
             try
             {
                 HandshakeTracker();
                 Task.Factory.StartNew(SendHandshakes);
                 var listen = Task.Factory.StartNew(Listen);
 
-                while (true)
-                {
-                    Thread.Sleep(200);
-                    if (stop || listen.IsCompleted) break;
-                }
-                stop = true;
-                listener.Stop();
+                WaitForStop();
             }
             catch (Exception e)
             {
                 OnRaisedException(e);
             }
+            StopActions();
+        }
 
+        private void StartActions()
+        {
+            stop = false;
+            Running = true;
+        }
+
+        private void StopActions()
+        {
             OnStopping();
             Running = false;
+        }
+
+        private void WaitForStop()
+        {
+            while (true)
+            {
+                Thread.Sleep(100);
+                if (stop) break;
+            }
         }
 
         private void Listen()
         {
             try
             {
+                var listener = new TcpListener(IPAddress.Any, LocalInfo.Instance.ListeningPort);
                 listener.Start();
                 while (true)
                 {
                     if (stop) break;
+                    if (!listener.Pending())
+                    {
+                        Thread.Sleep(100);
+                        continue;
+                    }
+
                     var client = listener.AcceptTcpClient();
                     var endpoint = client.Client.RemoteEndPoint;
                     var stream = client.GetStream();
