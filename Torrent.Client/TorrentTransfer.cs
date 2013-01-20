@@ -12,12 +12,7 @@ using System.Threading.Tasks;
 
 namespace Torrent.Client
 {
-    public enum MessageType
-    {
-        Handshake,
-        Unknown
-    }
-
+    
     /// <summary>
     /// Represents a BitTorrent data transfer.
     /// </summary>
@@ -127,38 +122,48 @@ namespace Torrent.Client
                 var stream = client.GetStream();
 
                 SendMessage(handshakeMessage, stream);
-                byte[] response = ReadMessage(stream);
-                Debug.WriteLine(Encoding.ASCII.GetString(response), "Response");
-                var type = GetMessageType(response);
+                IPeerMessage response = ReadMessage(stream);
+                Debug.WriteLine(response.ToString(), "Response");
                 Debug.WriteLine("Successful " + peer.IP);
                 if (stop) return;
                 OnSentHandshake(peer);
-                if (type == MessageType.Handshake)
+                if (response is HandshakeMessage)
                     OnReceivedHandshake(new IPEndPoint(peer.IP, peer.Port));
             }
-            catch { }
+            catch (Exception e)
+            {
+                OnRaisedException(e);
+            }
         }
 
-        private byte[] ReadMessage(NetworkStream stream)
+        private IPeerMessage ReadMessage(NetworkStream stream)
         {
-            var first = stream.ReadByte();
-            if (first == -1) 
-                return null;
+            byte[] buffer = new byte[1024];
+            int read = 0;
+            int count = 0;
+
+            var first = stream.ReadByte(); read++;
+            buffer[0] = (byte)first;
+
+            if (first == -1) return null;
+            if (first == 0) return PeerMessage.CreateFromBytes(buffer, 0, 1);
             if (first == 19)
             {
-                int count = 67;
-                byte[] buffer = new byte[count+1];
-                buffer[0] = (byte)first;
-                stream.Read(buffer, 1, count);
-                return buffer;
+                stream.Read(buffer, 1, 67);
+                return PeerMessage.CreateFromBytes(buffer, 0, 68);
             }
-            else
+
+            using (var mstr = new MemoryStream(buffer))
             {
-                int count = first;
-                byte[] buffer = new byte[count];
-                stream.Read(buffer, 0, count);
-                return buffer;
+                buffer[0] = 0;
+                while ((count = stream.Read(buffer, 0, buffer.Length)) != 0)
+                {
+                    mstr.Write(buffer, 0, count);
+                }
+                var message = mstr.ToArray();
+                return PeerMessage.CreateFromBytes(message, 0, message.Length);
             }
+
         }
 
         private void StartActions()
@@ -201,9 +206,9 @@ namespace Torrent.Client
                     var client = listener.AcceptTcpClient();
                     var endpoint = client.Client.RemoteEndPoint;
                     var stream = client.GetStream();
-                    byte[] message = ReadMessage(stream);
+                    var message = ReadMessage(stream);
                     client.Close();
-                    ProcessMessage(message, endpoint);
+                    //ProcessMessage(message, endpoint);
                 }
                 catch (Exception e)
                 {
@@ -211,29 +216,7 @@ namespace Torrent.Client
                 }
             }
             listener.Stop();
-        }
-
-        private void ProcessMessage(byte[] msg, EndPoint peer)
-        {
-            MessageType type = GetMessageType(msg);
-            switch (type)
-            {
-                case MessageType.Handshake:
-                    OnReceivedHandshake(peer);
-                    break;
-                default:
-                    OnGotTcpMessage("Unrecognized TCP message.");
-                    break;
-            }
-        }
-
-        private MessageType GetMessageType(byte[] msg)
-        {
-            if (msg.Length>PSTR_LENGTH && msg[0] == PSTR_LENGTH)
-                return MessageType.Handshake;
-
-            return MessageType.Unknown;
-        }
+        }     
 
         private void SendMessage(byte[] msg, NetworkStream stream)
         {
@@ -265,7 +248,7 @@ namespace Torrent.Client
                     successfullyConnected = true;
                     break;
                 }
-                catch { continue; }
+                catch(Exception e) { continue; }
             }
             if (!successfullyConnected) throw new TorrentException(string.Format("Unable to connect to tracker. {0}", failureReason ?? string.Empty));
 

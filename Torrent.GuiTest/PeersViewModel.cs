@@ -239,7 +239,7 @@ namespace Torrent.GuiTest
 
         private void HandleException(Exception e)
         {
-            AddMessage(string.Format("Ooops. Something bad happened. {0}", e.Message));
+            AddMessage(string.Format("{0}", e.Message));
         }
 
         void torrent_RaisedException(object sender, Exception e)
