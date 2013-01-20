@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Diagnostics.Contracts;
 using System.IO;
 using System.Linq;
@@ -84,10 +85,14 @@ namespace Torrent.Client
             StartActions();
             try
             {
-                HandshakeTracker();
-                Task.Factory.StartNew(SendHandshakes);
-                var listen = Task.Factory.StartNew(Listen);
 
+                //var send = Task.Factory.StartNew(Send);
+                //var listen = Task.Factory.StartNew(Listen);
+                HandshakeTracker();
+                foreach (var peer in PeerEndpoints)
+                {
+                    Task.Factory.StartNew(()=>StartConnection(peer));
+                }
                 WaitForStop();
             }
             catch (Exception e)
@@ -95,6 +100,65 @@ namespace Torrent.Client
                 OnRaisedException(e);
             }
             StopActions();
+        }
+
+        private void StartConnection(PeerEndpoint peer)
+        {
+            var pstr = "BitTorrent protocol";
+            var pstrlen = pstr.Length;
+            var reserved = new byte[8];
+            var info_hash = Data.InfoHash;
+            var peer_id = LocalInfo.Instance.PeerId;
+
+            var msgList = new List<byte>();
+            msgList.Add((byte)pstrlen);
+            msgList.AddRange(Encoding.UTF8.GetBytes(pstr));
+            msgList.AddRange(reserved);
+            msgList.AddRange(info_hash);
+            msgList.AddRange(peer_id);
+
+            var handshakeMessage = msgList.ToArray();
+            try
+            {
+                if (stop) return;
+                Debug.WriteLine("Creating client and connecting to " + peer.IP);
+                var client = new TcpClient();
+                client.Connect(new IPEndPoint(peer.IP, peer.Port));
+                var stream = client.GetStream();
+
+                SendMessage(handshakeMessage, stream);
+                byte[] response = ReadMessage(stream);
+                Debug.WriteLine(Encoding.ASCII.GetString(response), "Response");
+                var type = GetMessageType(response);
+                Debug.WriteLine("Successful " + peer.IP);
+                if (stop) return;
+                OnSentHandshake(peer);
+                if (type == MessageType.Handshake)
+                    OnReceivedHandshake(new IPEndPoint(peer.IP, peer.Port));
+            }
+            catch { }
+        }
+
+        private byte[] ReadMessage(NetworkStream stream)
+        {
+            var first = stream.ReadByte();
+            if (first == -1) 
+                return null;
+            if (first == 19)
+            {
+                int count = 67;
+                byte[] buffer = new byte[count+1];
+                buffer[0] = (byte)first;
+                stream.Read(buffer, 1, count);
+                return buffer;
+            }
+            else
+            {
+                int count = first;
+                byte[] buffer = new byte[count];
+                stream.Read(buffer, 0, count);
+                return buffer;
+            }
         }
 
         private void StartActions()
@@ -120,11 +184,12 @@ namespace Torrent.Client
 
         private void Listen()
         {
-            try
+            var listener = new TcpListener(IPAddress.Any, LocalInfo.Instance.ListeningPort);
+            listener.Start();
+
+            while (true)
             {
-                var listener = new TcpListener(IPAddress.Any, LocalInfo.Instance.ListeningPort);
-                listener.Start();
-                while (true)
+                try
                 {
                     if (stop) break;
                     if (!listener.Pending())
@@ -136,25 +201,16 @@ namespace Torrent.Client
                     var client = listener.AcceptTcpClient();
                     var endpoint = client.Client.RemoteEndPoint;
                     var stream = client.GetStream();
-                    byte[] buffer = new byte[1024];
-                    int count;
-                    using (var bstr = new MemoryStream())
-                    {
-                        while ((count = stream.Read(buffer, 0, buffer.Length)) != 0)
-                        {
-                            bstr.Write(buffer, 0, count);
-                        }
-                        client.Close();
-                        if (stop) break;
-                        ProcessMessage(bstr.ToArray(), endpoint);
-                    }
+                    byte[] message = ReadMessage(stream);
+                    client.Close();
+                    ProcessMessage(message, endpoint);
                 }
-                listener.Stop();
+                catch (Exception e)
+                {
+                    OnRaisedException(e);
+                }
             }
-            catch (Exception e)
-            {
-                OnRaisedException(e);
-            }
+            listener.Stop();
         }
 
         private void ProcessMessage(byte[] msg, EndPoint peer)
@@ -166,7 +222,7 @@ namespace Torrent.Client
                     OnReceivedHandshake(peer);
                     break;
                 default:
-                    OnGotTcpMessage(Encoding.UTF8.GetString(msg));
+                    OnGotTcpMessage("Unrecognized TCP message.");
                     break;
             }
         }
@@ -178,39 +234,12 @@ namespace Torrent.Client
 
             return MessageType.Unknown;
         }
-        private void SendHandshakes()
+
+        private void SendMessage(byte[] msg, NetworkStream stream)
         {
-            Parallel.ForEach(PeerEndpoints, (peer) =>
-            {
-                try
-                {
-                    if (stop) return;
-
-                    var client = new TcpClient();
-                    client.Connect(new IPEndPoint(peer.IP, peer.Port));
-                    var stream = client.GetStream();
-
-                    var pstr = "BitTorrent protocol";
-                    var pstrlen = pstr.Length;
-                    var reserved = new byte[8];
-                    var info_hash = Data.InfoHash;
-                    var peer_id = LocalInfo.Instance.PeerId;
-
-                    var msg = new List<byte>();
-                    msg.AddRange(BitConverter.GetBytes(pstrlen));
-                    msg.AddRange(Encoding.UTF8.GetBytes(pstr));
-                    msg.AddRange(reserved);
-                    msg.AddRange(info_hash);
-                    msg.AddRange(peer_id);
-
-                    stream.Write(msg.ToArray(), 0, msg.Count);
-                    client.Close();
-                    if(!stop)
-                        OnSentHandshake(peer);
-                }
-                catch { }
-            });
+            stream.Write(msg, 0, msg.Length);
         }
+
         private void HandshakeTracker()
         {
             var announces = new List<string>();
