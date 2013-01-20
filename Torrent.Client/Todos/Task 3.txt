@@ -1,0 +1,27 @@
+﻿Да се имплементират класовете:
+KeepAliveMessage
+ChokeMessage
+UnchokeMessage
+InterestedMessage
+NotInterestedMessage
+HaveMessage
+BitfieldMessage
+RequestMessage
+PieceMessage
+CancelMessage
+PortMessage
+
+HandshakeMessage вече е имплементиран и там можеш да видиш какво да направиш, както и стандарта, който ползваме.
+
+Накратко:
+създай нужните property-та във всеки клас, съгласно съдържанието на съобщението,
+както е описано в BitTorrent спецификацията
+
+имплементирай FromBytes метода на PeerMessage, като конвертираш и зареждаш данните от двоичния масив в свойствата на класа
+имплементирай ToBytes, като от свойствата на класа попълваш подадения двоичен масив
+имплементирай ToString, GetHashCode, и Equals, както е направено в HandshakeMessage
+имплементирай свойството MessageLength (за класовете, които носят пакет данни с неопределена големина, трябва да го изчислиш по
+свойствата на класа)
+
+за класовете без данни, като KeepAlive, е нужно само да провериш дали класа със който сравняваш също е KeepAlive,
+за да докажеш равенство

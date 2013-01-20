@@ -10,9 +10,10 @@ namespace Torrent.Client
 {
     public abstract class PeerMessage:IPeerMessage
     {
-        private static Dictionary<int, Func<PeerMessage>> messages;
-        public abstract byte[] ToBytes();
+        public abstract int MessageLength { get; }
         public abstract void FromBytes(byte[] buffer, int offset, int count);
+        public abstract int ToBytes(byte[] buffer, int offset);
+        private static Dictionary<int, Func<PeerMessage>> messages;
         static PeerMessage()
         {
             messages = new Dictionary<int, Func<PeerMessage>>();
@@ -26,6 +27,12 @@ namespace Torrent.Client
             messages.Add(PieceMessage.Id, () => new PieceMessage());
             messages.Add(CancelMessage.Id, () => new CancelMessage());
             messages.Add(PortMessage.Id, () => new PortMessage());
+        }
+        public byte[] ToBytes()
+        {
+            byte[] buffer = new byte[MessageLength];
+            ToBytes(buffer, 0);
+            return buffer;
         }
         public static PeerMessage CreateFromBytes(byte[] buffer, int offset, int count)
         {

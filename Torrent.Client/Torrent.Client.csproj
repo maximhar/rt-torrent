@@ -119,6 +119,7 @@
   <ItemGroup>
     <Content Include="Todos\Task 1.txt" />
     <Content Include="Todos\Task 2.txt" />
+    <Content Include="Todos\Task 3.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
