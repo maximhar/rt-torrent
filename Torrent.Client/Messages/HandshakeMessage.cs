@@ -68,15 +68,5 @@ namespace Torrent.Client
             return string.Format("Handshake message: {Protocol: {0}, Reserved: {1}, InfoHash: {2}, PeerID: {3}",
                 this.Protocol, BitConverter.ToString(this.Reserved), BitConverter.ToString(this.InfoHash), this.PeerID);
         }
-
-        private bool CompareByteArray(byte[] a, byte[] b)
-        {
-            if (a.Length != b.Length) return false;
-            for (int i = 0; i < a.Length; i++)
-            {
-                if (a[i] != b[i]) return false;
-            }
-            return true;
-        }
     }
 }
