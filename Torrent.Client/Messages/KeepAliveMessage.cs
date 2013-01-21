@@ -7,6 +7,9 @@ namespace Torrent.Client
 {
     class KeepAliveMessage:PeerMessage
     {
+
+        public KeepAliveMessage() { }
+
         public override void FromBytes(byte[] buffer, int offset, int count)
         {  }
 
