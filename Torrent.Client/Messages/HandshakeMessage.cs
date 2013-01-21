@@ -7,12 +7,19 @@ namespace Torrent.Client
 {
     class HandshakeMessage:PeerMessage
     {
-        
-
         public string PeerID { get; private set; }
         public byte[] Reserved { get; private set; }
         public byte[] InfoHash { get; private set; }
         public string Protocol { get; private set; }
+
+        public HandshakeMessage(string peerID, byte[] reserved, byte[] infoHash, string protocol)
+        {
+            this.PeerID = peerID;
+            this.Reserved = reserved;
+            this.InfoHash = infoHash;
+            this.Protocol = protocol;
+        }
+
         public override int MessageLength
         {
             get { return 68; }
