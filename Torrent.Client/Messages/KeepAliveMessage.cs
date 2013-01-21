@@ -10,17 +10,19 @@ namespace Torrent.Client
 
         public KeepAliveMessage() { }
 
-        public override void FromBytes(byte[] buffer, int offset, int count)
-        {  }
-
         public override int MessageLength
         {
-            get { return 0; }
+            get { return 1; }
         }
-
+        
+        public override void FromBytes(byte[] buffer, int offset, int count)
+        {  }
+        
         public override int ToBytes(byte[] buffer, int offset)
         {
-            return 0;
+            int start = offset;
+            offset += Write(buffer, offset, (byte)0);
+            return offset - start;
         }
 
         public override string ToString()
