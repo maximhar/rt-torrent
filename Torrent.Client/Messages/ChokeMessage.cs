@@ -10,9 +10,11 @@ namespace Torrent.Client
     {
         public static readonly int Id = 0;
 
+        public ChokeMessage() { }
+
         public override int MessageLength
         {
-            get { return 1; }
+            get { return 2; }
         }
 
         public override void FromBytes(byte[] buffer, int offset, int count)

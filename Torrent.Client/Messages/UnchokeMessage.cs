@@ -10,19 +10,37 @@ namespace Torrent.Client
     {
         public static readonly int Id = 1;
 
-        public override void FromBytes(byte[] buffer, int offset, int count)
-        {
-            throw new NotImplementedException();
-        }
+        public UnchokeMessage() { }
 
         public override int MessageLength
         {
-            get { throw new NotImplementedException(); }
+            get { return 2; }
         }
 
+        public override void FromBytes(byte[] buffer, int offset, int count)
+        { }
+        
         public override int ToBytes(byte[] buffer, int offset)
         {
-            throw new NotImplementedException();
+            int start = offset;
+            offset += Write(buffer, offset, (byte)1);
+            offset += Write(buffer, offset, (byte)1);
+            return offset - start;
+        }
+
+        public override string ToString()
+        {
+            return string.Format("Unchoke message");
+        }
+
+        public override bool Equals(object obj)
+        {
+            return obj is UnchokeMessage;
+        }
+
+        public override int GetHashCode()
+        {
+            return MessageLength.GetHashCode() ^ Id.GetHashCode();
         }
     }
 }
