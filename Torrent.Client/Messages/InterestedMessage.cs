@@ -14,7 +14,7 @@ namespace Torrent.Client
 
         public override int MessageLength
         {
-            get { return 2; }
+            get { return 5; }
         }
 
         public override void FromBytes(byte[] buffer, int offset, int count)
@@ -23,7 +23,7 @@ namespace Torrent.Client
         public override int ToBytes(byte[] buffer, int offset)
         {
             int start = offset;
-            offset += Write(buffer, offset, (byte)1);
+            offset += Write(buffer, offset, (int)1);
             offset += Write(buffer, offset, (byte)2);
             return offset - start;
         }

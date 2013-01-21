@@ -32,6 +32,7 @@ namespace Torrent.Client
         {
             get { return 68; }
         }
+
         public override int ToBytes(byte[] buffer, int offset)
         {
             int start = offset;
@@ -47,7 +48,7 @@ namespace Torrent.Client
         {
             if (count != MessageLength)
                 throw new ArgumentException("Invalid message length.");
-            ReadByte(buffer, offset);
+            ReadByte(buffer, ref offset);
             this.Protocol = ReadString(buffer, ref offset, 19);
             this.Reserved = ReadBytes(buffer, ref offset, 8);
             this.InfoHash = ReadBytes(buffer, ref offset, 20);
@@ -73,7 +74,7 @@ namespace Torrent.Client
 
         public override string ToString()
         {
-            return string.Format("Handshake message: {Protocol: {0}, Reserved: {1}, InfoHash: {2}, PeerID: {3}",
+            return string.Format("Handshake message: {Protocol: {0}, Reserved: {1}, InfoHash: {2}, PeerID: {3}}",
                 this.Protocol, BitConverter.ToString(this.Reserved), BitConverter.ToString(this.InfoHash), this.PeerID);
         }
     }
