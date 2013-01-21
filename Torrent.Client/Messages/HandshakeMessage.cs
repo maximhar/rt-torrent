@@ -12,6 +12,14 @@ namespace Torrent.Client
         public byte[] InfoHash { get; private set; }
         public string Protocol { get; private set; }
 
+        public HandshakeMessage()
+        {
+            this.PeerID = string.Empty;
+            this.Reserved = null;
+            this.InfoHash = null;
+            this.Protocol = string.Empty;
+        }
+
         public HandshakeMessage(string peerID, byte[] reserved, byte[] infoHash, string protocol)
         {
             this.PeerID = peerID;
