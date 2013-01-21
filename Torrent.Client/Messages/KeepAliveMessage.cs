@@ -19,5 +19,20 @@ namespace Torrent.Client
         {
             return 0;
         }
+
+        public override string ToString()
+        {
+            return string.Format("Keep Alive message");
+        }
+
+        public override bool Equals(object obj)
+        {
+            return obj is KeepAliveMessage;
+        }
+
+        public override int GetHashCode()
+        {
+            return MessageLength.GetHashCode();
+        }
     }
 }
