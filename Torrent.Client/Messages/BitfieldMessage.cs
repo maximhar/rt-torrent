@@ -37,14 +37,14 @@ namespace Torrent.Client
         {
             int start = offset;
             offset += Write(buffer, offset, (int)5);
-            offset += Write(buffer, offset, (byte)4);
+            offset += Write(buffer, offset, (byte)5);
             offset += Write(buffer, offset, Bitfield);
             return offset - start;
         }
 
         public override string ToString()
         {
-            return string.Format("Have message: {Bitfield.Length: {0}}", Bitfield.Length);
+            return string.Format("Bitfield message: {Bitfield.Length: {0}}", Bitfield.Length);
         }
 
         public override bool Equals(object obj)
