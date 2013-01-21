@@ -10,19 +10,37 @@ namespace Torrent.Client
     {
         public static readonly int Id = 2;
 
-        public override void FromBytes(byte[] buffer, int offset, int count)
-        {
-            throw new NotImplementedException();
-        }
+        public InterestedMessage() { }
 
         public override int MessageLength
         {
-            get { throw new NotImplementedException(); }
+            get { return 2; }
         }
+
+        public override void FromBytes(byte[] buffer, int offset, int count)
+        { }
 
         public override int ToBytes(byte[] buffer, int offset)
         {
-            throw new NotImplementedException();
+            int start = offset;
+            offset += Write(buffer, offset, (byte)1);
+            offset += Write(buffer, offset, (byte)2);
+            return offset - start;
+        }
+
+        public override string ToString()
+        {
+            return string.Format("Interested message");
+        }
+
+        public override bool Equals(object obj)
+        {
+            return obj is InterestedMessage;
+        }
+
+        public override int GetHashCode()
+        {
+            return MessageLength.GetHashCode() ^ Id.GetHashCode();
         }
     }
 }
