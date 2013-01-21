@@ -27,7 +27,7 @@ namespace Torrent.Client
 
         public override string ToString()
         {
-            return string.Format("Keep Alive message");
+            return string.Format("KeepAlive message");
         }
 
         public override bool Equals(object obj)
