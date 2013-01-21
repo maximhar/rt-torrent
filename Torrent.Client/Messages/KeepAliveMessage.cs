@@ -8,18 +8,16 @@ namespace Torrent.Client
     class KeepAliveMessage:PeerMessage
     {
         public override void FromBytes(byte[] buffer, int offset, int count)
-        {
-            throw new NotImplementedException();
-        }
+        {  }
 
         public override int MessageLength
         {
-            get { throw new NotImplementedException(); }
+            get { return 0; }
         }
 
         public override int ToBytes(byte[] buffer, int offset)
         {
-            throw new NotImplementedException();
+            return 0;
         }
     }
 }
