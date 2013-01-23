@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -7,7 +8,7 @@ using System.Threading.Tasks;
 namespace Torrent.Client
 {
     /// <summary>
-    /// Provides a container class for the Bitfield message data for peer communication.
+    /// Provides a container class for the BitfieldMessage data for peer communication.
     /// </summary>
     class BitfieldMessage:PeerMessage
     {
@@ -35,11 +36,13 @@ namespace Torrent.Client
         /// <param name="bitfield">A bitfield representing the pieces that have been successfully downloaded.</param>
         public BitfieldMessage(byte[] bitfield)
         {
+            Contract.Requires(bitfield != null);
+
             this.Bitfield = bitfield;
         }
 
         /// <summary>
-        /// The lenght of the Bitfield message.
+        /// The lenght of the BitfieldMessage.
         /// </summary>
         public override int MessageLength
         {
@@ -47,7 +50,7 @@ namespace Torrent.Client
         }
 
         /// <summary>
-        /// Sets the Bitfield message properties via a byte array.
+        /// Sets the BitfieldMessage properties via a byte array.
         /// </summary>
         /// <param name="buffer">The byte array containing the message data.</param>
         /// <param name="offset">The position in the array at which the message begins.</param>
@@ -60,7 +63,7 @@ namespace Torrent.Client
         }
 
         /// <summary>
-        /// Writes the Bitfield message data to a byte array.
+        /// Writes the BitfieldMessage data to a byte array.
         /// </summary>
         /// <param name="buffer">The byte array that the message data will be written to.</param>
         /// <param name="offset">The position in the array at which the message begins.</param>
