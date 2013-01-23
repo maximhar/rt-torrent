@@ -103,7 +103,7 @@ namespace Torrent.Client
         /// <summary>
         /// Returns the hash code for this BitfieldMessage instance.
         /// </summary>
-        /// <returns></returns>
+        /// <returns>An integer representing the hash code of this instace of the BitfieldMessage class.</returns>
         public override int GetHashCode()
         {
             return MessageLength.GetHashCode() ^ Id.GetHashCode() ^ Bitfield.GetHashCode();

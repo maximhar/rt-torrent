@@ -122,7 +122,7 @@ namespace Torrent.Client
         /// <summary>
         /// Returns the hash code for this CancelMessage instance.
         /// </summary>
-        /// <returns></returns>
+        /// <returns>An integer representing the hash code of this instace of the CancelMessage class.</returns>
         public override int GetHashCode()
         {
             return MessageLength.GetHashCode() ^ Id.GetHashCode() ^ Index.GetHashCode() ^ Begin.GetHashCode() ^ Length.GetHashCode();
