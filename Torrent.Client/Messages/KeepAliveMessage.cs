@@ -16,7 +16,7 @@ namespace Torrent.Client
         public KeepAliveMessage() { }
 
         /// <summary>
-        /// The lenght of the KeepAliveMessage.
+        /// The length of the KeepAliveMessage.
         /// </summary>
         public override int MessageLength
         {

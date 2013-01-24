@@ -41,7 +41,7 @@ namespace Torrent.Client
         }
 
         /// <summary>
-        /// The lenght of the HaveMessage.
+        /// The length of the HaveMessage.
         /// </summary>
         public override int MessageLength
         {

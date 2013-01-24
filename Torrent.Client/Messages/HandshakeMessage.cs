@@ -63,7 +63,7 @@ namespace Torrent.Client
         }
 
         /// <summary>
-        /// The lenght of the HandshakeMessage.
+        /// The length of the HandshakeMessage.
         /// </summary>
         public override int MessageLength
         {

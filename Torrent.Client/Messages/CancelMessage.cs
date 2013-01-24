@@ -72,7 +72,7 @@ namespace Torrent.Client
         }
 
         /// <summary>
-        /// The lenght of the CancelMessage.
+        /// The length of the CancelMessage.
         /// </summary>
         public override int MessageLength
         {

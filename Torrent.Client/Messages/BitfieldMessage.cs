@@ -42,7 +42,7 @@ namespace Torrent.Client
         }
 
         /// <summary>
-        /// The lenght of the BitfieldMessage.
+        /// The length of the BitfieldMessage.
         /// </summary>
         public override int MessageLength
         {

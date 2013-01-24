@@ -22,7 +22,7 @@ namespace Torrent.Client
         public ChokeMessage() { }
 
         /// <summary>
-        /// The lenght of the ChokeMessage.
+        /// The length of the ChokeMessage.
         /// </summary>
         public override int MessageLength
         {

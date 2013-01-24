@@ -22,7 +22,7 @@ namespace Torrent.Client
         public InterestedMessage() { }
 
         /// <summary>
-        /// The lenght of the InterestedMessage.
+        /// The length of the InterestedMessage.
         /// </summary>
         public override int MessageLength
         {
@@ -31,7 +31,7 @@ namespace Torrent.Client
 
         /// <summary>
         /// Sets the InterestedMessage properties via a byte array.
-        /// <para>This method has no use for the ChokeMessage class.</para>
+        /// <para>This method has no use for the InterestedMessage class.</para>
         /// </summary>
         /// <param name="buffer">The byte array containing the message data.</param>
         /// <param name="offset">The position in the array at which the message begins.</param>
