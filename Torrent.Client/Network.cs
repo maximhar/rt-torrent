@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
@@ -12,6 +13,7 @@ namespace Torrent.Client
     {
         static AsyncCallback EndReceiveCallback = EndReceive;
         static AsyncCallback EndSendCallback = EndSend;
+        static AsyncCallback EndConnectCallback = EndConnect;
 
         
         static public void Receive(Socket socket, byte[] buffer, int offset, int count, object state, NetworkCallback callback)
@@ -24,6 +26,19 @@ namespace Torrent.Client
         {
             var data = new NetworkState(socket, buffer, offset, count, callback, state);
             SendBase(data);
+        }
+
+        static public void Connect(Socket socket, IPEndPoint endpoint, object state, NetworkCallback callback)
+        {
+            try
+            {
+                var data = new NetworkState(socket, callback, state);
+                var task = socket.BeginConnect(endpoint, EndConnectCallback, state);
+            }
+            catch
+            {
+                callback(false, 0, state);
+            }
         }
 
         private static void SendBase(NetworkState data)
@@ -110,6 +125,20 @@ namespace Torrent.Client
             }
         }
 
+        private static void EndConnect(IAsyncResult ar)
+        {
+            var data = (NetworkState)ar.AsyncState;
+            try
+            {
+                data.Socket.EndConnect(ar);
+                data.Callback(true, 0, data.State);
+            }
+            catch
+            {
+                data.Callback(false, 0, data.State);
+            }
+        }
+
         class NetworkState
         {
             public Socket Socket { get; internal set; }
@@ -128,6 +157,17 @@ namespace Torrent.Client
                 this.Remaining = count;
                 this.Count = count;
                 this.Buffer = buffer;
+                this.Callback = callback;
+            }
+
+            public NetworkState(Socket socket, NetworkCallback callback, object state)
+            {
+                this.Socket = socket;
+                this.State = state;
+                this.Offset = 0;
+                this.Remaining = 0;
+                this.Count = 0;
+                this.Buffer = null;
                 this.Callback = callback;
             }
         }
