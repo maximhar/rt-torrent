@@ -11,19 +11,38 @@ namespace Torrent.Client
     static class Network
     {
         static AsyncCallback EndReceiveCallback = EndReceive;
+        static AsyncCallback EndSendCallback = EndSend;
 
-
+        
         static public void Receive(Socket socket, byte[] buffer, int offset, int count, object state, NetworkCallback callback)
         {
             var data = new NetworkState(socket, buffer, offset, count, callback, state);
             ReceiveBase(data);
         }
 
+        static public void Send(Socket socket, byte[] buffer, int offset, int count, object state, NetworkCallback callback)
+        {
+            var data = new NetworkState(socket, buffer, offset, count, callback, state);
+            SendBase(data);
+        }
+
+        private static void SendBase(NetworkState data)
+        {
+            try
+            {
+                data.Socket.BeginSend(data.Buffer, data.Offset, data.Count, SocketFlags.None, EndSendCallback, data);
+            }
+            catch
+            {
+                data.Callback(false, 0, data.State);
+            }
+        }
+
         private static void ReceiveBase(NetworkState data)
         {
             try
             {
-                data.Socket.BeginReceive(data.Buffer, data.Offset, data.Remaining, SocketFlags.None, EndReceiveCallback, data);
+                data.Socket.BeginReceive(data.Buffer, data.Offset, data.Count, SocketFlags.None, EndReceiveCallback, data);
             }
             catch
             {
@@ -52,6 +71,36 @@ namespace Torrent.Client
                     else
                     {
                         ReceiveBase(data);
+                    }
+                }
+            }
+            catch
+            {
+                data.Callback(false, 0, data.State);
+            }
+        }
+
+        private static void EndSend(IAsyncResult ar)
+        {
+            var data = (NetworkState)ar.AsyncState;
+            try
+            {
+                int count = data.Socket.EndSend(ar);
+                if (count == 0)
+                {
+                    data.Callback(false, 0, data.State);
+                }
+                else
+                {
+                    data.Offset += count;
+                    data.Remaining -= count;
+                    if (data.Remaining == 0)
+                    {
+                        data.Callback(true, data.Count, data.State);
+                    }
+                    else
+                    {
+                        SendBase(data);
                     }
                 }
             }
