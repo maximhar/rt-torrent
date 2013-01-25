@@ -8,6 +8,9 @@ using System.Threading.Tasks;
 
 namespace Torrent.Client
 {
+    /// <summary>
+    /// Provides an abstract base for the message classes, as well as constructor methods.
+    /// </summary>
     public abstract class PeerMessage:IPeerMessage
     {
         public abstract int MessageLength { get; }

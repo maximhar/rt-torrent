@@ -98,6 +98,7 @@
     <Compile Include="Messages\InterestedMessage.cs" />
     <Compile Include="Messages\IPeerMessage.cs" />
     <Compile Include="Messages\KeepAliveMessage.cs" />
+    <Compile Include="Network.cs" />
     <Compile Include="Messages\NotInterestedMessage.cs" />
     <Compile Include="Messages\PeerMessage.cs" />
     <Compile Include="LocalInfo.cs" />
