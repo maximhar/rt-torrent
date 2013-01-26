@@ -25,6 +25,7 @@ namespace Torrent.Client
         /// The list of announce URLs, if available.
         /// </summary>
         public ReadOnlyCollection<string> AnnounceList { get; private set; }
+        public IEnumerable<string> Announces { get; private set; }
         /// <summary>
         /// Length of the individual BitTorrent piece.
         /// </summary>
@@ -180,6 +181,18 @@ namespace Torrent.Client
             this.PieceLength = pieceLength;
             this.Name = name;
             this.InfoHash = ComputeInfoHash(info);
+            this.Announces = CreateAnnouces(AnnounceURL, AnnounceList);
+        }
+
+        private IEnumerable<string> CreateAnnouces(string AnnounceURL, ReadOnlyCollection<string> AnnounceList)
+        {
+            var list = new List<string>();
+
+            if (AnnounceList != null)
+                list.AddRange(AnnounceList);
+
+            list.Add(AnnounceURL);
+            return list.AsReadOnly();
         }
 
         private byte[] ComputeInfoHash(BencodedDictionary info)

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
@@ -8,8 +9,8 @@ using System.Threading.Tasks;
 
 namespace Torrent.Client
 {
-    public delegate void NetworkCallback(bool success, int read, object state);
-    static class Network
+    public delegate void NetworkCallback(bool success, int transmitted, object state);
+    static class NetworkIO
     {
         static AsyncCallback EndReceiveCallback = EndReceive;
         static AsyncCallback EndSendCallback = EndSend;
@@ -34,7 +35,7 @@ namespace Torrent.Client
             var data = cache.Get().Init(socket, callback, state);
             try
             {
-                var task = socket.BeginConnect(endpoint, EndConnectCallback, state);
+                socket.BeginConnect(endpoint, EndConnectCallback, data);
             }
             catch
             {
@@ -143,7 +144,7 @@ namespace Torrent.Client
                 data.Socket.EndConnect(ar);
                 data.Callback(true, 0, data.State);
             }
-            catch
+            catch(Exception e)
             {
                 data.Callback(false, 0, data.State);
             }

@@ -19,7 +19,7 @@ namespace Torrent.Client
         /// <summary>
         /// The current peer ID.
         /// </summary>
-        public byte[] PeerId { get; private set; }
+        public string PeerId { get; private set; }
         /// <summary>
         /// The port the client listens on;
         /// </summary>
@@ -45,7 +45,7 @@ namespace Torrent.Client
 
         private LocalInfo()
         {
-            PeerId = GeneratePeerId();
+            PeerId = new string(GeneratePeerId().Select(b=>(char)b).ToArray());
             ListeningPort = LISTEN_PORT;
         }
 
@@ -55,7 +55,7 @@ namespace Torrent.Client
             var seed = DateTime.Now.Millisecond + DateTime.Now.Minute + DateTime.Now.Day + ID_HEAD.Length;
             var random = new Random(seed);
             id.AddRange(Encoding.UTF8.GetBytes(ID_HEAD));
-            id.AddRange(Enumerable.Repeat(0, ID_LENGTH - ID_HEAD.Length).Select(i => (byte)random.Next(128)));
+            id.AddRange(Enumerable.Repeat(0, ID_LENGTH - ID_HEAD.Length).Select(i => (byte)random.Next((int)'0', (int)'z')));
             return id.ToArray();
         }
     }

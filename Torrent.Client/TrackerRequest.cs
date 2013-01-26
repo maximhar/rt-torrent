@@ -18,7 +18,7 @@ namespace Torrent.Client
         /// <summary>
         /// The Peer ID, used to uniquely identify the peer. 20 bytes.
         /// </summary>
-        public byte[] PeerId { get; private set; }
+        public string PeerId { get; private set; }
         /// <summary>
         /// The port at which the client is listening on. Typically 6881-6889.
         /// </summary>
@@ -63,7 +63,7 @@ namespace Torrent.Client
         /// <param name="compact">Whether to request a compact response by the tracker. (binary peers representation)</param>
         /// <param name="omitPeerIds">Whether to request that the tracker should omit peer IDs in the peers dictionary.</param>
         /// <param name="event">Specifies the event that caused the request. None by default.</param>
-        public TrackerRequest(byte[] infoHash, byte[] peerId, ushort port, long uploaded, long downloaded,
+        public TrackerRequest(byte[] infoHash, string peerId, ushort port, long uploaded, long downloaded,
             long left, bool compact, bool omitPeerIds, EventType @event = EventType.None, int? numWant = null)
         {
             Contract.Requires(infoHash != null);

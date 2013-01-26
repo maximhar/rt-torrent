@@ -5,6 +5,7 @@ using System.Text;
 using Torrent.Client.Bencoding;
 using MoreLinq;
 using System.Diagnostics.Contracts;
+using System.Net;
 
 namespace Torrent.Client
 {
@@ -54,7 +55,7 @@ namespace Torrent.Client
         /// <summary>
         /// A list of PeerEndoints containing all peers.
         /// </summary>
-        public List<PeerEndpoint> PeerEndpoints { get; private set; }
+        public List<IPEndPoint> Endpoints { get; private set; }
 
         /// <summary>
         /// Initializes a new instance of the Torrent.Client.TrackerResponse class with the reponse specified as a string.
@@ -94,11 +95,11 @@ namespace Torrent.Client
                     if (((BencodedList)response["peers"]).Count() == 0)
                         throw new TorrentException("Peers list is empty.");
 
-                    PeerEndpoints = new List<PeerEndpoint>();
+                    Endpoints = new List<IPEndPoint>();
 
                     foreach (BencodedDictionary peer in (BencodedList)response["peers"])
                     {
-                        PeerEndpoints.Add(new PeerEndpoint(peer));
+                        Endpoints.Add(PeerEndpoint.FromBencoded(peer));
                     }
                 }
                 else if (response["peers"] is BencodedString) // Peers Binary model
@@ -106,8 +107,8 @@ namespace Torrent.Client
                     if (!((BencodedString)response["peers"]).Any())
                         throw new TorrentException("Peers list is empty.");
 
-                    var byteData = Encoding.ASCII.GetBytes((BencodedString)response["peers"]);
-                    PeerEndpoints = byteData.Batch(6).Select(p => new PeerEndpoint(p.ToArray())).ToList();
+                    var byteData = ((BencodedString)response["peers"]).Select(c => (byte)c).ToArray();
+                    Endpoints = byteData.Batch(6).Select(p => PeerEndpoint.FromBytes(p.ToArray())).ToList();
                 }
                 else
                 {
@@ -118,7 +119,7 @@ namespace Torrent.Client
         public override string ToString()
         {
             return string.Format("Failure reason: {0}, Peers: {2}{1}", FailureReason??"None",
-                PeerEndpoints.ToDelimitedString(Environment.NewLine),
+                Endpoints.ToDelimitedString(Environment.NewLine),
                 Environment.NewLine);
         }
     }

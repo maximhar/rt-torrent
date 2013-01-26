@@ -20,19 +20,19 @@ namespace Torrent.Client
         /// <summary>
         /// The announce URL of the tracker.
         /// </summary>
-        public string AnnounceURL { get; private set; }
+        public IEnumerable<string> Announces { get; private set; }
+
+        public string PreferredAnnounce { get; private set; }
 
         /// <summary>
         /// The class constructor.
         /// </summary>
-        /// <param name="announceUrl">The announce URL of the tracker.</param>
-        public TrackerClient(string announceUrl)
+        /// <param name="announces">The announce URLs of the tracker.</param>
+        public TrackerClient(IEnumerable<string> announces)
         {
-            Contract.Requires(announceUrl != null);
-
-            this.AnnounceURL = announceUrl;
+            Contract.Requires(announces != null);
+            this.Announces = announces;
         }
-
         private string UrlEncode(byte[] source)
         {
             StringBuilder builder = new StringBuilder();
@@ -40,6 +40,13 @@ namespace Torrent.Client
             hex.Batch(2).ForEach(h => builder.Append("%" + new string(h.ToArray()).ToLower()));
             return builder.ToString();
         }
+
+        public TrackerResponse AnnounceStart(byte[] infoHash, string peerId, ushort port, long downloaded, long uploaded, long left)
+        {
+            var request = new TrackerRequest(infoHash, peerId, port, uploaded, downloaded, left, true, true, EventType.Started, 100);
+            return GetResponse(request);
+        }
+
         /// <summary>
         /// Sends a HTTP request to the tracker and returns the response.
         /// </summary>
@@ -49,12 +56,37 @@ namespace Torrent.Client
         {
             Contract.Requires(requestData != null);
 
-            string announceURL = AnnounceURL;
+            TrackerResponse response = null;
+
+            if (PreferredAnnounce != null)
+                response = AttemptGet(requestData, PreferredAnnounce);
             
+            if(response == null)
+            {
+                foreach (string url in Announces)
+                {
+                    Debug.WriteLine("Trying to connect to " + url);
+                    if ((response = AttemptGet(requestData, url)) != null)
+                    {
+                        this.PreferredAnnounce = url;
+                        break;
+                    }
+                }
+            }
+
+            if (response == null)
+                throw new TorrentException("Unable to connect to tracker.");
+
+            return response;
+            Debug.WriteLine("Connected to tracker!");
+        }
+
+        private TrackerResponse AttemptGet(TrackerRequest requestData, string announceURL)
+        {
             var parameters = new Dictionary<string, string>
             {
                 {"info_hash", UrlEncode(requestData.InfoHash)},
-                {"peer_id", Uri.EscapeDataString(Encoding.ASCII.GetString(requestData.PeerId))},
+                {"peer_id", Uri.EscapeDataString(requestData.PeerId)},
                 {"port", requestData.Port.ToString()},
                 {"uploaded", requestData.Uploaded.ToString()},
                 {"downloaded", requestData.Downloaded.ToString()},
@@ -80,7 +112,7 @@ namespace Torrent.Client
             var request = (HttpWebRequest)WebRequest.Create(announceURL + urlBuilder.ToString());
             request.KeepAlive = false;
             request.Method = "GET";
-            
+
             try
             {
                 var response = request.GetResponse();
@@ -103,7 +135,7 @@ namespace Torrent.Client
             }
             catch (Exception e)
             {
-                throw new TorrentException(string.Format("Announce URL: {0}", announceURL), e);
+                return null;
             }
         }
     }

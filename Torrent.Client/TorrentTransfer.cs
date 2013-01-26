@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.Contracts;
@@ -20,13 +21,17 @@ namespace Torrent.Client
     {
         private const int PSTR_LENGTH = 19;
         private volatile bool stop = false;
-
+        private TrackerClient tracker;
+        private List<IPEndPoint> Endpoints;
+        private NetworkCallback PeerConnectedCallback;
+        private Socket listenSocket;
+        private HandshakeMessage localHandshake;
         /// <summary>
         /// The metadata decribing the torrent.
         /// </summary>
         public TorrentData Data { get; private set; }
 
-        public List<PeerEndpoint> PeerEndpoints { get; private set; }
+        public ConcurrentDictionary<string, PeerState> Peers { get; private set; }
 
         public bool Running { get; private set; }
 
@@ -38,7 +43,7 @@ namespace Torrent.Client
         {
             Contract.Requires(torrentPath != null);
         }
-
+        
         /// <summary>
         /// Initialize a torrent transfer with metadata read from the specified stream.
         /// </summary>
@@ -47,7 +52,7 @@ namespace Torrent.Client
         {
             Contract.Requires(torrentStream != null);
 
-            PeerEndpoints = new List<PeerEndpoint>();
+            Endpoints = new List<IPEndPoint>();
 
             using (torrentStream)
             using (var reader = new BinaryReader(torrentStream))
@@ -55,7 +60,14 @@ namespace Torrent.Client
                 var bytes = reader.ReadBytes((int)reader.BaseStream.Length);
                 this.Data = new TorrentData(bytes);
             }
+
+            tracker = new TrackerClient(this.Data.Announces);
+            this.Peers = new ConcurrentDictionary<string, PeerState>();
+            this.PeerConnectedCallback = PeerConnected;
+            listenSocket = new Socket(SocketType.Stream, ProtocolType.Tcp);
+            localHandshake = new HandshakeMessage(LocalInfo.Instance.PeerId, new byte[8], Data.InfoHash, "BitTorrent protocol");
         }
+
         /// <summary>
         /// Starts the torrent transfer on a new thread.
         /// </summary>
@@ -80,14 +92,9 @@ namespace Torrent.Client
             StartActions();
             try
             {
-
-                //var send = Task.Factory.StartNew(Send);
-                //var listen = Task.Factory.StartNew(Listen);
+                Listen();
                 HandshakeTracker();
-                foreach (var peer in PeerEndpoints)
-                {
-                    Task.Factory.StartNew(()=>StartConnection(peer));
-                }
+                ConnectToPeers();
                 WaitForStop();
             }
             catch (Exception e)
@@ -97,73 +104,25 @@ namespace Torrent.Client
             StopActions();
         }
 
-        private void StartConnection(PeerEndpoint peer)
+        private void ConnectToPeers()
         {
-            var pstr = "BitTorrent protocol";
-            var pstrlen = pstr.Length;
-            var reserved = new byte[8];
-            var info_hash = Data.InfoHash;
-            var peer_id = LocalInfo.Instance.PeerId;
-
-            var msgList = new List<byte>();
-            msgList.Add((byte)pstrlen);
-            msgList.AddRange(Encoding.UTF8.GetBytes(pstr));
-            msgList.AddRange(reserved);
-            msgList.AddRange(info_hash);
-            msgList.AddRange(peer_id);
-
-            var handshakeMessage = msgList.ToArray();
-            try
+            foreach (var peerEndpoint in Endpoints)
             {
-                if (stop) return;
-                Debug.WriteLine("Creating client and connecting to " + peer.IP);
-                var client = new TcpClient();
-                client.Connect(new IPEndPoint(peer.IP, peer.Port));
-                var stream = client.GetStream();
-
-                SendMessage(handshakeMessage, stream);
-                IPeerMessage response = ReadMessage(stream);
-                Debug.WriteLine(response.ToString(), "Response");
-                Debug.WriteLine("Successful " + peer.IP);
-                if (stop) return;
-                OnSentHandshake(peer);
-                if (response is HandshakeMessage)
-                    OnReceivedHandshake(new IPEndPoint(peer.IP, peer.Port));
-            }
-            catch (Exception e)
-            {
-                OnRaisedException(e);
+                var peer = new PeerState(new Socket(SocketType.Stream, ProtocolType.Tcp), peerEndpoint);
+                NetworkIO.Connect(peer.Socket, peer.EndPoint, peer, PeerConnected);
             }
         }
 
-        private IPeerMessage ReadMessage(NetworkStream stream)
+        private void PeerConnected(bool success, int transmitted, object state)
         {
-            byte[] buffer = new byte[1024];
-            int read = 0;
-            int count = 0;
-
-            var first = stream.ReadByte(); read++;
-            buffer[0] = (byte)first;
-
-            if (first == -1) return null;
-            if (first == 0) return PeerMessage.CreateFromBytes(buffer, 0, 1);
-            if (first == 19)
+            var peer = (PeerState)state;
+            if (success)
             {
-                stream.Read(buffer, 1, 67);
-                return PeerMessage.CreateFromBytes(buffer, 0, 68);
+                Debug.WriteLine("Connected to: " + peer);
+                MessageIO.SendMessage(peer.Socket, localHandshake, peer, HandshakeSent);
             }
-
-            using (var mstr = new MemoryStream(buffer))
-            {
-                buffer[0] = 0;
-                while ((count = stream.Read(buffer, 0, buffer.Length)) != 0)
-                {
-                    mstr.Write(buffer, 0, count);
-                }
-                var message = mstr.ToArray();
-                return PeerMessage.CreateFromBytes(message, 0, message.Length);
-            }
-
+            else
+                Debug.WriteLine("Couldn't connect to: " + peer);
         }
 
         private void StartActions()
@@ -189,72 +148,68 @@ namespace Torrent.Client
 
         private void Listen()
         {
-            var listener = new TcpListener(IPAddress.Any, LocalInfo.Instance.ListeningPort);
-            listener.Start();
+            listenSocket.Bind(new IPEndPoint(IPAddress.Any, LocalInfo.Instance.ListeningPort));
+            listenSocket.Listen(10);
+            BeginListen();
+        }
 
-            while (true)
+        private void BeginListen()
+        {
+            if (stop) return;
+            listenSocket.BeginAccept(EndAccept, listenSocket);
+        }
+
+        private void EndAccept(IAsyncResult ar)
+        {
+            var socket = (Socket)ar.AsyncState;
+            var newsocket = socket.EndAccept(ar);
+            var peer = new PeerState(newsocket, (IPEndPoint)newsocket.RemoteEndPoint);
+            MessageIO.ReceiveHandshake(newsocket, peer, HandshakeReceived);
+            Debug.WriteLine("Hello new peer");
+            BeginListen();
+        }
+
+        private void HandshakeReceived(bool success, PeerMessage message, object state)
+        {
+            var peer = (PeerState)state;
+            var handshake = (HandshakeMessage)message;
+            if(success)
             {
-                try
-                {
-                    if (stop) break;
-                    if (!listener.Pending())
-                    {
-                        Thread.Sleep(100);
-                        continue;
-                    }
+                peer.ReceivedHandshake = true;
+                peer.ID = handshake.PeerID;
+                Peers.AddOrUpdate(peer.ID, peer, (id, s) => s);
+                OnGotPeers();
+                if(!peer.SentHandshake && peer.ID != LocalInfo.Instance.PeerId)
+                    MessageIO.SendMessage(peer.Socket, localHandshake, peer, HandshakeSent);
+            }
+        }
 
-                    var client = listener.AcceptTcpClient();
-                    var endpoint = client.Client.RemoteEndPoint;
-                    var stream = client.GetStream();
-                    var message = ReadMessage(stream);
-                    client.Close();
-                    //ProcessMessage(message, endpoint);
-                }
-                catch (Exception e)
+        private void HandshakeSent(bool success, int sent, object state)
+        {
+            var peer = (PeerState)state;
+            if (success)
+            {
+                peer.SentHandshake = true;
+                OnGotPeers();
+                if (!peer.ReceivedHandshake)
                 {
-                    OnRaisedException(e);
+                    MessageIO.ReceiveHandshake(peer.Socket, peer, HandshakeReceived);
                 }
             }
-            listener.Stop();
-        }     
-
-        private void SendMessage(byte[] msg, NetworkStream stream)
-        {
-            stream.Write(msg, 0, msg.Length);
         }
+
+        private void MessageSent(bool success, int sent, object state)
+        {
+            Debug.WriteLine("I sent some message, success: " + success);
+        }     
 
         private void HandshakeTracker()
         {
-            var announces = new List<string>();
-            announces.Add(Data.AnnounceURL);
-            if (Data.AnnounceList != null)
-                announces.AddRange(Data.AnnounceList);
-
-            var request = new TrackerRequest(this.Data.InfoHash,
-                        LocalInfo.Instance.PeerId, LocalInfo.Instance.ListeningPort, 0, 0, (long)this.Data.Files.Sum(f => f.Length),
-                        false, false, numWant: 200, @event: EventType.Started);
-            bool successfullyConnected = false;
-            string failureReason = null;
-            foreach (var url in announces)
-            {
-                try
-                {
-                    if (stop) return;
-
-                    var client = new TrackerClient(url);
-                    var response = client.GetResponse(request);
-                    if ((failureReason = response.FailureReason) != null) continue;
-                    PeerEndpoints.AddRange(response.PeerEndpoints);
-                    successfullyConnected = true;
-                    break;
-                }
-                catch(Exception e) { continue; }
-            }
-            if (!successfullyConnected) throw new TorrentException(string.Format("Unable to connect to tracker. {0}", failureReason ?? string.Empty));
-
-            OnGotPeers();
+            var info = tracker.AnnounceStart(Data.InfoHash, LocalInfo.Instance.PeerId, LocalInfo.Instance.ListeningPort,
+                0, 0, (long)this.Data.Files.Sum(f => f.Length));
+            Endpoints = info.Endpoints;
         }
-
+        #region Events
         private void OnGotPeers()
         {
             if (GotPeers != null)
@@ -279,7 +234,7 @@ namespace Torrent.Client
             }
         }
 
-        private void OnSentHandshake(PeerEndpoint peer)
+        private void OnSentHandshake(EndPoint peer)
         {
             if (SentHandshake != null)
             {
@@ -317,8 +272,9 @@ namespace Torrent.Client
 
         public event EventHandler<string> GotTcpMessage;
 
-        public event EventHandler<PeerEndpoint> SentHandshake;
+        public event EventHandler<EndPoint> SentHandshake;
 
         public event EventHandler<EndPoint> ReceivedHandshake;
+        #endregion
     }
 }

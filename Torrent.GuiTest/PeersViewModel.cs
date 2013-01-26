@@ -20,7 +20,7 @@ namespace Torrent.GuiTest
     /// </summary>
     class PeersViewModel:INotifyPropertyChanged
     {
-        ObservableCollection<PeerEndpoint> peers;
+        ObservableCollection<PeerState> peers;
         ObservableCollection<FileEntry> files;
         ObservableCollection<string> announces;
         ObservableCollection<string> messages;
@@ -124,7 +124,7 @@ namespace Torrent.GuiTest
         /// <summary>
         /// Gets or sets and ObservableCollection of PeerEndpoints of the torrent.
         /// </summary>
-        public ObservableCollection<PeerEndpoint> Peers
+        public ObservableCollection<PeerState> Peers
         {
             get { return peers; }
             set
@@ -155,7 +155,7 @@ namespace Torrent.GuiTest
         /// <param name="window">The Window object.</param>
         public PeersViewModel(Window window)
         {
-            Peers = new ObservableCollection<PeerEndpoint>();
+            Peers = new ObservableCollection<PeerState>();
             Files = new ObservableCollection<FileEntry>();
             Announces = new ObservableCollection<string>();
             Messages = new ObservableCollection<string>();
@@ -204,7 +204,7 @@ namespace Torrent.GuiTest
             dispatcher.Invoke(() => AddMessage("Handshake received from: " + ((IPEndPoint)e).ToString()));
         }
 
-        void torrent_SentHandshake(object sender, PeerEndpoint e)
+        void torrent_SentHandshake(object sender, EndPoint e)
         {
             dispatcher.Invoke(() => AddMessage("Handshake sent to: " + e));
         }
@@ -249,10 +249,13 @@ namespace Torrent.GuiTest
 
         void torrent_GotPeers(object sender, EventArgs e)
         {
-            if (torrent.PeerEndpoints != null)
+            if (torrent.Peers != null)
             {
-                dispatcher.Invoke(() => torrent.PeerEndpoints.ForEach(p => Peers.Add(p)));
-                dispatcher.Invoke(() => AddMessage("Got peers from tracker!"));
+                dispatcher.Invoke(() =>
+                    {
+                        Peers.Clear();
+                        torrent.Peers.ForEach(p => Peers.Add(p.Value));
+                    });
             }
         }
 

@@ -44,18 +44,18 @@ namespace Torrent.Client
         {
             byte[] buffer = new byte[HandshakeMessage.Length];
             data.Buffer = buffer;
-            Network.Receive(data.Socket, data.Buffer, 0, buffer.Length, data, EndReceiveHandshakeCallback);
+            NetworkIO.Receive(data.Socket, data.Buffer, 0, buffer.Length, data, EndReceiveHandshakeCallback);
         }
         private static void ReceiveMessageBase(ReceiveMessageState data)
         {
             byte[] buffer = new byte[4];
             data.Buffer = buffer;
-            Network.Receive(data.Socket, data.Buffer, 0, 4, data, EndReceiveLengthCallback);
+            NetworkIO.Receive(data.Socket, data.Buffer, 0, 4, data, EndReceiveLengthCallback);
         }
 
         private static void SendMessageBase(SendMessageState data)
         {
-            Network.Send(data.Socket, data.Buffer, data.Offset, data.Count, data, EndSendCallback);
+            NetworkIO.Send(data.Socket, data.Buffer, data.Offset, data.Count, data, EndSendCallback);
         }
 
         private static void EndReceiveHandshake(bool success, int read, object state)
@@ -97,7 +97,7 @@ namespace Torrent.Client
                 byte[] newBuffer = new byte[read + messageLength];
                 BufferCopy(newBuffer, 0, data.Buffer, 0, read);
                 data.Buffer = newBuffer;
-                Network.Receive(data.Socket, data.Buffer, read, messageLength, data, EndReceiveCallback);
+                NetworkIO.Receive(data.Socket, data.Buffer, read, messageLength, data, EndReceiveCallback);
             }
             else
             {

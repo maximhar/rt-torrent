@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
+using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -12,13 +14,21 @@ namespace Torrent.Client
         public bool AmInterested {get; set;}
         public bool IsChoked {get; set;}
         public bool IsInterested { get; set; }
+        public Socket Socket { get; set; }
+        public bool ReceivedHandshake { get; set; }
+        public bool SentHandshake { get; set; }
+        public IPEndPoint EndPoint { get; set; }
+        public string ID { get; set; }
 
-        public PeerState(bool amChocked, bool amInterested, bool isChocked, bool isInterested)
+        public PeerState(Socket socket, IPEndPoint endpoint)
         {
-            this.AmChoked = amChocked;
-            this.AmInterested = amInterested;
-            this.IsChoked = isChocked;
-            this.IsInterested = isInterested;
+            this.Socket = socket;
+            this.EndPoint = endpoint;
+        }
+
+        public override string ToString()
+        {
+            return string.Format("{0}, sent: {1}, received: {2}", EndPoint, SentHandshake, ReceivedHandshake);
         }
     }
 }
