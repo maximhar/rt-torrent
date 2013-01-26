@@ -10,27 +10,42 @@ namespace Torrent.Client
 {
     public delegate void MessageSentCallback(bool success, int sent, object state);
     public delegate void MessageReceivedCallback(bool success, PeerMessage message, object state);
+
     static class MessageIO
     {
         static NetworkCallback EndSendCallback = EndSend;
         static NetworkCallback EndReceiveCallback = EndReceive;
         static NetworkCallback EndReceiveLengthCallback = EndReceiveLength;
+        static NetworkCallback EndReceiveHandshakeCallback = EndReceiveHandshake;
 
 
+        static Cache<SendMessageState> sendCache = new Cache<SendMessageState>();
+        static Cache<ReceiveMessageState> receiveCache = new Cache<ReceiveMessageState>();
 
         
         public static void SendMessage(Socket socket, PeerMessage message, object state, MessageSentCallback callback)
         {
             byte[] buffer = message.ToBytes();
-            var data = new SendMessageState(socket, buffer, 0, buffer.Length, state, callback);
+            var data = sendCache.Get().Init(socket, buffer, 0, buffer.Length, state, callback);
             SendMessageBase(data);
         }
         public static void ReceiveMessage(Socket socket, object state, MessageReceivedCallback callback)
         {
-            var data = new ReceiveMessageState(socket, state, callback);
+            var data = receiveCache.Get().Init(socket, state, callback);
             ReceiveMessageBase(data);
         }
+        public static void ReceiveHandshake(Socket socket, object state, MessageReceivedCallback callback)
+        {
+            var data = receiveCache.Get().Init(socket, state, callback);
+            HandshakeMessageBase(data);
+        }
 
+        private static void HandshakeMessageBase(ReceiveMessageState data)
+        {
+            byte[] buffer = new byte[HandshakeMessage.Length];
+            data.Buffer = buffer;
+            Network.Receive(data.Socket, data.Buffer, 0, buffer.Length, data, EndReceiveHandshakeCallback);
+        }
         private static void ReceiveMessageBase(ReceiveMessageState data)
         {
             byte[] buffer = new byte[4];
@@ -42,10 +57,30 @@ namespace Torrent.Client
         {
             Network.Send(data.Socket, data.Buffer, data.Offset, data.Count, data, EndSendCallback);
         }
+
+        private static void EndReceiveHandshake(bool success, int read, object state)
+        {
+            var data = (ReceiveMessageState)state;
+            try
+            {
+                if (!success)
+                {
+                    data.Callback(false, null, data.State);
+                    return;
+                }
+                var message = PeerMessage.CreateFromBytes(data.Buffer, 0, read);
+                data.Callback(true, message, data.State);
+            }
+            finally
+            {
+                receiveCache.Put(data);
+            }
+        }
         private static void EndSend(bool success, int sent, object state)
         {
             var data = (SendMessageState)state;
             data.Callback(success, sent, data.State);
+            sendCache.Put(data);
         }
         private static void EndReceiveLength(bool success, int read, object state)
         {
@@ -56,12 +91,18 @@ namespace Torrent.Client
                 if (messageLength == 0)
                 {
                     data.Callback(true, new KeepAliveMessage(), data.State);
+                    receiveCache.Put(data);
                     return;
                 }
                 byte[] newBuffer = new byte[read + messageLength];
                 BufferCopy(newBuffer, 0, data.Buffer, 0, read);
                 data.Buffer = newBuffer;
                 Network.Receive(data.Socket, data.Buffer, read, messageLength, data, EndReceiveCallback);
+            }
+            else
+            {
+                data.Callback(false, null, data.State);
+                receiveCache.Put(data);
             }
         }
 
@@ -72,10 +113,12 @@ namespace Torrent.Client
             if (!success)
             {
                 data.Callback(false, null, data.State);
+                receiveCache.Put(data);
                 return;
             }
             var message = PeerMessage.CreateFromBytes(data.Buffer, 0, read + 4);
             data.Callback(true, message, data.State);
+            receiveCache.Put(data);
         }
         private static void BufferCopy(byte[] destination, int destOffset, byte[] source, int srcOffset, int count)
         {
@@ -95,28 +138,13 @@ namespace Torrent.Client
             public object State { get; internal set; }
             public MessageSentCallback Callback { get; internal set; }
 
-            public SendMessageState(Socket socket, byte[] buffer, int offset, int count, object state, MessageSentCallback callback)
-            {
-                this.Socket = socket;
-                this.Buffer = buffer;
-                this.Offset = offset;
-                this.Count = count;
-                this.State = state;
-                this.Callback = callback;
-            }
-
             public ICacheable Init()
             {
-                this.Socket = null;
-                this.Buffer = null;
-                this.Offset = 0;
-                this.Count = 0;
-                this.State = null;
-                this.Callback = null;
-                return this;
+                return Init(null, null, 0, 0, null, null);
             }
 
-            public SendMessageState Init(Socket socket, byte[] buffer, int offset, int count, object state, MessageSentCallback callback)
+            public SendMessageState Init(Socket socket, byte[] buffer,
+                int offset, int count, object state, MessageSentCallback callback)
             {
                 this.Socket = socket;
                 this.Buffer = buffer;
@@ -135,19 +163,9 @@ namespace Torrent.Client
             public object State { get; internal set; }
             public MessageReceivedCallback Callback { get; internal set; }
 
-            public ReceiveMessageState(Socket socket, object state, MessageReceivedCallback callback)
-            {
-                this.Socket = socket;
-                this.State = state;
-                this.Callback = callback;
-            }
-
             public ICacheable Init()
             {
-                this.Socket = null;
-                this.State = null;
-                this.Callback = null;
-                return this;
+                return Init(null, null, null);
             }
 
             public ReceiveMessageState Init(Socket socket, object state, MessageReceivedCallback callback)

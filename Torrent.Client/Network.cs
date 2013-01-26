@@ -15,29 +15,31 @@ namespace Torrent.Client
         static AsyncCallback EndSendCallback = EndSend;
         static AsyncCallback EndConnectCallback = EndConnect;
 
+        static Cache<NetworkState> cache = new Cache<NetworkState>();
         
         static public void Receive(Socket socket, byte[] buffer, int offset, int count, object state, NetworkCallback callback)
         {
-            var data = new NetworkState(socket, buffer, offset, count, callback, state);
+            var data = cache.Get().Init(socket, buffer, offset, count, callback, state);
             ReceiveBase(data);
         }
 
         static public void Send(Socket socket, byte[] buffer, int offset, int count, object state, NetworkCallback callback)
         {
-            var data = new NetworkState(socket, buffer, offset, count, callback, state);
+            var data = cache.Get().Init(socket, buffer, offset, count, callback, state);
             SendBase(data);
         }
 
         static public void Connect(Socket socket, IPEndPoint endpoint, object state, NetworkCallback callback)
         {
+            var data = cache.Get().Init(socket, callback, state);
             try
             {
-                var data = new NetworkState(socket, callback, state);
                 var task = socket.BeginConnect(endpoint, EndConnectCallback, state);
             }
             catch
             {
                 callback(false, 0, state);
+                cache.Put(data);
             }
         }
 
@@ -50,6 +52,7 @@ namespace Torrent.Client
             catch
             {
                 data.Callback(false, 0, data.State);
+                cache.Put(data);
             }
         }
 
@@ -62,6 +65,7 @@ namespace Torrent.Client
             catch
             {
                 data.Callback(false, 0, data.State);
+                cache.Put(data);
             }
         }
 
@@ -74,6 +78,7 @@ namespace Torrent.Client
                 if (count == 0)
                 {
                     data.Callback(false, 0, data.State);
+                    cache.Put(data);
                 }
                 else
                 {
@@ -82,6 +87,7 @@ namespace Torrent.Client
                     if (data.Remaining == 0)
                     {
                         data.Callback(true, data.Count, data.State);
+                        cache.Put(data);
                     }
                     else
                     {
@@ -92,6 +98,7 @@ namespace Torrent.Client
             catch
             {
                 data.Callback(false, 0, data.State);
+                cache.Put(data);
             }
         }
 
@@ -104,6 +111,7 @@ namespace Torrent.Client
                 if (count == 0)
                 {
                     data.Callback(false, 0, data.State);
+                    cache.Put(data);
                 }
                 else
                 {
@@ -112,6 +120,7 @@ namespace Torrent.Client
                     if (data.Remaining == 0)
                     {
                         data.Callback(true, data.Count, data.State);
+                        cache.Put(data);
                     }
                     else
                     {
@@ -122,6 +131,7 @@ namespace Torrent.Client
             catch
             {
                 data.Callback(false, 0, data.State);
+                cache.Put(data);
             }
         }
 
@@ -137,9 +147,13 @@ namespace Torrent.Client
             {
                 data.Callback(false, 0, data.State);
             }
+            finally
+            {
+                cache.Put(data);
+            }
         }
 
-        class NetworkState
+        class NetworkState:ICacheable
         {
             public Socket Socket { get; internal set; }
             public object State { get; internal set; }
@@ -149,7 +163,12 @@ namespace Torrent.Client
             public int Count { get; internal set; }
             public NetworkCallback Callback { get; internal set; }
 
-            public NetworkState(Socket socket, byte[] buffer, int offset, int count, NetworkCallback callback, object state)
+            public ICacheable Init()
+            {
+                return Init(null, null, null);
+            }
+
+            public NetworkState Init(Socket socket, byte[] buffer, int offset, int count, NetworkCallback callback, object state)
             {
                 this.Socket = socket;
                 this.State = state;
@@ -158,9 +177,9 @@ namespace Torrent.Client
                 this.Count = count;
                 this.Buffer = buffer;
                 this.Callback = callback;
+                return this;
             }
-
-            public NetworkState(Socket socket, NetworkCallback callback, object state)
+            public NetworkState Init(Socket socket, NetworkCallback callback, object state)
             {
                 this.Socket = socket;
                 this.State = state;
@@ -169,6 +188,7 @@ namespace Torrent.Client
                 this.Count = 0;
                 this.Buffer = null;
                 this.Callback = callback;
+                return this;
             }
         }
     }

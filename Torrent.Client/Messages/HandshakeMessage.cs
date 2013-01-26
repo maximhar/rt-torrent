@@ -11,6 +11,10 @@ namespace Torrent.Client
     /// </summary>
     class HandshakeMessage:PeerMessage
     {
+        public static int Length
+        {
+            get { return 68; }
+        }
         /// <summary>
         /// A 20-byte string used as a unique ID for the client.
         /// <para>This is usually the same peer_id that is transmitted in tracker requests.</para>
@@ -67,7 +71,7 @@ namespace Torrent.Client
         /// </summary>
         public override int MessageLength
         {
-            get { return 68; }
+            get { return Length; }
         }
 
         /// <summary>
