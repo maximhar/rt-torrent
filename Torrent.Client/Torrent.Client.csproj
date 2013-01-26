@@ -90,7 +90,7 @@
     <Compile Include="Bencoding\BencodingParser.cs" />
     <Compile Include="Bencoding\BencodingParserException.cs" />
     <Compile Include="Cache.cs" />
-    <Compile Include="ICachable.cs" />
+    <Compile Include="ICacheable.cs" />
     <Compile Include="MessageIO.cs" />
     <Compile Include="Messages\BitfieldMessage.cs" />
     <Compile Include="Messages\CancelMessage.cs" />

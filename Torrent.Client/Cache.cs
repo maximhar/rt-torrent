@@ -21,13 +21,12 @@ namespace Torrent.Client
             Queue.Enqueue(item);
         }
 
-        public ICacheable Get()
+        public T Get()
         {
-            if (Queue.IsEmpty)
-                return new T();
             T item;
-            Queue.TryDequeue(out item);
-            return item;
+            if (!Queue.TryDequeue(out item))
+                item = new T();
+            return (T)item.Init();
         }
     }
 }
