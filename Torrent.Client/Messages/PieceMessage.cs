@@ -6,8 +6,14 @@ using System.Threading.Tasks;
 
 namespace Torrent.Client
 {
+    /// <summary>
+    /// Provides a container class for the BitfieldMessage data for peer communication.
+    /// </summary>
     class PieceMessage:PeerMessage
     {
+        /// <summary>
+        /// The ID of the message
+        /// </summary>
         public static readonly int Id = 7;
         public int Index { get; private set; }
         public int Begin { get; private set; }

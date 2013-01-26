@@ -84,7 +84,9 @@ namespace Torrent.Client
                 destination[destOffset + i] = source[srcOffset + i];
             }
         }
-        class SendMessageState
+
+
+        class SendMessageState:ICacheable
         {
             public Socket Socket { get; internal set; }
             public byte[] Buffer { get; internal set; }
@@ -102,9 +104,31 @@ namespace Torrent.Client
                 this.State = state;
                 this.Callback = callback;
             }
+
+            public ICacheable Init()
+            {
+                this.Socket = null;
+                this.Buffer = null;
+                this.Offset = 0;
+                this.Count = 0;
+                this.State = null;
+                this.Callback = null;
+                return this;
+            }
+
+            public SendMessageState Init(Socket socket, byte[] buffer, int offset, int count, object state, MessageSentCallback callback)
+            {
+                this.Socket = socket;
+                this.Buffer = buffer;
+                this.Offset = offset;
+                this.Count = count;
+                this.State = state;
+                this.Callback = callback;
+                return this;
+            }
         }
 
-        class ReceiveMessageState
+        class ReceiveMessageState : ICacheable
         {
             public Socket Socket { get; internal set; }
             public byte[] Buffer { get; internal set; }
@@ -116,6 +140,22 @@ namespace Torrent.Client
                 this.Socket = socket;
                 this.State = state;
                 this.Callback = callback;
+            }
+
+            public ICacheable Init()
+            {
+                this.Socket = null;
+                this.State = null;
+                this.Callback = null;
+                return this;
+            }
+
+            public ReceiveMessageState Init(Socket socket, object state, MessageReceivedCallback callback)
+            {
+                this.Socket = socket;
+                this.State = state;
+                this.Callback = callback;
+                return this;
             }
         }
     }
