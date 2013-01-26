@@ -191,42 +191,6 @@ namespace Torrent.Client
                 this.Callback = callback;
                 return this;
             }
-
-            public ICacheable Init()
-            {
-                this.Socket = null;
-                this.State = null;
-                this.Offset = 0;
-                this.Remaining = 0;
-                this.Count = 0;
-                this.Buffer = null;
-                this.Callback = null;
-                return this;
-            }
-
-            public NetworkState Init(Socket socket, byte[] buffer, int offset, int count, NetworkCallback callback, object state)
-            {
-                this.Socket = socket;
-                this.State = state;
-                this.Offset = offset;
-                this.Remaining = count;
-                this.Count = count;
-                this.Buffer = buffer;
-                this.Callback = callback;
-                return this;
-            }
-
-            public ICacheable Init(Socket socket, NetworkCallback callback, object state)
-            {
-                this.Socket = socket;
-                this.State = state;
-                this.Offset = 0;
-                this.Remaining = 0;
-                this.Count = 0;
-                this.Buffer = null;
-                this.Callback = callback;
-                return this;
-            }
         }
     }
 }
