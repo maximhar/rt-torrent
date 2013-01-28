@@ -46,7 +46,7 @@ namespace Torrent.Client
         /// <summary>
         /// The SHA1 hash of the info dictionary of the torrent.
         /// </summary>
-        public byte[] InfoHash { get; private set; }
+        public InfoHash InfoHash { get; private set; }
 
         private byte[] data;
         /// <summary>

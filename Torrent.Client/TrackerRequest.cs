@@ -14,7 +14,7 @@ namespace Torrent.Client
         /// <summary>
         /// The SHA1 hash of the value of the info key from the torrent metadata.
         /// </summary>
-        public byte[] InfoHash { get; private set; }
+        public InfoHash InfoHash { get; private set; }
         /// <summary>
         /// The Peer ID, used to uniquely identify the peer. 20 bytes.
         /// </summary>
@@ -63,7 +63,7 @@ namespace Torrent.Client
         /// <param name="compact">Whether to request a compact response by the tracker. (binary peers representation)</param>
         /// <param name="omitPeerIds">Whether to request that the tracker should omit peer IDs in the peers dictionary.</param>
         /// <param name="event">Specifies the event that caused the request. None by default.</param>
-        public TrackerRequest(byte[] infoHash, string peerId, ushort port, long uploaded, long downloaded,
+        public TrackerRequest(InfoHash infoHash, string peerId, ushort port, long uploaded, long downloaded,
             long left, bool compact, bool omitPeerIds, EventType @event = EventType.None, int? numWant = null)
         {
             Contract.Requires(infoHash != null);
