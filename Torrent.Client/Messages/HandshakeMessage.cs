@@ -140,7 +140,7 @@ namespace Torrent.Client
         /// <returns>The string containing the HandshakeMessage data representation.</returns>
         public override string ToString()
         {
-            return string.Format("Handshake message: {Protocol: {0}, Reserved: {1}, InfoHash: {2}, PeerID: {3}}",
+            return string.Format("Handshake message: Protocol: {0}, Reserved: {1}, InfoHash: {2}, PeerID: {3}",
                 this.Protocol, BitConverter.ToString(this.Reserved), BitConverter.ToString(this.InfoHash), this.PeerID);
         }
     }

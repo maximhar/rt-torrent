@@ -57,8 +57,6 @@ namespace Torrent.Client
         /// <param name="count">The length to be read in bytes.</param>
         public override void FromBytes(byte[] buffer, int offset, int count)
         {
-            if (count != MessageLength)
-                throw new ArgumentException("Invalid message length.");
             this.Bitfield = ReadBytes(buffer, ref offset, count);
         }
 
@@ -83,7 +81,7 @@ namespace Torrent.Client
         /// <returns>The string containing the BitfieldMessage data representation.</returns>
         public override string ToString()
         {
-            return string.Format("Bitfield message: {Bitfield.Length: {0}}", Bitfield.Length);
+            return string.Format("Bitfield message: Bitfield.Length: {0}", Bitfield.Length);
         }
 
         /// <summary>

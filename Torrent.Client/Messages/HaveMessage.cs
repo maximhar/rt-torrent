@@ -82,7 +82,7 @@ namespace Torrent.Client
         /// <returns>The string containing the HaveMessage data representation.</returns>
         public override string ToString()
         {
-            return string.Format("Have message: {PieceIndex: {0}}", PieceIndex);
+            return string.Format("Have message: PieceIndex: {0}", PieceIndex);
         }
 
         /// <summary>

@@ -44,7 +44,7 @@ namespace Torrent.Client
 
         public override string ToString()
         {
-            return string.Format("Port message: {Port: {0}}", Port);
+            return string.Format("Port message: Port: {0}", Port);
         }
 
         public override bool Equals(object obj)

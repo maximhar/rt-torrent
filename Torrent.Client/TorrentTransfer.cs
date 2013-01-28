@@ -108,6 +108,7 @@ namespace Torrent.Client
         {
             foreach (var peerEndpoint in Endpoints)
             {
+                if (stop) break;
                 var peer = new PeerState(new Socket(SocketType.Stream, ProtocolType.Tcp), peerEndpoint);
                 NetworkIO.Connect(peer.Socket, peer.EndPoint, peer, PeerConnected);
             }
@@ -115,11 +116,12 @@ namespace Torrent.Client
 
         private void PeerConnected(bool success, int transmitted, object state)
         {
+            if (stop) return;
             var peer = (PeerState)state;
             if (success)
             {
                 Debug.WriteLine("Connected to: " + peer);
-                MessageIO.SendMessage(peer.Socket, localHandshake, peer, HandshakeSent);
+                SendMessage(peer.Socket, localHandshake, peer, HandshakeSent);
             }
             else
                 Debug.WriteLine("Couldn't connect to: " + peer);
@@ -134,7 +136,26 @@ namespace Torrent.Client
         private void StopActions()
         {
             OnStopping();
+            CloseListenSocket();
+            ClosePeerSockets();
             Running = false;
+        }
+
+        private void CloseListenSocket()
+        {
+            if (listenSocket!=null && listenSocket.Connected)
+            {
+                listenSocket.Shutdown(SocketShutdown.Both);
+                listenSocket.Close();
+            }
+        }
+
+        private void ClosePeerSockets()
+        {
+            foreach (var peer in Peers)
+            {
+                ClosePeerSocket(peer.Value);
+            }
         }
 
         private void WaitForStop()
@@ -148,6 +169,7 @@ namespace Torrent.Client
 
         private void Listen()
         {
+            
             listenSocket.Bind(new IPEndPoint(IPAddress.Any, LocalInfo.Instance.ListeningPort));
             listenSocket.Listen(10);
             BeginListen();
@@ -155,7 +177,10 @@ namespace Torrent.Client
 
         private void BeginListen()
         {
-            if (stop) return;
+            if (stop)
+            {
+                return;
+            }
             listenSocket.BeginAccept(EndAccept, listenSocket);
         }
 
@@ -165,22 +190,63 @@ namespace Torrent.Client
             var newsocket = socket.EndAccept(ar);
             var peer = new PeerState(newsocket, (IPEndPoint)newsocket.RemoteEndPoint);
             MessageIO.ReceiveHandshake(newsocket, peer, HandshakeReceived);
-            Debug.WriteLine("Hello new peer");
             BeginListen();
         }
 
         private void HandshakeReceived(bool success, PeerMessage message, object state)
         {
+
             var peer = (PeerState)state;
             var handshake = (HandshakeMessage)message;
             if(success)
-            {
+            {            
+                OnReceivedMessage(message);
                 peer.ReceivedHandshake = true;
                 peer.ID = handshake.PeerID;
-                Peers.AddOrUpdate(peer.ID, peer, (id, s) => s);
-                OnGotPeers();
-                if(!peer.SentHandshake && peer.ID != LocalInfo.Instance.PeerId)
+                
+                if (peer.ID == LocalInfo.Instance.PeerId) return;
+
+                if (!peer.SentHandshake)
+                {
                     MessageIO.SendMessage(peer.Socket, localHandshake, peer, HandshakeSent);
+                }
+                else
+                {
+                    HandshakeCompleted(peer);
+                }
+            }
+        }
+
+        private void HandshakeCompleted(PeerState peer)
+        {
+            Debug.WriteLine("Successful handshake.");
+            Peers.AddOrUpdate(peer.ID, peer, (id, s) => s);
+            OnGotPeers();
+
+            MessageIO.ReceiveMessage(peer.Socket, peer, MessageReceived);
+        }
+
+        private void MessageReceived(bool success, PeerMessage message, object state)
+        {
+            var peer = (PeerState)state;
+            if (success)
+            {
+                MessageIO.ReceiveMessage(peer.Socket, peer, MessageReceived);
+                OnReceivedMessage(message);
+            }
+            else
+            {
+                ClosePeerSocket(peer);
+            }
+        }
+
+        private static void ClosePeerSocket(PeerState peer)
+        {
+            if (peer!=null && peer.Socket!=null && peer.Socket.Connected)
+            {
+                Debug.WriteLine("Closing socket with " + peer.Socket.RemoteEndPoint);
+                peer.Socket.Shutdown(SocketShutdown.Both);
+                peer.Socket.Close();
             }
         }
 
@@ -190,10 +256,15 @@ namespace Torrent.Client
             if (success)
             {
                 peer.SentHandshake = true;
-                OnGotPeers();
+                if (peer.ID == LocalInfo.Instance.PeerId) return;
+
                 if (!peer.ReceivedHandshake)
                 {
                     MessageIO.ReceiveHandshake(peer.Socket, peer, HandshakeReceived);
+                }
+                else
+                {
+                    HandshakeCompleted(peer);
                 }
             }
         }
@@ -201,8 +272,14 @@ namespace Torrent.Client
         private void MessageSent(bool success, int sent, object state)
         {
             Debug.WriteLine("I sent some message, success: " + success);
-        }     
+        }
 
+        private void SendMessage(Socket socket, PeerMessage message, PeerState state, MessageSentCallback callback)
+        {
+            MessageIO.SendMessage(socket, message, state, callback);
+            OnSentMessage(message);
+        }
+        
         private void HandshakeTracker()
         {
             var info = tracker.AnnounceStart(Data.InfoHash, LocalInfo.Instance.PeerId, LocalInfo.Instance.ListeningPort,
@@ -257,6 +334,22 @@ namespace Torrent.Client
                 Stopping(this, EventArgs.Empty);
             }
         }
+
+        private void OnSentMessage(PeerMessage msg)
+        {
+            if (SentMessage != null)
+            {
+                SentMessage(this, msg);
+            }
+        }
+
+        private void OnReceivedMessage(PeerMessage msg)
+        {
+            if (ReceivedMessage != null)
+            {
+                ReceivedMessage(this, msg);
+            }
+        }
         /// <summary>
         /// Fires when the torrent receives peers from the tracker.
         /// </summary>
@@ -275,6 +368,10 @@ namespace Torrent.Client
         public event EventHandler<EndPoint> SentHandshake;
 
         public event EventHandler<EndPoint> ReceivedHandshake;
+
+        public event EventHandler<PeerMessage> ReceivedMessage;
+
+        public event EventHandler<PeerMessage> SentMessage;
         #endregion
     }
 }

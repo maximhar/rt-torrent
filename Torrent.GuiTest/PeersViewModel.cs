@@ -187,9 +187,8 @@ namespace Torrent.GuiTest
                 torrent.GotPeers += torrent_GotPeers;
                 torrent.RaisedException += torrent_RaisedException;
                 torrent.Stopping += torrent_Stopping;
-                torrent.GotTcpMessage += torrent_GotTcpMessage;
-                torrent.SentHandshake += torrent_SentHandshake;
-                torrent.ReceivedHandshake += torrent_ReceivedHandshake;
+                torrent.ReceivedMessage +=torrent_ReceivedMessage;
+                torrent.SentMessage += torrent_SentMessage;
                 torrent.Start();
                 
             }
@@ -197,6 +196,16 @@ namespace Torrent.GuiTest
             {
                 HandleException(e);
             }
+        }
+
+        void torrent_SentMessage(object sender, PeerMessage e)
+        {
+            dispatcher.Invoke(() => AddMessage("Sent: " + e));
+        }
+
+        private void torrent_ReceivedMessage(object sender, PeerMessage e)
+        {
+            dispatcher.Invoke(() => AddMessage("Received: " + e));
         }
 
         void torrent_ReceivedHandshake(object sender, EndPoint e)

@@ -54,7 +54,7 @@ namespace Torrent.Client
 
         public override string ToString()
         {
-            return string.Format("Request message: {Index: {0}, Begin: {1}, Length: {2}}", Index, Begin, Length);
+            return string.Format("Request message: Index: {0}, Begin: {1}, Length: {2}", Index, Begin, Length);
         }
 
         public override bool Equals(object obj)

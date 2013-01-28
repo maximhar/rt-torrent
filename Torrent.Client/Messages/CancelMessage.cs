@@ -102,7 +102,7 @@ namespace Torrent.Client
         /// <returns>The string containing the CancelMessage data representation.</returns>
         public override string ToString()
         {
-            return string.Format("Cancel message: {Index: {0}, Begin: {1}, Length: {2}}", Index, Begin, Length);
+            return string.Format("Cancel message: Index: {0}, Begin: {1}, Length: {2}", Index, Begin, Length);
         }
 
         /// <summary>
