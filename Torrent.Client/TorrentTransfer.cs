@@ -109,12 +109,18 @@ namespace Torrent.Client
             foreach (var peerEndpoint in Endpoints)
             {
                 if (stop) break;
-                var peer = new PeerState(new Socket(SocketType.Stream, ProtocolType.Tcp), peerEndpoint);
-                peer.Bitfield = new System.Collections.BitArray(Data.Checksums.Count);
-                peer.AmChoked = true;
-                peer.IsChoked = true;
+                var peer = InitializePeer(peerEndpoint);
                 NetworkIO.Connect(peer.Socket, peer.EndPoint, peer, PeerConnected);
             }
+        }
+
+        private PeerState InitializePeer(IPEndPoint peerEndpoint)
+        {
+            var peer = new PeerState(new Socket(SocketType.Stream, ProtocolType.Tcp), peerEndpoint);
+            peer.Bitfield = new System.Collections.BitArray(Data.Checksums.Count);
+            peer.AmChoked = true;
+            peer.IsChoked = true;
+            return peer;
         }
 
         private void PeerConnected(bool success, int transmitted, object state)
@@ -179,7 +185,7 @@ namespace Torrent.Client
         {
             var socket = (Socket)ar.AsyncState;
             var newsocket = socket.EndAccept(ar);
-            var peer = new PeerState(newsocket, (IPEndPoint)newsocket.RemoteEndPoint);
+            var peer = InitializePeer((IPEndPoint)newsocket.RemoteEndPoint);
             MessageIO.ReceiveHandshake(newsocket, peer, HandshakeReceived);
             BeginListen();
         }
