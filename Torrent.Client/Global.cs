@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
+using System.Net.Sockets;
 using System.Text;
 
 namespace Torrent.Client
@@ -8,12 +10,12 @@ namespace Torrent.Client
     /// <summary>
     /// Holds globally available information.
     /// </summary>
-    public sealed class LocalInfo
+    public sealed class Global
     {
         private const int ID_LENGTH = 20;
         private const string ID_HEAD = "-RT1000-";
         private const ushort LISTEN_PORT = 8912;
-        private static volatile LocalInfo instance = new LocalInfo();
+        private static volatile Global instance = new Global();
         private static object syncRoot = new object();
         private Random random;
         /// <summary>
@@ -25,10 +27,12 @@ namespace Torrent.Client
         /// </summary>
         public ushort ListeningPort { get; private set; }
 
+        public Socket Listener { get; private set; }
+
         /// <summary>
         /// Holds the single instance of the Torrent.Client.LocalInfo class.
         /// </summary>
-        public static LocalInfo Instance
+        public static Global Instance
         {
             get
             {
@@ -36,7 +40,7 @@ namespace Torrent.Client
                 {
                     lock (syncRoot)
                     {
-                        instance = new LocalInfo();
+                        instance = new Global();
                     }
                 }
                 return instance;
@@ -53,12 +57,20 @@ namespace Torrent.Client
                 return random.Next(min, max);
             }
         }
-        private LocalInfo()
+        private Global()
         {
             ListeningPort = LISTEN_PORT;
             var seed = DateTime.Now.Millisecond + DateTime.Now.Minute + DateTime.Now.Day + ID_HEAD.Length;
             random = new Random(seed);
             PeerId = new string(GeneratePeerId().Select(b=>(char)b).ToArray());
+            BindSocket();
+        }
+
+        private void BindSocket()
+        {
+            this.Listener = new Socket(SocketType.Stream, ProtocolType.Tcp);
+            Listener.Bind(new IPEndPoint(IPAddress.Any, LISTEN_PORT));
+            Listener.Listen(10);
         }
 
         private byte[] GeneratePeerId()

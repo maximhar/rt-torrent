@@ -104,7 +104,7 @@
     <Compile Include="NetworkIO.cs" />
     <Compile Include="Messages\NotInterestedMessage.cs" />
     <Compile Include="Messages\PeerMessage.cs" />
-    <Compile Include="LocalInfo.cs" />
+    <Compile Include="Global.cs" />
     <Compile Include="PeerEndpoint.cs" />
     <Compile Include="PeerState.cs" />
     <Compile Include="Messages\PieceMessage.cs" />

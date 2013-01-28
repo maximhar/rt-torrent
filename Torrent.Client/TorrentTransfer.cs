@@ -64,8 +64,8 @@ namespace Torrent.Client
             tracker = new TrackerClient(this.Data.Announces);
             this.Peers = new ConcurrentDictionary<string, PeerState>();
             this.PeerConnectedCallback = PeerConnected;
-            listenSocket = new Socket(SocketType.Stream, ProtocolType.Tcp);
-            localHandshake = new HandshakeMessage(LocalInfo.Instance.PeerId, new byte[8], Data.InfoHash, "BitTorrent protocol");
+            listenSocket = Global.Instance.Listener;
+            localHandshake = new HandshakeMessage(Global.Instance.PeerId, new byte[8], Data.InfoHash, "BitTorrent protocol");
         }
 
         /// <summary>
@@ -111,6 +111,8 @@ namespace Torrent.Client
                 if (stop) break;
                 var peer = new PeerState(new Socket(SocketType.Stream, ProtocolType.Tcp), peerEndpoint);
                 peer.Bitfield = new System.Collections.BitArray(Data.Checksums.Count);
+                peer.AmChoked = true;
+                peer.IsChoked = true;
                 NetworkIO.Connect(peer.Socket, peer.EndPoint, peer, PeerConnected);
             }
         }
@@ -137,18 +139,8 @@ namespace Torrent.Client
         private void StopActions()
         {
             OnStopping();
-            CloseListenSocket();
             ClosePeerSockets();
             Running = false;
-        }
-
-        private void CloseListenSocket()
-        {
-            if (listenSocket!=null && listenSocket.Connected)
-            {
-                listenSocket.Shutdown(SocketShutdown.Both);
-                listenSocket.Close();
-            }
         }
 
         private void ClosePeerSockets()
@@ -170,9 +162,6 @@ namespace Torrent.Client
 
         private void Listen()
         {
-            
-            listenSocket.Bind(new IPEndPoint(IPAddress.Any, LocalInfo.Instance.ListeningPort));
-            listenSocket.Listen(10);
             BeginListen();
         }
 
@@ -206,7 +195,7 @@ namespace Torrent.Client
                 peer.ReceivedHandshake = true;
                 peer.ID = handshake.PeerID;
                 
-                if (peer.ID == LocalInfo.Instance.PeerId) return;
+                if (peer.ID == Global.Instance.PeerId) return;
 
                 if (!peer.SentHandshake)
                 {
@@ -233,13 +222,33 @@ namespace Torrent.Client
             var peer = (PeerState)state;
             if (success)
             {
+                
                 if (message is BitfieldMessage)
                 {
                     HandleBitfield(message, peer);
+                    peer.AmInterested = true;
+                    SendMessage(peer.Socket, new InterestedMessage(), peer, MessageSent);
                 }
                 else if (message is HaveMessage)
                 {
                     HandleHave(message, peer);
+                }
+                else if (message is UnchokeMessage)
+                {
+                    peer.AmChoked = false;
+                    SendMessageTo(peer, new RequestMessage(2, 0, 1024 * 16));
+                }
+                else if (message is InterestedMessage)
+                {
+                    peer.IsInterested = true;
+                }
+                else if (message is ChokeMessage)
+                {
+                    peer.AmChoked = true;
+                }
+                else if (message is NotInterestedMessage)
+                {
+                    peer.IsInterested = false;
                 }
                 MessageIO.ReceiveMessage(peer.Socket, peer, MessageReceived);
                 OnReceivedMessage(message);
@@ -259,26 +268,6 @@ namespace Torrent.Client
         private void HandleBitfield(PeerMessage message, PeerState peer)
         {
             peer.Bitfield = ((BitfieldMessage)message).Bitfield;
-            for (int i = 0; i < 10; i++)
-            {
-                int pieceId = -1;
-                int count = 0;
-                while (true)
-                {
-                    pieceId = LocalInfo.Instance.NextRandom(peer.Bitfield.Length);
-                    if (peer.Bitfield[pieceId])
-                        break;
-                    if (count++ > 100)
-                    {
-                        pieceId = -1;
-                        break;
-                    }
-                }
-                if (pieceId != -1)
-                {
-                    SendMessage(peer.Socket, new RequestMessage(pieceId, 0, 1024 * 16), peer, MessageSent);
-                }
-            }
         }
 
         private static void ClosePeerSocket(PeerState peer)
@@ -297,7 +286,7 @@ namespace Torrent.Client
             if (success)
             {
                 peer.SentHandshake = true;
-                if (peer.ID == LocalInfo.Instance.PeerId) return;
+                if (peer.ID == Global.Instance.PeerId) return;
 
                 if (!peer.ReceivedHandshake)
                 {
@@ -315,6 +304,11 @@ namespace Torrent.Client
             Debug.WriteLine("I sent some message, success: " + success);
         }
 
+        private void SendMessageTo(PeerState peer, PeerMessage message)
+        {
+            SendMessage(peer.Socket, message, peer, MessageSent);
+        }
+
         private void SendMessage(Socket socket, PeerMessage message, PeerState state, MessageSentCallback callback)
         {
             MessageIO.SendMessage(socket, message, state, callback);
@@ -323,7 +317,7 @@ namespace Torrent.Client
         
         private void HandshakeTracker()
         {
-            var info = tracker.AnnounceStart(Data.InfoHash, LocalInfo.Instance.PeerId, LocalInfo.Instance.ListeningPort,
+            var info = tracker.AnnounceStart(Data.InfoHash, Global.Instance.PeerId, Global.Instance.ListeningPort,
                 0, 0, (long)this.Data.Files.Sum(f => f.Length));
             Endpoints = info.Endpoints;
         }

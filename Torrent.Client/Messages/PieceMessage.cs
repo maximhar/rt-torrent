@@ -39,7 +39,7 @@ namespace Torrent.Client
             ReadByte(buffer, ref offset);
             this.Index = ReadInt(buffer, ref offset);
             this.Begin = ReadInt(buffer, ref offset);
-            this.Block = ReadBytes(buffer, ref offset, count);
+            this.Block = ReadBytes(buffer, ref offset, count-offset);
         }
 
         public override int MessageLength
