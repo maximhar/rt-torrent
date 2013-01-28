@@ -181,6 +181,7 @@ namespace Torrent.Client
             {
                 return;
             }
+            Debug.WriteLine("Listening");
             listenSocket.BeginAccept(EndAccept, listenSocket);
         }
 
@@ -208,7 +209,7 @@ namespace Torrent.Client
 
                 if (!peer.SentHandshake)
                 {
-                    MessageIO.SendMessage(peer.Socket, localHandshake, peer, HandshakeSent);
+                    SendMessage(peer.Socket, localHandshake, peer, HandshakeSent);
                 }
                 else
                 {
@@ -228,9 +229,34 @@ namespace Torrent.Client
 
         private void MessageReceived(bool success, PeerMessage message, object state)
         {
+            Debug.WriteLine("Received");
             var peer = (PeerState)state;
             if (success)
             {
+                if (message is BitfieldMessage)
+                {
+                    peer.Bitfield = ((BitfieldMessage)message).Bitfield;
+                    for (int i = 0; i < 10; i++)
+                    {
+                        int pieceId = -1;
+                        int count = 0;
+                        while (true)
+                        {
+                            pieceId = LocalInfo.Instance.NextRandom(peer.Bitfield.Length);
+                            if (peer.Bitfield[pieceId])
+                                break;
+                            if (count++ > 100)
+                            {
+                                pieceId = -1;
+                                break;
+                            }
+                        }
+                        if (pieceId != -1)
+                        {
+                            SendMessage(peer.Socket, new RequestMessage(pieceId, 0, 1024 * 16), peer, MessageSent);
+                        }
+                    }
+                }
                 MessageIO.ReceiveMessage(peer.Socket, peer, MessageReceived);
                 OnReceivedMessage(message);
             }

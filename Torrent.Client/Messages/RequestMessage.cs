@@ -29,8 +29,8 @@ namespace Torrent.Client
 
         public override void FromBytes(byte[] buffer, int offset, int count)
         {
-            if (count != MessageLength)
-                throw new ArgumentException("Invalid message length.");
+            ReadInt(buffer, ref offset);
+            ReadByte(buffer, ref offset);
             this.Index = ReadInt(buffer, ref offset);
             this.Begin = ReadInt(buffer, ref offset);
             this.Length = ReadInt(buffer, ref offset);
@@ -44,7 +44,7 @@ namespace Torrent.Client
         public override int ToBytes(byte[] buffer, int offset)
         {
             int start = offset;
-            offset += Write(buffer, offset, (int)5);
+            offset += Write(buffer, offset, (int)13);
             offset += Write(buffer, offset, (byte)6);
             offset += Write(buffer, offset, Index);
             offset += Write(buffer, offset, Begin);

@@ -54,9 +54,8 @@
             <TextBox x:Name="PieceCountTextBox" Grid.Column="1" IsEnabled="False" Text="{Binding PieceCount}"/>
         </Grid>
         <ListBox Height="80" ItemsSource="{Binding Files}" FontFamily="Courier New" />
-        <ListBox Height="80" ItemsSource="{Binding Announces}" FontFamily="Courier New" />
         <ListBox Height="100" ItemsSource="{Binding Peers}" FontFamily="Courier New" />
-        <ListBox Height="100" ItemsSource="{Binding Messages}" FontFamily="Courier New" />
+        <ListBox Height="180" ItemsSource="{Binding Messages}" FontFamily="Courier New" />
         <StackPanel Orientation="Horizontal">
             <Button Name="StopButton" Click="StopButton_Click">Stop</Button>
         </StackPanel>

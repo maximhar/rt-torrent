@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
@@ -20,7 +21,7 @@ namespace Torrent.Client
         /// A bitfield representing the pieces that have been successfully downloaded.
         /// <para>A cleared bit indicated a missing piece, and set bits indicate a valid and available piece.</para>
         /// </summary>
-        public byte[] Bitfield { get; private set; }
+        public BitArray Bitfield { get; private set; }
         
         /// <summary>
         /// Initializes a new empty instance of the Torrent.Client.BitfieldMessage class.
@@ -34,7 +35,7 @@ namespace Torrent.Client
         /// Initializes a new instance of the Torrent.Client.BitfieldMessage class.
         /// </summary>
         /// <param name="bitfield">A bitfield representing the pieces that have been successfully downloaded.</param>
-        public BitfieldMessage(byte[] bitfield)
+        public BitfieldMessage(BitArray bitfield)
         {
             Contract.Requires(bitfield != null);
 
@@ -46,7 +47,7 @@ namespace Torrent.Client
         /// </summary>
         public override int MessageLength
         {
-            get { return 4+1+Bitfield.Length; }
+            get { return 4+1+Bitfield.Length/8; }
         }
 
         /// <summary>
@@ -57,7 +58,10 @@ namespace Torrent.Client
         /// <param name="count">The length to be read in bytes.</param>
         public override void FromBytes(byte[] buffer, int offset, int count)
         {
-            this.Bitfield = ReadBytes(buffer, ref offset, count);
+            ReadInt(buffer, ref offset);
+            ReadByte(buffer, ref offset);
+            var bytes = ReadBytes(buffer, ref offset, count-offset);
+            this.Bitfield = new BitArray(bytes);
         }
 
         /// <summary>
@@ -68,10 +72,12 @@ namespace Torrent.Client
         /// <returns>An integer representing the the amount of bytes written in the array.</returns>
         public override int ToBytes(byte[] buffer, int offset)
         {
+            byte[] byteArray = new byte[(int)Math.Ceiling((double)Bitfield.Length / 8)];
+            Bitfield.CopyTo(byteArray, 0);
             int start = offset;
             offset += Write(buffer, offset, (int)5);
             offset += Write(buffer, offset, (byte)5);
-            offset += Write(buffer, offset, Bitfield);
+            offset += Write(buffer, offset, byteArray);
             return offset - start;
         }
 
@@ -95,7 +101,7 @@ namespace Torrent.Client
             
             if (msg == null)
                 return false;
-            return CompareByteArray(this.Bitfield, msg.Bitfield);
+            return CompareBitArray(this.Bitfield, msg.Bitfield);
         }
 
         /// <summary>

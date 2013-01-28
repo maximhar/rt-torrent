@@ -15,7 +15,7 @@ namespace Torrent.Client
         private const ushort LISTEN_PORT = 8912;
         private static volatile LocalInfo instance = new LocalInfo();
         private static object syncRoot = new object();
-
+        private Random random;
         /// <summary>
         /// The current peer ID.
         /// </summary>
@@ -42,20 +42,33 @@ namespace Torrent.Client
                 return instance;
             }
         }
-
+        public int NextRandom(int max)
+        {
+            return NextRandom(0, max);
+        }
+        public int NextRandom(int min, int max)
+        {
+            lock (random)
+            {
+                return random.Next(min, max);
+            }
+        }
         private LocalInfo()
         {
-            PeerId = new string(GeneratePeerId().Select(b=>(char)b).ToArray());
             ListeningPort = LISTEN_PORT;
+            var seed = DateTime.Now.Millisecond + DateTime.Now.Minute + DateTime.Now.Day + ID_HEAD.Length;
+            random = new Random(seed);
+            PeerId = new string(GeneratePeerId().Select(b=>(char)b).ToArray());
         }
 
         private byte[] GeneratePeerId()
         {
             var id = new List<byte>(ID_LENGTH);
-            var seed = DateTime.Now.Millisecond + DateTime.Now.Minute + DateTime.Now.Day + ID_HEAD.Length;
-            var random = new Random(seed);
-            id.AddRange(Encoding.UTF8.GetBytes(ID_HEAD));
-            id.AddRange(Enumerable.Repeat(0, ID_LENGTH - ID_HEAD.Length).Select(i => (byte)random.Next((int)'0', (int)'z')));
+            lock (random)
+            {
+                id.AddRange(Encoding.UTF8.GetBytes(ID_HEAD));
+                id.AddRange(Enumerable.Repeat(0, ID_LENGTH - ID_HEAD.Length).Select(i => (byte)NextRandom((int)'0', (int)'z')));
+            }
             return id.ToArray();
         }
     }

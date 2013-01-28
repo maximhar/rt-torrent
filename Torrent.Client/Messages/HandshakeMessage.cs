@@ -105,7 +105,7 @@ namespace Torrent.Client
             this.Protocol = ReadString(buffer, ref offset, 19);
             this.Reserved = ReadBytes(buffer, ref offset, 8);
             this.InfoHash = ReadBytes(buffer, ref offset, 20);
-            this.PeerID = ReadString(buffer, ref offset, 20);
+            this.PeerID = new string(ReadBytes(buffer, ref offset, 20).Select(b=>(char)b).ToArray());
         }
 
         /// <summary>

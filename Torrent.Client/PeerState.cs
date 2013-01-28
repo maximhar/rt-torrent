@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -19,7 +20,7 @@ namespace Torrent.Client
         public bool SentHandshake { get; set; }
         public IPEndPoint EndPoint { get; set; }
         public string ID { get; set; }
-
+        public BitArray Bitfield { get; set; }
         public PeerState(Socket socket, IPEndPoint endpoint)
         {
             this.Socket = socket;

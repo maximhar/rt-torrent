@@ -56,8 +56,8 @@ namespace Torrent.Client
         /// <param name="count">The length to be read in bytes.</param>
         public override void FromBytes(byte[] buffer, int offset, int count)
         {
-            if (count != MessageLength)
-                throw new ArgumentException("Invalid message length.");
+            ReadInt(buffer, ref offset);
+            ReadByte(buffer, ref offset);
             this.PieceIndex = ReadInt(buffer, ref offset);
         }
 

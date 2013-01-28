@@ -61,7 +61,7 @@ namespace Torrent.Client
         {
             try
             {
-                data.Socket.BeginReceive(data.Buffer, data.Offset, data.Count, SocketFlags.None, EndReceiveCallback, data);
+                data.Socket.BeginReceive(data.Buffer, data.Offset, data.Remaining, SocketFlags.None, EndReceiveCallback, data);
             }
             catch
             {
