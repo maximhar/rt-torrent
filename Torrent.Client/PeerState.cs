@@ -25,6 +25,8 @@ namespace Torrent.Client
         {
             this.Socket = socket;
             this.EndPoint = endpoint;
+            this.AmChoked = true;
+            this.IsChoked = true;
         }
 
         public override string ToString()
