@@ -7,41 +7,17 @@ namespace Torrent.Client.Messages
     /// <summary>
     /// Provides a container class for the HandshakeMessage data for peer communication.
     /// </summary>
-    class HandshakeMessage:PeerMessage
+    internal class HandshakeMessage : PeerMessage
     {
-        public static int Length
-        {
-            get { return 68; }
-        }
-        /// <summary>
-        /// A 20-byte string used as a unique ID for the client.
-        /// <para>This is usually the same peer_id that is transmitted in tracker requests.</para>
-        /// </summary>
-        public string PeerID { get; private set; }
-        /// <summary>
-        /// An 8-byte array containing reserved bytes.
-        /// <para>Usually all eight bytes are set to zero.</para>
-        /// </summary>
-        public byte[] Reserved { get; private set; }
-        /// <summary>
-        /// A 20-byte SHA1 hash of the info key in the metainfo file.
-        /// <para>This is the same info_hash that is transmitted in tracker requests.</para>
-        /// </summary>
-        public InfoHash InfoHash { get; private set; }
-        /// <summary>
-        /// A string identifier of the protocol.
-        /// </summary>
-        public string Protocol { get; private set; }
-
         /// <summary>
         /// Initializes a new empty instance of the Torrent.Client.HandshakeMessage class.
         /// </summary>
         public HandshakeMessage()
         {
-            this.PeerID = string.Empty;
-            this.Reserved = null;
-            this.InfoHash = null;
-            this.Protocol = string.Empty;
+            PeerID = string.Empty;
+            Reserved = null;
+            InfoHash = null;
+            Protocol = string.Empty;
         }
 
         /// <summary>
@@ -58,11 +34,39 @@ namespace Torrent.Client.Messages
             Contract.Requires(infoHash.Length == 20);
             Contract.Requires(protocol != null);
 
-            this.PeerID = peerID;
-            this.Reserved = reserved;
-            this.InfoHash = infoHash;
-            this.Protocol = protocol;
+            PeerID = peerID;
+            Reserved = reserved;
+            InfoHash = infoHash;
+            Protocol = protocol;
         }
+
+        public static int Length
+        {
+            get { return 68; }
+        }
+
+        /// <summary>
+        /// A 20-byte string used as a unique ID for the client.
+        /// <para>This is usually the same peer_id that is transmitted in tracker requests.</para>
+        /// </summary>
+        public string PeerID { get; private set; }
+
+        /// <summary>
+        /// An 8-byte array containing reserved bytes.
+        /// <para>Usually all eight bytes are set to zero.</para>
+        /// </summary>
+        public byte[] Reserved { get; private set; }
+
+        /// <summary>
+        /// A 20-byte SHA1 hash of the info key in the metainfo file.
+        /// <para>This is the same info_hash that is transmitted in tracker requests.</para>
+        /// </summary>
+        public InfoHash InfoHash { get; private set; }
+
+        /// <summary>
+        /// A string identifier of the protocol.
+        /// </summary>
+        public string Protocol { get; private set; }
 
         /// <summary>
         /// The length of the HandshakeMessage.
@@ -81,7 +85,7 @@ namespace Torrent.Client.Messages
         public override int ToBytes(byte[] buffer, int offset)
         {
             int start = offset;
-            offset += Write(buffer, offset, (byte)Protocol.Length);
+            offset += Write(buffer, offset, (byte) Protocol.Length);
             offset += WriteAscii(buffer, offset, Protocol);
             offset += Write(buffer, offset, Reserved);
             offset += Write(buffer, offset, InfoHash);
@@ -100,10 +104,10 @@ namespace Torrent.Client.Messages
             if (count < 68)
                 throw new ArgumentException("Message not of sufficient length.");
             ReadByte(buffer, ref offset);
-            this.Protocol = ReadString(buffer, ref offset, 19);
-            this.Reserved = ReadBytes(buffer, ref offset, 8);
-            this.InfoHash = ReadBytes(buffer, ref offset, 20);
-            this.PeerID = new string(ReadBytes(buffer, ref offset, 20).Select(b=>(char)b).ToArray());
+            Protocol = ReadString(buffer, ref offset, 19);
+            Reserved = ReadBytes(buffer, ref offset, 8);
+            InfoHash = ReadBytes(buffer, ref offset, 20);
+            PeerID = new string(ReadBytes(buffer, ref offset, 20).Select(b => (char) b).ToArray());
         }
 
         /// <summary>
@@ -113,13 +117,13 @@ namespace Torrent.Client.Messages
         /// <returns></returns>
         public override bool Equals(object obj)
         {
-            HandshakeMessage msg = obj as HandshakeMessage;
+            var msg = obj as HandshakeMessage;
 
             if (msg == null)
                 return false;
-            if (!CompareByteArray(this.InfoHash, msg.InfoHash) || !CompareByteArray(this.Reserved, msg.Reserved))
+            if (!CompareByteArray(InfoHash, msg.InfoHash) || !CompareByteArray(Reserved, msg.Reserved))
                 return false;
-            return (this.PeerID == msg.PeerID && this.Protocol == msg.Protocol);
+            return (PeerID == msg.PeerID && Protocol == msg.Protocol);
         }
 
         /// <summary>
@@ -128,8 +132,8 @@ namespace Torrent.Client.Messages
         /// <returns>An integer representing the hash code of this instace of the HandshakeMessage class.</returns>
         public override int GetHashCode()
         {
-            return Protocol.GetHashCode() ^ BitConverter.ToString(this.Reserved).GetHashCode() ^
-                BitConverter.ToString(this.InfoHash).GetHashCode() ^ this.PeerID.GetHashCode();
+            return Protocol.GetHashCode() ^ BitConverter.ToString(Reserved).GetHashCode() ^
+                   BitConverter.ToString(InfoHash).GetHashCode() ^ PeerID.GetHashCode();
         }
 
         /// <summary>
@@ -139,7 +143,7 @@ namespace Torrent.Client.Messages
         public override string ToString()
         {
             return string.Format("Handshake message: Protocol: {0}, Reserved: {1}, InfoHash: {2}, PeerID: {3}",
-                this.Protocol, BitConverter.ToString(this.Reserved), BitConverter.ToString(this.InfoHash), this.PeerID);
+                                 Protocol, BitConverter.ToString(Reserved), BitConverter.ToString(InfoHash), PeerID);
         }
     }
 }

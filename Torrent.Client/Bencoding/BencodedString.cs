@@ -1,8 +1,6 @@
-
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace Torrent.Client.Bencoding
 {
@@ -11,11 +9,7 @@ namespace Torrent.Client.Bencoding
     /// </summary>
     public class BencodedString : IBencodedElement, IEnumerable<char>
     {
-        private string innerString;
-        /// <summary>
-        /// Returns the length of the Bencoded string.
-        /// </summary>
-        public int Length { get { return innerString.Length; } }
+        private readonly string innerString;
 
         /// <summary>
         /// Initializes a new instance of the Torrent.Client.Bencoding.BencodedString class via a string.
@@ -27,13 +21,15 @@ namespace Torrent.Client.Bencoding
         }
 
         /// <summary>
-        /// Returns the Bencoded string as a normal string.
+        /// Returns the length of the Bencoded string.
         /// </summary>
-        /// <returns></returns>
-        public override string ToString()
+        public int Length
         {
-            return innerString;
+            get { return innerString.Length; }
         }
+
+        #region IBencodedElement Members
+
         /// <summary>
         /// Returns the Bencoded string in Bencoded format.
         /// </summary>
@@ -42,25 +38,40 @@ namespace Torrent.Client.Bencoding
         {
             return String.Format("{0}:{1}", innerString.Length, innerString);
         }
-        public static implicit operator string(BencodedString value)
-        {
-            return value.innerString;
-        }
-        public static implicit operator BencodedString(string value)
-        {
-            return new BencodedString(value);
-        }
 
+        #endregion
+
+        #region IEnumerable<char> Members
 
         public IEnumerator<char> GetEnumerator()
         {
             return innerString.GetEnumerator();
         }
 
-        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
+        IEnumerator IEnumerable.GetEnumerator()
         {
             return innerString.GetEnumerator();
         }
+
+        #endregion
+
+        /// <summary>
+        /// Returns the Bencoded string as a normal string.
+        /// </summary>
+        /// <returns></returns>
+        public override string ToString()
+        {
+            return innerString;
+        }
+
+        public static implicit operator string(BencodedString value)
+        {
+            return value.innerString;
+        }
+
+        public static implicit operator BencodedString(string value)
+        {
+            return new BencodedString(value);
+        }
     }
 }
-

@@ -3,17 +3,12 @@
     /// <summary>
     /// Provides a container class for the NotInterestedMessage data for peer communication.
     /// </summary>
-    class NotInterestedMessage : PeerMessage
+    internal class NotInterestedMessage : PeerMessage
     {
         /// <summary>
         /// The ID of the message
         /// </summary>
         public static readonly int Id = 3;
-
-        /// <summary>
-        /// Initializes a new instance of the Torrent.Client.NotInterestedMessage class.
-        /// </summary>
-        public NotInterestedMessage() { }
 
         /// <summary>
         /// The length of the NotInterestedMessage.
@@ -31,7 +26,8 @@
         /// <param name="offset">The position in the array at which the message begins.</param>
         /// <param name="count">The length to be read in bytes.</param>
         public override void FromBytes(byte[] buffer, int offset, int count)
-        { }
+        {
+        }
 
         /// <summary>
         /// Writes the NotInterestedMessage data to a byte array.
@@ -42,8 +38,8 @@
         public override int ToBytes(byte[] buffer, int offset)
         {
             int start = offset;
-            offset += Write(buffer, offset, (int)1);
-            offset += Write(buffer, offset, (byte)3);
+            offset += Write(buffer, offset, 1);
+            offset += Write(buffer, offset, (byte) 3);
             return offset - start;
         }
 

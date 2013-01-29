@@ -6,33 +6,21 @@ namespace Torrent.Client.Messages
     /// <summary>
     /// Provides a container class for the CancelMessage data for peer communication.
     /// </summary>
-    class CancelMessage:PeerMessage
+    internal class CancelMessage : PeerMessage
     {
         /// <summary>
         /// The ID of the message
         /// </summary>
         public static readonly int Id = 8;
-        /// <summary>
-        /// The zero-based piece index.
-        /// </summary>
-        public int Index { get; private set; }
-        /// <summary>
-        /// The zero-based byte offset within the piece.
-        /// </summary>
-        public int Begin { get; private set; }
-        /// <summary>
-        /// The requested length.
-        /// </summary>
-        public int Length { get; private set; }
 
         /// <summary>
         /// Initializes a new empty instance of the Torrent.Client.CancelMessage class.
         /// </summary>
-        public CancelMessage() 
+        public CancelMessage()
         {
-            this.Index = -1;
-            this.Begin = -1;
-            this.Length = -1;
+            Index = -1;
+            Begin = -1;
+            Length = -1;
         }
 
         /// <summary>
@@ -47,9 +35,32 @@ namespace Torrent.Client.Messages
             Contract.Requires(begin >= 0);
             Contract.Requires(length >= 0);
 
-            this.Index = index;
-            this.Begin = begin;
-            this.Length = length;
+            Index = index;
+            Begin = begin;
+            Length = length;
+        }
+
+        /// <summary>
+        /// The zero-based piece index.
+        /// </summary>
+        public int Index { get; private set; }
+
+        /// <summary>
+        /// The zero-based byte offset within the piece.
+        /// </summary>
+        public int Begin { get; private set; }
+
+        /// <summary>
+        /// The requested length.
+        /// </summary>
+        public int Length { get; private set; }
+
+        /// <summary>
+        /// The length of the CancelMessage.
+        /// </summary>
+        public override int MessageLength
+        {
+            get { return 17; }
         }
 
         /// <summary>
@@ -62,17 +73,9 @@ namespace Torrent.Client.Messages
         {
             if (count != MessageLength)
                 throw new ArgumentException("Invalid message length.");
-            this.Index = ReadInt(buffer, ref offset);
-            this.Begin = ReadInt(buffer, ref offset);
-            this.Length = ReadInt(buffer, ref offset);
-        }
-
-        /// <summary>
-        /// The length of the CancelMessage.
-        /// </summary>
-        public override int MessageLength
-        {
-            get { return 17; }
+            Index = ReadInt(buffer, ref offset);
+            Begin = ReadInt(buffer, ref offset);
+            Length = ReadInt(buffer, ref offset);
         }
 
         /// <summary>
@@ -84,8 +87,8 @@ namespace Torrent.Client.Messages
         public override int ToBytes(byte[] buffer, int offset)
         {
             int start = offset;
-            offset += Write(buffer, offset, (int)5);
-            offset += Write(buffer, offset, (byte)8);
+            offset += Write(buffer, offset, 5);
+            offset += Write(buffer, offset, (byte) 8);
             offset += Write(buffer, offset, Index);
             offset += Write(buffer, offset, Begin);
             offset += Write(buffer, offset, Length);
@@ -108,11 +111,11 @@ namespace Torrent.Client.Messages
         /// <returns></returns>
         public override bool Equals(object obj)
         {
-            CancelMessage msg = obj as CancelMessage;
+            var msg = obj as CancelMessage;
 
             if (msg == null)
                 return false;
-            return this.Index == msg.Index && this.Begin == msg.Begin && this.Length == msg.Length;
+            return Index == msg.Index && Begin == msg.Begin && Length == msg.Length;
         }
 
         /// <summary>
@@ -121,7 +124,8 @@ namespace Torrent.Client.Messages
         /// <returns>An integer representing the hash code of this instace of the CancelMessage class.</returns>
         public override int GetHashCode()
         {
-            return MessageLength.GetHashCode() ^ Id.GetHashCode() ^ Index.GetHashCode() ^ Begin.GetHashCode() ^ Length.GetHashCode();
+            return MessageLength.GetHashCode() ^ Id.GetHashCode() ^ Index.GetHashCode() ^ Begin.GetHashCode() ^
+                   Length.GetHashCode();
         }
     }
 }

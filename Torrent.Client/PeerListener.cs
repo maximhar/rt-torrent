@@ -1,21 +1,18 @@
 ﻿using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Net;
 using System.Net.Sockets;
-using System.Text;
-using System.Threading.Tasks;
 using Torrent.Client.Messages;
 
 namespace Torrent.Client
 {
     public delegate void PeerConnectedCallback(PeerState peer);
-    static class PeerListener
+
+    internal static class PeerListener
     {
-        private static ConcurrentDictionary<InfoHash, PeerConnectedCallback> innerDictionary;
-        private static Socket listenSocket;
+        private static readonly ConcurrentDictionary<InfoHash, PeerConnectedCallback> innerDictionary;
+        private static readonly Socket listenSocket;
 
         static PeerListener()
         {
@@ -42,7 +39,7 @@ namespace Torrent.Client
                 Debug.WriteLine("PeerListener is listening!");
                 listenSocket.BeginAccept(EndAccept, listenSocket);
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 RaiseException(e);
             }
@@ -50,17 +47,17 @@ namespace Torrent.Client
 
         private static void EndAccept(IAsyncResult ar)
         {
-            var socket = (Socket)ar.AsyncState;//this is very werid :D
-            var newsocket = socket.EndAccept(ar);
-            var peer = new PeerState(newsocket, (IPEndPoint)newsocket.RemoteEndPoint);
+            var socket = (Socket) ar.AsyncState; //this is very werid :D
+            Socket newsocket = socket.EndAccept(ar);
+            var peer = new PeerState(newsocket, (IPEndPoint) newsocket.RemoteEndPoint);
             MessageIO.ReceiveHandshake(newsocket, peer, HandshakeReceived);
             BeginListening();
         }
 
         private static void HandshakeReceived(bool success, PeerMessage message, object state)
         {
-            var peer = (PeerState)state;
-            var handshake = (HandshakeMessage)message;
+            var peer = (PeerState) state;
+            var handshake = (HandshakeMessage) message;
             if (success)
             {
                 peer.ReceivedHandshake = true;
@@ -68,7 +65,7 @@ namespace Torrent.Client
 
                 if (peer.ID == Global.Instance.PeerId) return;
                 PeerConnectedCallback callback;
-                if(!innerDictionary.TryGetValue(handshake.InfoHash,out callback)) ClosePeerSocket(peer);
+                if (!innerDictionary.TryGetValue(handshake.InfoHash, out callback)) ClosePeerSocket(peer);
                 else callback(peer);
             }
             else ClosePeerSocket(peer);

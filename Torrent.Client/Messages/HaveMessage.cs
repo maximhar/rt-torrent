@@ -5,21 +5,17 @@ namespace Torrent.Client.Messages
     /// <summary>
     /// Provides a container class for the HaveMessage data for peer communication.
     /// </summary>
-    class HaveMessage:PeerMessage
+    internal class HaveMessage : PeerMessage
     {
         /// <summary>
         /// The ID of the message
         /// </summary>
         public static readonly int Id = 4;
-        /// <summary>
-        /// The zero-based index of a piece that has been successfully downloaded and verified via the hash.
-        /// </summary>
-        public int PieceIndex { get; private set; }
 
         /// <summary>
         /// Initializes a new empty instance of the Torrent.Client.HaveMessage class.
         /// </summary>
-        public HaveMessage() 
+        public HaveMessage()
         {
             PieceIndex = -1;
         }
@@ -32,8 +28,13 @@ namespace Torrent.Client.Messages
         {
             Contract.Requires(pieceIndex >= 0);
 
-            this.PieceIndex = pieceIndex;
+            PieceIndex = pieceIndex;
         }
+
+        /// <summary>
+        /// The zero-based index of a piece that has been successfully downloaded and verified via the hash.
+        /// </summary>
+        public int PieceIndex { get; private set; }
 
         /// <summary>
         /// The length of the HaveMessage.
@@ -53,7 +54,7 @@ namespace Torrent.Client.Messages
         {
             ReadInt(buffer, ref offset);
             ReadByte(buffer, ref offset);
-            this.PieceIndex = ReadInt(buffer, ref offset);
+            PieceIndex = ReadInt(buffer, ref offset);
         }
 
         /// <summary>
@@ -65,8 +66,8 @@ namespace Torrent.Client.Messages
         public override int ToBytes(byte[] buffer, int offset)
         {
             int start = offset;
-            offset += Write(buffer, offset, (int)5);
-            offset += Write(buffer, offset, (byte)4);
+            offset += Write(buffer, offset, 5);
+            offset += Write(buffer, offset, (byte) 4);
             offset += Write(buffer, offset, PieceIndex);
             return offset - start;
         }
@@ -87,11 +88,11 @@ namespace Torrent.Client.Messages
         /// <returns></returns>
         public override bool Equals(object obj)
         {
-            HaveMessage msg = obj as HaveMessage;
+            var msg = obj as HaveMessage;
 
             if (msg == null)
                 return false;
-            return this.PieceIndex == msg.PieceIndex;
+            return PieceIndex == msg.PieceIndex;
         }
 
         /// <summary>

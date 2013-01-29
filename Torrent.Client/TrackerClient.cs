@@ -1,15 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Diagnostics.Contracts;
-using System.Net;
-using System.Web;
-using MoreLinq;
-using System.Net.Sockets;
-using System.IO;
-using System.Threading.Tasks;
 using System.Diagnostics;
+using System.Diagnostics.Contracts;
+using System.IO;
+using System.Linq;
+using System.Net;
+using System.Text;
+using MoreLinq;
+
 namespace Torrent.Client
 {
     /// <summary>
@@ -18,32 +16,35 @@ namespace Torrent.Client
     public class TrackerClient
     {
         /// <summary>
-        /// The announce URL of the tracker.
-        /// </summary>
-        public IEnumerable<string> Announces { get; private set; }
-
-        public string PreferredAnnounce { get; private set; }
-
-        /// <summary>
         /// The class constructor.
         /// </summary>
         /// <param name="announces">The announce URLs of the tracker.</param>
         public TrackerClient(IEnumerable<string> announces)
         {
             Contract.Requires(announces != null);
-            this.Announces = announces;
+            Announces = announces;
         }
+
+        /// <summary>
+        /// The announce URL of the tracker.
+        /// </summary>
+        public IEnumerable<string> Announces { get; private set; }
+
+        public string PreferredAnnounce { get; private set; }
+
         private string UrlEncode(byte[] source)
         {
-            StringBuilder builder = new StringBuilder();
+            var builder = new StringBuilder();
             string hex = BitConverter.ToString(source).Replace("-", string.Empty);
             hex.Batch(2).ForEach(h => builder.Append("%" + new string(h.ToArray()).ToLower()));
             return builder.ToString();
         }
 
-        public TrackerResponse AnnounceStart(byte[] infoHash, string peerId, ushort port, long downloaded, long uploaded, long left)
+        public TrackerResponse AnnounceStart(byte[] infoHash, string peerId, ushort port, long downloaded, long uploaded,
+                                             long left)
         {
-            var request = new TrackerRequest(infoHash, peerId, port, uploaded, downloaded, left, true, true, EventType.Started, 100);
+            var request = new TrackerRequest(infoHash, peerId, port, uploaded, downloaded, left, true, true,
+                                             EventType.Started, 100);
             return GetResponse(request);
         }
 
@@ -60,15 +61,15 @@ namespace Torrent.Client
 
             if (PreferredAnnounce != null)
                 response = AttemptGet(requestData, PreferredAnnounce);
-            
-            if(response == null)
+
+            if (response == null)
             {
                 foreach (string url in Announces)
                 {
                     Debug.WriteLine("Trying to connect to " + url);
                     if ((response = AttemptGet(requestData, url)) != null)
                     {
-                        this.PreferredAnnounce = url;
+                        PreferredAnnounce = url;
                         break;
                     }
                 }
@@ -84,44 +85,44 @@ namespace Torrent.Client
         private TrackerResponse AttemptGet(TrackerRequest requestData, string announceURL)
         {
             var parameters = new Dictionary<string, string>
-            {
-                {"info_hash", UrlEncode(requestData.InfoHash)},
-                {"peer_id", Uri.EscapeDataString(requestData.PeerId)},
-                {"port", requestData.Port.ToString()},
-                {"uploaded", requestData.Uploaded.ToString()},
-                {"downloaded", requestData.Downloaded.ToString()},
-                {"left", requestData.Left.ToString()},
-                {"compact", requestData.Compact?"1":"0"},
-                {"no_peer_id", requestData.OmitPeerIds?"1":"0"}
-            };
+                                 {
+                                     {"info_hash", UrlEncode(requestData.InfoHash)},
+                                     {"peer_id", Uri.EscapeDataString(requestData.PeerId)},
+                                     {"port", requestData.Port.ToString()},
+                                     {"uploaded", requestData.Uploaded.ToString()},
+                                     {"downloaded", requestData.Downloaded.ToString()},
+                                     {"left", requestData.Left.ToString()},
+                                     {"compact", requestData.Compact ? "1" : "0"},
+                                     {"no_peer_id", requestData.OmitPeerIds ? "1" : "0"}
+                                 };
             if (requestData.Event != EventType.None)
                 parameters.Add("event", requestData.Event.ToString().ToLower());
             if (requestData.NumWant.HasValue)
                 parameters.Add("numwant", requestData.NumWant.ToString());
             var urlBuilder = new StringBuilder();
             urlBuilder.Append(parameters.Select(kv =>
-            {
-                if (kv.Value == null)
-                    return string.Empty;
-                return kv.Key + "=" + kv.Value;
-            }).ToDelimitedString("&"));
+                                                    {
+                                                        if (kv.Value == null)
+                                                            return string.Empty;
+                                                        return kv.Key + "=" + kv.Value;
+                                                    }).ToDelimitedString("&"));
 
             if (!announceURL.Contains("?")) announceURL += "?";
             else announceURL += "&";
 
-            var request = (HttpWebRequest)WebRequest.Create(announceURL + urlBuilder.ToString());
+            var request = (HttpWebRequest) WebRequest.Create(announceURL + urlBuilder);
             request.KeepAlive = false;
             request.Method = "GET";
 
             try
             {
-                var response = request.GetResponse();
+                WebResponse response = request.GetResponse();
                 byte[] trackerResponse;
                 using (var reader = new BinaryReader(response.GetResponseStream()))
                 {
-                    using (MemoryStream ms = new MemoryStream())
+                    using (var ms = new MemoryStream())
                     {
-                        byte[] buffer = new byte[1024];
+                        var buffer = new byte[1024];
                         int len = 0;
                         while ((len = reader.Read(buffer, 0, buffer.Length)) != 0)
                         {

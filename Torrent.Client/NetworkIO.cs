@@ -1,38 +1,36 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
 using System.Net;
 using System.Net.Sockets;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Torrent.Client
 {
     public delegate void NetworkCallback(bool success, int transmitted, object state);
-    static class NetworkIO
-    {
-        static AsyncCallback EndReceiveCallback = EndReceive;
-        static AsyncCallback EndSendCallback = EndSend;
-        static AsyncCallback EndConnectCallback = EndConnect;
 
-        static Cache<NetworkState> cache = new Cache<NetworkState>();
-        
-        static public void Receive(Socket socket, byte[] buffer, int offset, int count, object state, NetworkCallback callback)
+    internal static class NetworkIO
+    {
+        private static readonly AsyncCallback EndReceiveCallback = EndReceive;
+        private static readonly AsyncCallback EndSendCallback = EndSend;
+        private static readonly AsyncCallback EndConnectCallback = EndConnect;
+
+        private static readonly Cache<NetworkState> cache = new Cache<NetworkState>();
+
+        public static void Receive(Socket socket, byte[] buffer, int offset, int count, object state,
+                                   NetworkCallback callback)
         {
-            var data = cache.Get().Init(socket, buffer, offset, count, callback, state);
+            NetworkState data = cache.Get().Init(socket, buffer, offset, count, callback, state);
             ReceiveBase(data);
         }
 
-        static public void Send(Socket socket, byte[] buffer, int offset, int count, object state, NetworkCallback callback)
+        public static void Send(Socket socket, byte[] buffer, int offset, int count, object state,
+                                NetworkCallback callback)
         {
-            var data = cache.Get().Init(socket, buffer, offset, count, callback, state);
+            NetworkState data = cache.Get().Init(socket, buffer, offset, count, callback, state);
             SendBase(data);
         }
 
-        static public void Connect(Socket socket, IPEndPoint endpoint, object state, NetworkCallback callback)
+        public static void Connect(Socket socket, IPEndPoint endpoint, object state, NetworkCallback callback)
         {
-            var data = cache.Get().Init(socket, callback, state);
+            NetworkState data = cache.Get().Init(socket, callback, state);
             try
             {
                 socket.BeginConnect(endpoint, EndConnectCallback, data);
@@ -61,7 +59,8 @@ namespace Torrent.Client
         {
             try
             {
-                data.Socket.BeginReceive(data.Buffer, data.Offset, data.Remaining, SocketFlags.None, EndReceiveCallback, data);
+                data.Socket.BeginReceive(data.Buffer, data.Offset, data.Remaining, SocketFlags.None, EndReceiveCallback,
+                                         data);
             }
             catch
             {
@@ -72,7 +71,7 @@ namespace Torrent.Client
 
         private static void EndReceive(IAsyncResult ar)
         {
-            var data = (NetworkState)ar.AsyncState;
+            var data = (NetworkState) ar.AsyncState;
             try
             {
                 int count = data.Socket.EndReceive(ar);
@@ -105,7 +104,7 @@ namespace Torrent.Client
 
         private static void EndSend(IAsyncResult ar)
         {
-            var data = (NetworkState)ar.AsyncState;
+            var data = (NetworkState) ar.AsyncState;
             try
             {
                 int count = data.Socket.EndSend(ar);
@@ -138,13 +137,13 @@ namespace Torrent.Client
 
         private static void EndConnect(IAsyncResult ar)
         {
-            var data = (NetworkState)ar.AsyncState;
+            var data = (NetworkState) ar.AsyncState;
             try
             {
                 data.Socket.EndConnect(ar);
                 data.Callback(true, 0, data.State);
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 data.Callback(false, 0, data.State);
             }
@@ -154,7 +153,9 @@ namespace Torrent.Client
             }
         }
 
-        class NetworkState:ICacheable
+        #region Nested type: NetworkState
+
+        private class NetworkState : ICacheable
         {
             public Socket Socket { get; internal set; }
             public object State { get; internal set; }
@@ -164,33 +165,41 @@ namespace Torrent.Client
             public int Count { get; internal set; }
             public NetworkCallback Callback { get; internal set; }
 
+            #region ICacheable Members
+
             public ICacheable Init()
             {
                 return Init(null, null, null);
             }
 
-            public NetworkState Init(Socket socket, byte[] buffer, int offset, int count, NetworkCallback callback, object state)
+            #endregion
+
+            public NetworkState Init(Socket socket, byte[] buffer, int offset, int count, NetworkCallback callback,
+                                     object state)
             {
-                this.Socket = socket;
-                this.State = state;
-                this.Offset = offset;
-                this.Remaining = count;
-                this.Count = count;
-                this.Buffer = buffer;
-                this.Callback = callback;
+                Socket = socket;
+                State = state;
+                Offset = offset;
+                Remaining = count;
+                Count = count;
+                Buffer = buffer;
+                Callback = callback;
                 return this;
             }
+
             public NetworkState Init(Socket socket, NetworkCallback callback, object state)
             {
-                this.Socket = socket;
-                this.State = state;
-                this.Offset = 0;
-                this.Remaining = 0;
-                this.Count = 0;
-                this.Buffer = null;
-                this.Callback = callback;
+                Socket = socket;
+                State = state;
+                Offset = 0;
+                Remaining = 0;
+                Count = 0;
+                Buffer = null;
+                Callback = callback;
                 return this;
             }
         }
+
+        #endregion
     }
 }

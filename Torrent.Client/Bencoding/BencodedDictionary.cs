@@ -1,9 +1,6 @@
-
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Collections;
+using System.Collections.Generic;
+using System.Text;
 
 namespace Torrent.Client.Bencoding
 {
@@ -12,7 +9,7 @@ namespace Torrent.Client.Bencoding
     /// </summary>
     public class BencodedDictionary : IBencodedElement, IEnumerable<KeyValuePair<string, IBencodedElement>>
     {
-        private Dictionary<string, IBencodedElement> innerDictionary;
+        private readonly Dictionary<string, IBencodedElement> innerDictionary;
 
         /// <summary>
         /// Initializes a new instance of the Torrent.Client.Bencoding.BencodedDictionary class that is empty.
@@ -32,6 +29,39 @@ namespace Torrent.Client.Bencoding
             get { return innerDictionary[key]; }
             set { innerDictionary[key] = value; }
         }
+
+        #region IBencodedElement Members
+
+        /// <summary>
+        /// Returns a Bencoded string that represents the content of the Bencoded dictionary.
+        /// </summary>
+        /// <returns></returns>
+        public string ToBencodedString()
+        {
+            var str = new StringBuilder("d");
+            foreach (var item in innerDictionary)
+            {
+                str.Append(((BencodedString) item.Key).ToBencodedString()).Append(item.Value.ToBencodedString());
+            }
+            str.Append("e");
+            return str.ToString();
+        }
+
+        #endregion
+
+        #region IEnumerable<KeyValuePair<string,IBencodedElement>> Members
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return innerDictionary.GetEnumerator();
+        }
+
+        public IEnumerator<KeyValuePair<string, IBencodedElement>> GetEnumerator()
+        {
+            return innerDictionary.GetEnumerator();
+        }
+
+        #endregion
 
         /// <summary>
         /// Adds the specified key and value to the Bencoded dictionary.
@@ -63,18 +93,13 @@ namespace Torrent.Client.Bencoding
             return innerDictionary.ContainsKey(key);
         }
 
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return innerDictionary.GetEnumerator();
-        }
-
         /// <summary>
         /// Returns a string that represents the content of the Bencoded dictionary.
         /// </summary>
         /// <returns></returns>
         public override string ToString()
         {
-            StringBuilder buff = new StringBuilder();
+            var buff = new StringBuilder();
             buff.Append("dictionary: { ");
             foreach (var el in innerDictionary)
                 buff.Append(el.Key + "->" + el.Value + ", ");
@@ -82,26 +107,5 @@ namespace Torrent.Client.Bencoding
             buff.Append(" } ");
             return buff.ToString();
         }
-
-        public IEnumerator<KeyValuePair<string, IBencodedElement>> GetEnumerator()
-        {
-            return innerDictionary.GetEnumerator();
-        }
-
-        /// <summary>
-        /// Returns a Bencoded string that represents the content of the Bencoded dictionary.
-        /// </summary>
-        /// <returns></returns>
-        public string ToBencodedString()
-        {
-            StringBuilder str = new StringBuilder("d");
-            foreach (var item in innerDictionary)
-            {
-                str.Append(((BencodedString)item.Key).ToBencodedString()).Append(item.Value.ToBencodedString());
-            }
-            str.Append("e");
-            return str.ToString();
-        }
     }
 }
-

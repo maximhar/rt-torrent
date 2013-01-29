@@ -1,9 +1,6 @@
-
-﻿using System;
+﻿using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Collections;
 using MoreLinq;
 
 namespace Torrent.Client.Bencoding
@@ -13,7 +10,7 @@ namespace Torrent.Client.Bencoding
     /// </summary>
     public class BencodedList : IBencodedElement, IEnumerable<IBencodedElement>
     {
-        private List<IBencodedElement> innerList;
+        private readonly List<IBencodedElement> innerList;
 
         /// <summary>
         /// Initializes a new instance of the Torrent.Client.Bencoding.BencodedList class that is empty.
@@ -31,6 +28,39 @@ namespace Torrent.Client.Bencoding
         {
             collection.ForEach(e => innerList.Add(new BencodedString(e)));
         }
+
+        #region IBencodedElement Members
+
+        /// <summary>
+        /// Returns a Bencoded string that represents the content of the Bencoded list.
+        /// </summary>
+        /// <returns></returns>
+        public string ToBencodedString()
+        {
+            var str = new StringBuilder("l");
+            foreach (IBencodedElement item in innerList)
+            {
+                str.Append(item.ToBencodedString());
+            }
+            str.Append("e");
+            return str.ToString();
+        }
+
+        #endregion
+
+        #region IEnumerable<IBencodedElement> Members
+
+        public IEnumerator<IBencodedElement> GetEnumerator()
+        {
+            return innerList.GetEnumerator();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return innerList.GetEnumerator();
+        }
+
+        #endregion
 
         /// <summary>
         /// Adds an object to the end of the Bencoded list.
@@ -51,45 +81,19 @@ namespace Torrent.Client.Bencoding
             return innerList.Remove(value);
         }
 
-        public IEnumerator<IBencodedElement> GetEnumerator()
-        {
-            return innerList.GetEnumerator();
-        }
-
         /// <summary>
         /// Returns a string that represents the content of the Bencoded list.
         /// </summary>
         /// <returns></returns>
         public override string ToString()
         {
-            StringBuilder buff = new StringBuilder();
+            var buff = new StringBuilder();
             buff.Append("list: { ");
-            foreach (var el in innerList)
+            foreach (IBencodedElement el in innerList)
                 buff.Append(el + ", ");
             buff.Remove(buff.Length - 2, 2);
             buff.Append(" } ");
             return buff.ToString();
         }
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return innerList.GetEnumerator();
-        }
-
-        /// <summary>
-        /// Returns a Bencoded string that represents the content of the Bencoded list.
-        /// </summary>
-        /// <returns></returns>
-        public string ToBencodedString()
-        {
-            StringBuilder str = new StringBuilder("l");
-            foreach (var item in innerList)
-            {
-                str.Append(item.ToBencodedString());
-            }
-            str.Append("e");
-            return str.ToString();
-        }
     }
 }
-

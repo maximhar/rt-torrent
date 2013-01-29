@@ -1,13 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.IO;
-using Torrent.Client.Bencoding;
 using System.Collections.ObjectModel;
 using System.Diagnostics.Contracts;
-using MoreLinq;
+using System.IO;
+using System.Linq;
 using System.Security.Cryptography;
+using System.Text;
+using MoreLinq;
+using Torrent.Client.Bencoding;
 
 namespace Torrent.Client
 {
@@ -17,38 +17,8 @@ namespace Torrent.Client
     public class TorrentData
     {
         private const int CHECKSUM_SIZE = 20;
-        /// <summary>
-        /// The URL of the announce server.
-        /// </summary>
-        public string AnnounceURL { get; private set; }
-        /// <summary>
-        /// The list of announce URLs, if available.
-        /// </summary>
-        public ReadOnlyCollection<string> AnnounceList { get; private set; }
-        public IEnumerable<string> Announces { get; private set; }
-        /// <summary>
-        /// Length of the individual BitTorrent piece.
-        /// </summary>
-        public int PieceLength { get; private set; }
-        /// <summary>
-        /// Name of the torrent.
-        /// </summary>
-        public string Name { get; private set; }
-        /// <summary>
-        /// A read-only list of the files in the torrent.
-        /// </summary>
-        public ReadOnlyCollection<FileEntry> Files { get; private set; }
-        /// <summary>
-        /// A read-only list of the raw SHA1 checksums of the pieces in the torrent.
-        /// </summary>
-        public ReadOnlyCollection<byte[]> Checksums { get; private set; }
-        
-        /// <summary>
-        /// The SHA1 hash of the info dictionary of the torrent.
-        /// </summary>
-        public InfoHash InfoHash { get; private set; }
+        private readonly byte[] data;
 
-        private byte[] data;
         /// <summary>
         /// Initializes a new instance of the Torrent.Client.TorrentData class with data from a byte array.
         /// </summary>
@@ -80,6 +50,43 @@ namespace Torrent.Client
         }
 
         /// <summary>
+        /// The URL of the announce server.
+        /// </summary>
+        public string AnnounceURL { get; private set; }
+
+        /// <summary>
+        /// The list of announce URLs, if available.
+        /// </summary>
+        public ReadOnlyCollection<string> AnnounceList { get; private set; }
+
+        public IEnumerable<string> Announces { get; private set; }
+
+        /// <summary>
+        /// Length of the individual BitTorrent piece.
+        /// </summary>
+        public int PieceLength { get; private set; }
+
+        /// <summary>
+        /// Name of the torrent.
+        /// </summary>
+        public string Name { get; private set; }
+
+        /// <summary>
+        /// A read-only list of the files in the torrent.
+        /// </summary>
+        public ReadOnlyCollection<FileEntry> Files { get; private set; }
+
+        /// <summary>
+        /// A read-only list of the raw SHA1 checksums of the pieces in the torrent.
+        /// </summary>
+        public ReadOnlyCollection<byte[]> Checksums { get; private set; }
+
+        /// <summary>
+        /// The SHA1 hash of the info dictionary of the torrent.
+        /// </summary>
+        public InfoHash InfoHash { get; private set; }
+
+        /// <summary>
         /// Creates a .torrent file with the given data.
         /// </summary>
         /// <param name="name">The name of the file.</param>
@@ -91,7 +98,8 @@ namespace Torrent.Client
         /// <param name="pieces">A list of strings consisting of the concatenation of all 20-byte SHA1 hash values.</param>
         /// <param name="savePath">A path to save the .torrent file to.</param>
         /// <returns>A string representig the content of the .torrent file.</returns>
-        public static string Create(string name, List<FileEntry> inputFiles, string filesDir, string announce, List<string> announceList, int pieceLength, List<byte[]> pieces, string savePath)
+        public static string Create(string name, List<FileEntry> inputFiles, string filesDir, string announce,
+                                    List<string> announceList, int pieceLength, List<byte[]> pieces, string savePath)
         {
             Contract.Requires(name != null);
             Contract.Requires(inputFiles != null);
@@ -103,7 +111,7 @@ namespace Torrent.Client
             var res = new BencodedDictionary();
             res.Add("announce", new BencodedString(announce));
             var alist = new BencodedList();
-            announceList.ForEach(a => alist.Add(new BencodedList() { new BencodedString(a) }));
+            announceList.ForEach(a => alist.Add(new BencodedList {new BencodedString(a)}));
             res.Add("announce-list", alist);
             res.Add("created by", new BencodedString("rtTorrent/" + clientVersion));
             res.Add("creation date", new BencodedInteger(GetUnixTime()));
@@ -113,8 +121,8 @@ namespace Torrent.Client
 
             info.Add("piece length", new BencodedInteger(pieceLength));
 
-            StringBuilder piecesString = new StringBuilder();
-            pieces.ForEach(piece => piece.ForEach(b => piecesString.Append((char)b)));
+            var piecesString = new StringBuilder();
+            pieces.ForEach(piece => piece.ForEach(b => piecesString.Append((char) b)));
 
             info.Add("pieces", new BencodedString(piecesString.ToString()));
 
@@ -133,13 +141,14 @@ namespace Torrent.Client
                 info.Add("name", new BencodedString(filesDir));
                 var files = new BencodedList();
 
-                foreach (var inputFile in inputFiles)
+                foreach (FileEntry inputFile in inputFiles)
                 {
                     var aFile = new BencodedDictionary();
                     aFile.Add("length", new BencodedInteger(inputFile.Length));
 
                     var filePath = new BencodedList();
-                    inputFile.Name.Split(Path.DirectorySeparatorChar).ForEach(dir => filePath.Add(new BencodedString(dir)));
+                    inputFile.Name.Split(Path.DirectorySeparatorChar).ForEach(
+                        dir => filePath.Add(new BencodedString(dir)));
                     aFile.Add("path", filePath);
                     files.Add(aFile);
                 }
@@ -148,7 +157,7 @@ namespace Torrent.Client
             res.Add("info", info);
             return res.ToString();
         }
-        
+
         private static long GetUnixTime()
         {
             var epoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
@@ -157,31 +166,31 @@ namespace Torrent.Client
 
         private void LoadMetadata()
         {
-            var metadata = GetMetadata();
+            BencodedDictionary metadata = GetMetadata();
 
             var announce = metadata["announce"] as BencodedString;
-            
+
             var info = metadata["info"] as BencodedDictionary;
 
             CheckMetadata(announce, info);
 
             var pieceLength = info["piece length"] as BencodedInteger;
 
-            var checksumList = GetRawChecksums(info, pieceLength);
-            var name = GetNameFromInfo(info);
-            var decodedFiles = DecodeFiles(info, name);
+            List<byte[]> checksumList = GetRawChecksums(info, pieceLength);
+            BencodedString name = GetNameFromInfo(info);
+            List<FileEntry> decodedFiles = DecodeFiles(info, name);
             if (metadata.ContainsKey("announce-list"))
             {
-                var announceList = (BencodedList)metadata["announce-list"];
-                this.AnnounceList = DecodeAnnounceList(announceList).AsReadOnly();
+                var announceList = (BencodedList) metadata["announce-list"];
+                AnnounceList = DecodeAnnounceList(announceList).AsReadOnly();
             }
-            this.AnnounceURL = announce;
-            this.Checksums = checksumList.AsReadOnly();
-            this.Files = decodedFiles.AsReadOnly();
-            this.PieceLength = pieceLength;
-            this.Name = name;
-            this.InfoHash = ComputeInfoHash(info);
-            this.Announces = CreateAnnouces(AnnounceURL, AnnounceList);
+            AnnounceURL = announce;
+            Checksums = checksumList.AsReadOnly();
+            Files = decodedFiles.AsReadOnly();
+            PieceLength = pieceLength;
+            Name = name;
+            InfoHash = ComputeInfoHash(info);
+            Announces = CreateAnnouces(AnnounceURL, AnnounceList);
         }
 
         private IEnumerable<string> CreateAnnouces(string AnnounceURL, ReadOnlyCollection<string> AnnounceList)
@@ -197,9 +206,9 @@ namespace Torrent.Client
 
         private byte[] ComputeInfoHash(BencodedDictionary info)
         {
-            var hasher = SHA1.Create();
+            SHA1 hasher = SHA1.Create();
             string bencoded = info.ToBencodedString();
-            byte[] bytes = bencoded.Select(c => (byte)c).ToArray();
+            byte[] bytes = bencoded.Select(c => (byte) c).ToArray();
             byte[] hash = hasher.ComputeHash(bytes);
             return hash;
         }
@@ -209,43 +218,42 @@ namespace Torrent.Client
             var list = new List<string>();
             foreach (BencodedList urllist in announceList)
             {
-                list.Add((BencodedString)urllist.First());
+                list.Add((BencodedString) urllist.First());
             }
             return list;
         }
 
         private void CheckMetadata(BencodedString announce, BencodedDictionary info)
         {
-            if (announce == null || info == null) 
+            if (announce == null || info == null)
                 throw new TorrentException(string.Format("Invalid metadata, 'announce'/'info' not of expected type."));
-
         }
 
         private BencodedString GetNameFromInfo(BencodedDictionary info)
         {
             var name = info["name"] as BencodedString;
-            if (name == null) 
-                throw new TorrentException(string.Format("Invalid metadata in file {0}, 'name' not of expected type."));
+            if (name == null)
+                throw new TorrentException(string.Format("Invalid metadata in file, 'name' not of expected type."));
             return name;
         }
 
         private List<FileEntry> DecodeFiles(BencodedDictionary info, BencodedString name)
         {
             var decodedFiles = new List<FileEntry>();
-            if (info.ContainsKey("files")) 
+            if (info.ContainsKey("files"))
             {
                 var files = info["files"] as BencodedList;
                 CheckInfoFiles(files);
                 foreach (BencodedDictionary file in files)
                 {
-                    var torrentFile = CreateTorrentFile(file);
+                    FileEntry torrentFile = CreateTorrentFile(file);
                     decodedFiles.Add(torrentFile);
                 }
             }
-            else 
+            else
             {
                 var fileLength = info["length"] as BencodedInteger;
-                CheckFileLength(fileLength); 
+                CheckFileLength(fileLength);
                 decodedFiles.Add(new FileEntry(name, fileLength));
             }
             return decodedFiles;
@@ -253,7 +261,7 @@ namespace Torrent.Client
 
         private FileEntry CreateTorrentFile(BencodedDictionary file)
         {
-            var filePathList = (file["path"] as BencodedList).Select(s => (string)(s as BencodedString)).ToArray();
+            string[] filePathList = (file["path"] as BencodedList).Select(s => (string) (s as BencodedString)).ToArray();
             var fileLength = file["length"] as BencodedInteger;
             CheckFileProperties(filePathList, fileLength);
             string filePath = Path.Combine(filePathList);
@@ -263,50 +271,48 @@ namespace Torrent.Client
 
         private void CheckFileLength(BencodedInteger fileLength)
         {
-            if (fileLength == null) 
+            if (fileLength == null)
                 throw new TorrentException(string.Format("Invalid metadata, 'length' not of expected type."));
-
         }
 
         private void CheckFileProperties(string[] filePathList, BencodedInteger fileLength)
         {
-            if (filePathList == null || fileLength == null) 
+            if (filePathList == null || fileLength == null)
                 throw new TorrentException(string.Format("Invalid metadata, 'path'/'length' not of expected type."));
-
         }
 
         private void CheckInfoFiles(BencodedList files)
         {
-            if (files == null) 
+            if (files == null)
                 throw new TorrentException(string.Format("Invalid metadata, 'files' not of expected type."));
-
         }
 
         private List<byte[]> GetRawChecksums(BencodedDictionary info, BencodedInteger pieceLength)
         {
             byte[] rawChecksums = Encoding.ASCII.GetBytes(info["pieces"] as BencodedString);
-            if (pieceLength == null || rawChecksums == null || rawChecksums.Length % CHECKSUM_SIZE != 0)
-                throw new TorrentException(string.Format("Invalid metadata, 'piece length'/'pieces' not of expected type, or invalid length of 'pieces'."));
-            var slicedChecksums = rawChecksums.Batch(CHECKSUM_SIZE).Select(e=>e.ToArray());
+            if (pieceLength == null || rawChecksums == null || rawChecksums.Length%CHECKSUM_SIZE != 0)
+                throw new TorrentException(
+                    string.Format(
+                        "Invalid metadata, 'piece length'/'pieces' not of expected type, or invalid length of 'pieces'."));
+            IEnumerable<byte[]> slicedChecksums = rawChecksums.Batch(CHECKSUM_SIZE).Select(e => e.ToArray());
             return slicedChecksums.ToList();
         }
 
         private BencodedDictionary GetMetadata()
         {
-            var metadata = BencodingParser.Decode(this.data) as BencodedDictionary;
+            var metadata = BencodingParser.Decode(data) as BencodedDictionary;
             CheckMetadata(metadata);
             return metadata;
         }
 
         private void CheckMetadata(BencodedDictionary metadata)
         {
-            if (metadata == null) 
+            if (metadata == null)
                 throw new TorrentException(string.Format("Invalid metadata."));
-            if (!metadata.ContainsKey("announce")) 
+            if (!metadata.ContainsKey("announce"))
                 throw new TorrentException(string.Format("Invalid metadata, 'announce' not found."));
-            if (!metadata.ContainsKey("info")) 
+            if (!metadata.ContainsKey("info"))
                 throw new TorrentException(string.Format("Invalid metadata, 'info' not found."));
-
         }
     }
 }

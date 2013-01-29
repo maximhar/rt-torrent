@@ -3,13 +3,8 @@
     /// <summary>
     /// Provides a container class for the KeepAliveMessage data for peer communication.
     /// </summary>
-    class KeepAliveMessage:PeerMessage
+    internal class KeepAliveMessage : PeerMessage
     {
-        /// <summary>
-        /// Initializes a new instance of the Torrent.Client.KeepAliveMessage class.
-        /// </summary>
-        public KeepAliveMessage() { }
-
         /// <summary>
         /// The length of the KeepAliveMessage.
         /// </summary>
@@ -26,7 +21,8 @@
         /// <param name="offset">The position in the array at which the message begins.</param>
         /// <param name="count">The length to be read in bytes.</param>
         public override void FromBytes(byte[] buffer, int offset, int count)
-        {  }
+        {
+        }
 
         /// <summary>
         /// Writes the KeepAliveMessage data to a byte array.
@@ -37,7 +33,7 @@
         public override int ToBytes(byte[] buffer, int offset)
         {
             int start = offset;
-            offset += Write(buffer, offset, (byte)0);
+            offset += Write(buffer, offset, (byte) 0);
             return offset - start;
         }
 

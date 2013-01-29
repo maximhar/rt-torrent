@@ -1,9 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Net;
-using System.Text;
 using Torrent.Client.Bencoding;
 
 namespace Torrent.Client
@@ -15,15 +12,15 @@ namespace Torrent.Client
     {
         public static IPEndPoint FromBencoded(BencodedDictionary peer)
         {
-            return new IPEndPoint(IPAddress.Parse((BencodedString)peer["ip"]),
-                (ushort)(BencodedInteger)peer["port"]);
+            return new IPEndPoint(IPAddress.Parse((BencodedString) peer["ip"]),
+                                  (ushort) (BencodedInteger) peer["port"]);
         }
+
         public static IPEndPoint FromBytes(byte[] peer)
         {
-            ushort port = (ushort)IPAddress.HostToNetworkOrder((short)BitConverter.ToUInt16(peer, 4));
+            var port = (ushort) IPAddress.HostToNetworkOrder((short) BitConverter.ToUInt16(peer, 4));
             return new IPEndPoint(new IPAddress(peer.Take(4).ToArray()),
-                port);
+                                  port);
         }
     }
 }
-    

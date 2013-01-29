@@ -1,6 +1,6 @@
 ﻿namespace Torrent.Client.Messages
 {
-    interface IPeerMessage
+    internal interface IPeerMessage
     {
         int MessageLength { get; }
         byte[] ToBytes();

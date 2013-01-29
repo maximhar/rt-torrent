@@ -7,18 +7,13 @@ namespace Torrent.Client.Messages
     /// <summary>
     /// Provides a container class for the BitfieldMessage data for peer communication.
     /// </summary>
-    class BitfieldMessage:PeerMessage
+    internal class BitfieldMessage : PeerMessage
     {
         /// <summary>
         /// The ID of the message
         /// </summary>
         public static readonly int Id = 5;
-        /// <summary>
-        /// A bitfield representing the pieces that have been successfully downloaded.
-        /// <para>A cleared bit indicated a missing piece, and set bits indicate a valid and available piece.</para>
-        /// </summary>
-        public BitArray Bitfield { get; private set; }
-        
+
         /// <summary>
         /// Initializes a new empty instance of the Torrent.Client.BitfieldMessage class.
         /// </summary>
@@ -35,15 +30,21 @@ namespace Torrent.Client.Messages
         {
             Contract.Requires(bitfield != null);
 
-            this.Bitfield = bitfield;
+            Bitfield = bitfield;
         }
+
+        /// <summary>
+        /// A bitfield representing the pieces that have been successfully downloaded.
+        /// <para>A cleared bit indicated a missing piece, and set bits indicate a valid and available piece.</para>
+        /// </summary>
+        public BitArray Bitfield { get; private set; }
 
         /// <summary>
         /// The length of the BitfieldMessage.
         /// </summary>
         public override int MessageLength
         {
-            get { return 4+1+Bitfield.Length/8; }
+            get { return 4 + 1 + Bitfield.Length/8; }
         }
 
         /// <summary>
@@ -56,8 +57,8 @@ namespace Torrent.Client.Messages
         {
             ReadInt(buffer, ref offset);
             ReadByte(buffer, ref offset);
-            var bytes = ReadBytes(buffer, ref offset, count-offset);
-            this.Bitfield = new BitArray(bytes);
+            byte[] bytes = ReadBytes(buffer, ref offset, count - offset);
+            Bitfield = new BitArray(bytes);
         }
 
         /// <summary>
@@ -68,11 +69,11 @@ namespace Torrent.Client.Messages
         /// <returns>An integer representing the the amount of bytes written in the array.</returns>
         public override int ToBytes(byte[] buffer, int offset)
         {
-            byte[] byteArray = new byte[(int)Math.Ceiling((double)Bitfield.Length / 8)];
+            var byteArray = new byte[(int) Math.Ceiling((double) Bitfield.Length/8)];
             Bitfield.CopyTo(byteArray, 0);
             int start = offset;
-            offset += Write(buffer, offset, (int)5);
-            offset += Write(buffer, offset, (byte)5);
+            offset += Write(buffer, offset, 5);
+            offset += Write(buffer, offset, (byte) 5);
             offset += Write(buffer, offset, byteArray);
             return offset - start;
         }
@@ -93,11 +94,11 @@ namespace Torrent.Client.Messages
         /// <returns></returns>
         public override bool Equals(object obj)
         {
-            BitfieldMessage msg = obj as BitfieldMessage;
-            
+            var msg = obj as BitfieldMessage;
+
             if (msg == null)
                 return false;
-            return CompareBitArray(this.Bitfield, msg.Bitfield);
+            return CompareBitArray(Bitfield, msg.Bitfield);
         }
 
         /// <summary>

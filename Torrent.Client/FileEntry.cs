@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Diagnostics.Contracts;
+
 namespace Torrent.Client
 {
     /// <summary>
@@ -10,15 +8,6 @@ namespace Torrent.Client
     /// </summary>
     public class FileEntry
     {
-        /// <summary>
-        /// The name of the file enter. (in BitTorrent, includes full path)
-        /// </summary>
-        public string Name { get; private set; }
-
-        /// <summary>
-        /// The length of the file in bytes.
-        /// </summary>
-        public long Length { get; private set; }
         /// <summary>
         /// Initializes a new instance of the Torrent.Client.FileEntry class.
         /// </summary>
@@ -29,17 +18,28 @@ namespace Torrent.Client
             Contract.Requires(length >= 0);
             Contract.Requires(name != null);
 
-            this.Name = name;
-            this.Length = length;
+            Name = name;
+            Length = length;
         }
+
+        /// <summary>
+        /// The name of the file enter. (in BitTorrent, includes full path)
+        /// </summary>
+        public string Name { get; private set; }
+
+        /// <summary>
+        /// The length of the file in bytes.
+        /// </summary>
+        public long Length { get; private set; }
+
         /// <summary>
         /// Returns a string that represents the content of the FileEntry object.
         /// </summary>
         /// <returns></returns>
         public override string ToString()
         {
-            var size = FileSizeFormat(this.Length);
-            return String.Format("{0} | {1}", this.Name, size);
+            string size = FileSizeFormat(Length);
+            return String.Format("{0} | {1}", Name, size);
         }
 
         private string FileSizeFormat(long size)
@@ -54,17 +54,16 @@ namespace Torrent.Client
             }
             else if (size < MB)
             {
-                return string.Format("{0:0.00} KB", ((float)size / KB));
+                return string.Format("{0:0.00} KB", ((float) size/KB));
             }
             else if (size < GB)
             {
-                return string.Format("{0:0.00} MB", ((float)size / MB));
+                return string.Format("{0:0.00} MB", ((float) size/MB));
             }
             else
             {
-                return string.Format("{0:0.00} GB", ((float)size / GB));
+                return string.Format("{0:0.00} GB", ((float) size/GB));
             }
         }
-
     }
 }

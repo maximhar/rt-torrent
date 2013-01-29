@@ -2,38 +2,39 @@
 
 namespace Torrent.Client.Messages
 {
-    class PortMessage:PeerMessage
+    internal class PortMessage : PeerMessage
     {
         public static readonly int Id = 9;
-        public ushort Port { get; private set; }
 
         public PortMessage()
         {
-            this.Port = 0;
+            Port = 0;
         }
 
         public PortMessage(ushort port)
         {
-            this.Port = port;
+            Port = port;
         }
 
-        public override void FromBytes(byte[] buffer, int offset, int count)
-        {
-            if (count != MessageLength)
-                throw new ArgumentException("Invalid message length.");
-            this.Port = (ushort)ReadShort(buffer, ref offset);
-        }
+        public ushort Port { get; private set; }
 
         public override int MessageLength
         {
             get { return 7; }
         }
 
+        public override void FromBytes(byte[] buffer, int offset, int count)
+        {
+            if (count != MessageLength)
+                throw new ArgumentException("Invalid message length.");
+            Port = (ushort) ReadShort(buffer, ref offset);
+        }
+
         public override int ToBytes(byte[] buffer, int offset)
         {
             int start = offset;
-            offset += Write(buffer, offset, (int)5);
-            offset += Write(buffer, offset, (byte)9);
+            offset += Write(buffer, offset, 5);
+            offset += Write(buffer, offset, (byte) 9);
             offset += Write(buffer, offset, Port);
             return offset - start;
         }
@@ -45,11 +46,11 @@ namespace Torrent.Client.Messages
 
         public override bool Equals(object obj)
         {
-            PortMessage msg = obj as PortMessage;
+            var msg = obj as PortMessage;
 
             if (msg == null)
                 return false;
-            return this.Port == msg.Port;
+            return Port == msg.Port;
         }
 
         public override int GetHashCode()

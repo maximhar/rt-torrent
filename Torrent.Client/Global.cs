@@ -16,12 +16,23 @@ namespace Torrent.Client
         private const string ID_HEAD = "-RT1111-";
         private const ushort LISTEN_PORT = 8912;
         private static volatile Global instance = new Global();
-        private static object syncRoot = new object();
-        private Random random;
+        private static readonly object syncRoot = new object();
+        private readonly Random random;
+
+        private Global()
+        {
+            ListeningPort = LISTEN_PORT;
+            int seed = DateTime.Now.Millisecond + DateTime.Now.Minute + DateTime.Now.Day + ID_HEAD.Length;
+            random = new Random(seed);
+            PeerId = new string(GeneratePeerId().Select(b => (char) b).ToArray());
+            BindSocket();
+        }
+
         /// <summary>
         /// The current peer ID.
         /// </summary>
         public string PeerId { get; private set; }
+
         /// <summary>
         /// The port the client listens on;
         /// </summary>
@@ -46,10 +57,12 @@ namespace Torrent.Client
                 return instance;
             }
         }
+
         public int NextRandom(int max)
         {
             return NextRandom(0, max);
         }
+
         public int NextRandom(int min, int max)
         {
             lock (random)
@@ -57,18 +70,10 @@ namespace Torrent.Client
                 return random.Next(min, max);
             }
         }
-        private Global()
-        {
-            ListeningPort = LISTEN_PORT;
-            var seed = DateTime.Now.Millisecond + DateTime.Now.Minute + DateTime.Now.Day + ID_HEAD.Length;
-            random = new Random(seed);
-            PeerId = new string(GeneratePeerId().Select(b=>(char)b).ToArray());
-            BindSocket();
-        }
 
         private void BindSocket()
         {
-            this.Listener = new Socket(SocketType.Stream, ProtocolType.Tcp);
+            Listener = new Socket(SocketType.Stream, ProtocolType.Tcp);
             Listener.Bind(new IPEndPoint(IPAddress.Any, LISTEN_PORT));
             Listener.Listen(10);
         }
@@ -79,7 +84,7 @@ namespace Torrent.Client
             lock (random)
             {
                 id.AddRange(Encoding.UTF8.GetBytes(ID_HEAD));
-                id.AddRange(Enumerable.Repeat(0, ID_LENGTH - ID_HEAD.Length).Select(i => (byte)NextRandom((int)'0', (int)'z')));
+                id.AddRange(Enumerable.Repeat(0, ID_LENGTH - ID_HEAD.Length).Select(i => (byte) NextRandom('0', 'z')));
             }
             return id.ToArray();
         }
