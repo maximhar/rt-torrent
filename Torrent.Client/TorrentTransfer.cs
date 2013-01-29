@@ -92,7 +92,7 @@ namespace Torrent.Client
             StartActions();
             try
             {
-                Listen();
+                RegisterForListen();
                 HandshakeTracker();
                 ConnectToPeers();
                 WaitForStop();
@@ -103,6 +103,40 @@ namespace Torrent.Client
             }
             StopActions();
         }
+
+        private void StartActions()
+        {
+            stop = false;
+            Running = true;
+        }
+
+        private void RegisterForListen()
+        {
+            PeerListener.RaisedException += PeerListener_RaisedException;
+            PeerListener.Register(Data.InfoHash, ReceivedPeer);
+        }
+
+        void PeerListener_RaisedException(object sender, Exception e)
+        {
+            OnRaisedException(e);
+            Stop();
+        }
+
+        private void ReceivedPeer(PeerState peer)
+        {
+            Debug.WriteLine("I got a peer who connected to me first!");
+            InitializePeer(peer);
+            SendMessage(peer.Socket, localHandshake, peer, HandshakeSent);
+        }
+
+        private void HandshakeTracker()
+        {
+            var info = tracker.AnnounceStart(Data.InfoHash, Global.Instance.PeerId, Global.Instance.ListeningPort,
+                0, 0, (long)this.Data.Files.Sum(f => f.Length));
+            Endpoints = info.Endpoints;//gotta pee k
+            
+        }
+
 
         private void ConnectToPeers()
         {
@@ -121,30 +155,36 @@ namespace Torrent.Client
             return peer;
         }
 
+        private PeerState InitializePeer(PeerState peer)
+        {
+            peer.Bitfield = new System.Collections.BitArray(Data.Checksums.Count);
+            return peer;
+        }
+
         private void PeerConnected(bool success, int transmitted, object state)
         {
             if (stop) return;
             var peer = (PeerState)state;
             if (success)
             {
-                Debug.WriteLine("Connected to: " + peer);
                 SendMessage(peer.Socket, localHandshake, peer, HandshakeSent);
             }
-            else
-                Debug.WriteLine("Couldn't connect to: " + peer);
         }
 
-        private void StartActions()
-        {
-            stop = false;
-            Running = true;
-        }
+        
 
         private void StopActions()
         {
             OnStopping();
             ClosePeerSockets();
+            DeregisterFromListen();
             Running = false;
+        }
+
+        private void DeregisterFromListen()
+        {
+            PeerListener.Deregister(Data.InfoHash);
+            PeerListener.RaisedException -= PeerListener_RaisedException;
         }
 
         private void ClosePeerSockets()
@@ -164,33 +204,8 @@ namespace Torrent.Client
             }
         }
 
-        private void Listen()
-        {
-            BeginListen();
-        }
-
-        private void BeginListen()
-        {
-            if (stop)
-            {
-                return;
-            }
-            Debug.WriteLine("Listening");
-            listenSocket.BeginAccept(EndAccept, listenSocket);
-        }
-
-        private void EndAccept(IAsyncResult ar)
-        {
-            var socket = (Socket)ar.AsyncState;
-            var newsocket = socket.EndAccept(ar);
-            var peer = InitializePeer((IPEndPoint)newsocket.RemoteEndPoint);
-            MessageIO.ReceiveHandshake(newsocket, peer, HandshakeReceived);
-            BeginListen();
-        }
-
         private void HandshakeReceived(bool success, PeerMessage message, object state)
         {
-
             var peer = (PeerState)state;
             var handshake = (HandshakeMessage)message;
             if(success)
@@ -319,12 +334,7 @@ namespace Torrent.Client
             OnSentMessage(message);
         }
         
-        private void HandshakeTracker()
-        {
-            var info = tracker.AnnounceStart(Data.InfoHash, Global.Instance.PeerId, Global.Instance.ListeningPort,
-                0, 0, (long)this.Data.Files.Sum(f => f.Length));
-            Endpoints = info.Endpoints;
-        }
+        
         #region Events
         private void OnGotPeers()
         {

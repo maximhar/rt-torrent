@@ -29,7 +29,7 @@ namespace Torrent.Client
         /// A 20-byte SHA1 hash of the info key in the metainfo file.
         /// <para>This is the same info_hash that is transmitted in tracker requests.</para>
         /// </summary>
-        public byte[] InfoHash { get; private set; }
+        public InfoHash InfoHash { get; private set; }
         /// <summary>
         /// A string identifier of the protocol.
         /// </summary>

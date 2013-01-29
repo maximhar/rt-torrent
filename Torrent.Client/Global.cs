@@ -13,7 +13,7 @@ namespace Torrent.Client
     public sealed class Global
     {
         private const int ID_LENGTH = 20;
-        private const string ID_HEAD = "-RT1000-";
+        private const string ID_HEAD = "-RT1111-";
         private const ushort LISTEN_PORT = 8912;
         private static volatile Global instance = new Global();
         private static object syncRoot = new object();
