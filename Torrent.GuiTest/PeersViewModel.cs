@@ -12,6 +12,7 @@ using Torrent.Client;
 using MoreLinq;
 using System.Windows.Threading;
 using System.Net;
+using Torrent.Client.Messages;
 
 namespace Torrent.GuiTest
 {

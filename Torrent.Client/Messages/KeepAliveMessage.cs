@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
-namespace Torrent.Client
+﻿namespace Torrent.Client.Messages
 {
     /// <summary>
     /// Provides a container class for the KeepAliveMessage data for peer communication.

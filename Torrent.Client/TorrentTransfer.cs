@@ -10,6 +10,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Torrent.Client.Messages;
 
 namespace Torrent.Client
 {
@@ -53,7 +54,7 @@ namespace Torrent.Client
             Contract.Requires(torrentStream != null);
 
             Endpoints = new List<IPEndPoint>();
-
+            
             using (torrentStream)
             using (var reader = new BinaryReader(torrentStream))
             {

@@ -1,11 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics.Contracts;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Diagnostics.Contracts;
 
-namespace Torrent.Client
+namespace Torrent.Client.Messages
 {
     /// <summary>
     /// Provides a container class for the HaveMessage data for peer communication.

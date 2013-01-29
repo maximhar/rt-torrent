@@ -1,11 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics.Contracts;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace Torrent.Client
+namespace Torrent.Client.Messages
 {
     /// <summary>
     /// Provides a container class for the CancelMessage data for peer communication.

@@ -1,13 +1,9 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using System.Net;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace Torrent.Client
+namespace Torrent.Client.Messages
 {
     /// <summary>
     /// Provides an abstract base for the message classes, as well as constructor methods.
