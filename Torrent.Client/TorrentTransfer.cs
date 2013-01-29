@@ -118,8 +118,6 @@ namespace Torrent.Client
         {
             var peer = new PeerState(new Socket(SocketType.Stream, ProtocolType.Tcp), peerEndpoint);
             peer.Bitfield = new System.Collections.BitArray(Data.Checksums.Count);
-            peer.AmChoked = true;
-            peer.IsChoked = true;
             return peer;
         }
 

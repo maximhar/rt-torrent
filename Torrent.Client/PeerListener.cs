@@ -14,16 +14,25 @@ namespace Torrent.Client
         private static ConcurrentDictionary<InfoHash, PeerConnectedCallback> innerDictionary;
         private static Socket listenSocket;
 
-        public static PeerListener()
+        static PeerListener()
         {
             listenSocket = Global.Instance.Listener;
             BeginListening();
         }
 
-        public static bool Register(InfoHash infoHash, PeerConnectedCallback callback);
-        public static bool Deregister(InfoHash infoHash);
+        public static bool Register(InfoHash infoHash, PeerConnectedCallback callback)
+        {
+            throw new NotImplementedException();
+        }
+        public static bool Deregister(InfoHash infoHash)
+        {
+            throw new NotImplementedException();
+        }
 
-        private static void BeginListening();
+        private static void BeginListening()
+        {
+            throw new NotImplementedException();
+        }
 
         
     }

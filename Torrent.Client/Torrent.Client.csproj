@@ -107,6 +107,7 @@
     <Compile Include="Messages\PeerMessage.cs" />
     <Compile Include="Global.cs" />
     <Compile Include="PeerEndpoint.cs" />
+    <Compile Include="PeerListener.cs" />
     <Compile Include="PeerState.cs" />
     <Compile Include="Messages\PieceMessage.cs" />
     <Compile Include="Messages\PortMessage.cs" />
@@ -125,6 +126,7 @@
     <Content Include="Todos\Task 1.txt" />
     <Content Include="Todos\Task 2.txt" />
     <Content Include="Todos\Task 3.txt" />
+    <Content Include="Todos\Task 4.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
