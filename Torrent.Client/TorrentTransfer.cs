@@ -23,7 +23,7 @@ namespace Torrent.Client
         private readonly TrackerClient tracker;
         private List<IPEndPoint> Endpoints;
         private volatile bool stop;
-
+        private PieceManager pieceManager;
         /// <summary>
         /// Initialize a torrent transfer with metadata from a file on the filesystem.
         /// </summary>
@@ -54,6 +54,7 @@ namespace Torrent.Client
             Peers = new ConcurrentDictionary<string, PeerState>();
             localHandshake = new HandshakeMessage(Global.Instance.PeerId, new byte[8], Data.InfoHash,
                                                   "BitTorrent protocol");
+            pieceManager = new PieceManager(Data);
         }
 
         /// <summary>
@@ -251,7 +252,7 @@ namespace Torrent.Client
                 else if (message is UnchokeMessage)
                 {
                     peer.AmChoked = false;
-                    SendMessageTo(peer, new RequestMessage(2, 0, 1024*16));
+                    SendMessageTo(peer, new RequestMessage(Global.Instance.NextRandom(Data.Checksums.Count), 0, 1024*16));
                 }
                 else if (message is InterestedMessage)
                 {
@@ -265,6 +266,11 @@ namespace Torrent.Client
                 {
                     peer.IsInterested = false;
                 }
+                else if(message is PieceMessage)
+                {
+                    var pieceMessage = message as PieceMessage;
+                    pieceManager.AddPiece(new Piece(pieceMessage.Block, pieceMessage.Index, pieceMessage.Begin), PieceAdded, null);
+                }
                 MessageIO.ReceiveMessage(peer.Socket, peer, MessageReceived);
                 OnReceivedMessage(message);
             }
@@ -272,6 +278,11 @@ namespace Torrent.Client
             {
                 ClosePeerSocket(peer);
             }
+        }
+
+        private void PieceAdded(bool success, object state)
+        {
+            Debug.WriteLine("Piece written: " + success);
         }
 
         private void HandleHave(PeerMessage message, PeerState peer)
