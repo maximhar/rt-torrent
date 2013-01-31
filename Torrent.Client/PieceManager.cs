@@ -38,7 +38,7 @@ namespace Torrent.Client
 
         public void AddPiece(Piece piece, PieceWrittenDelegate callback, object state)
         {
-            Tuple<FileStream, long> file = GetFile((int)piece.Block, (int) piece.Offset);
+            Tuple<FileStream, long> file = GetFile((int)piece.Block, (int)piece.Offset);
             long relativeOffset = file.Item2;
             FileStream stream = file.Item1;
             PieceWriteState data = writeCache.Get().Init(callback, state);
