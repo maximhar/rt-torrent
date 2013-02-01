@@ -16,21 +16,21 @@
         public PieceMessage()
         {
             Index = -1;
-            Begin = -1;
-            Block = null;
+            Offset = -1;
+            Data = null;
         }
 
         /// <summary>
         /// Initializes a new empty instance of the Torrent.Client.PieceMessage class.
         /// </summary>
         /// <param name="index">The zero-based piece index.</param>
-        /// <param name="begin">The zero-based byte offset within the piece.</param>
-        /// <param name="block">A block of data, which is a subset of the piece specified by index.</param>
-        public PieceMessage(int index, int begin, byte[] block)
+        /// <param name="offset">The zero-based byte offset within the piece.</param>
+        /// <param name="data">A block of data, which is a subset of the piece specified by index.</param>
+        public PieceMessage(int index, int offset, byte[] data)
         {
             Index = index;
-            Begin = begin;
-            Block = block;
+            Offset = offset;
+            Data = data;
         }
 
         /// <summary>
@@ -41,19 +41,19 @@
         /// <summary>
         /// The zero-based byte offset within the piece.
         /// </summary>
-        public int Begin { get; private set; }
+        public int Offset { get; private set; }
 
         /// <summary>
         /// A block of data, which is a subset of the piece specified by index.
         /// </summary>
-        public byte[] Block { get; private set; }
+        public byte[] Data { get; private set; }
 
         /// <summary>
         /// The length of the PieceMessage.
         /// </summary>
         public override int MessageLength
         {
-            get { return 13 + Block.Length; }
+            get { return 13 + Data.Length; }
         }
 
         /// <summary>
@@ -67,8 +67,8 @@
             ReadInt(buffer, ref offset);
             ReadByte(buffer, ref offset);
             Index = ReadInt(buffer, ref offset);
-            Begin = ReadInt(buffer, ref offset);
-            Block = ReadBytes(buffer, ref offset, count - offset);
+            Offset = ReadInt(buffer, ref offset);
+            Data = ReadBytes(buffer, ref offset, count - offset);
         }
 
         /// <summary>
@@ -83,8 +83,8 @@
             offset += Write(buffer, offset, 5);
             offset += Write(buffer, offset, (byte) 7);
             offset += Write(buffer, offset, Index);
-            offset += Write(buffer, offset, Begin);
-            offset += Write(buffer, offset, Block);
+            offset += Write(buffer, offset, Offset);
+            offset += Write(buffer, offset, Data);
             return offset - start;
         }
 
@@ -94,7 +94,7 @@
         /// <returns>The string containing the PieceMessage data representation.</returns>
         public override string ToString()
         {
-            return string.Format("Piece message: Index: {0}, Begin: {1}, Block.Length: {2}", Index, Begin, Block.Length);
+            return string.Format("Piece message: Index: {0}, Offset: {1}, Block.Length: {2}", Index, Offset, Data.Length);
         }
 
         /// <summary>
@@ -108,9 +108,9 @@
 
             if (msg == null)
                 return false;
-            if (!CompareByteArray(Block, msg.Block))
+            if (!CompareByteArray(Data, msg.Data))
                 return false;
-            return Index == msg.Index && Begin == msg.Begin;
+            return Index == msg.Index && Offset == msg.Offset;
         }
 
         /// <summary>
@@ -119,8 +119,8 @@
         /// <returns>An integer representing the hash code of this instace of the PieceMessage class.</returns>
         public override int GetHashCode()
         {
-            return MessageLength.GetHashCode() ^ Id.GetHashCode() ^ Index.GetHashCode() ^ Begin.GetHashCode() ^
-                   Block.GetHashCode();
+            return MessageLength.GetHashCode() ^ Id.GetHashCode() ^ Index.GetHashCode() ^ Offset.GetHashCode() ^
+                   Data.GetHashCode();
         }
     }
 }

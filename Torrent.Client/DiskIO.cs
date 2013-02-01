@@ -5,9 +5,9 @@ using System.Threading;
 
 namespace Torrent.Client
 {
-    public delegate void DiskIOReadCallback(bool success, byte[] data, object state);
+    public delegate void DiskIOReadCallback(bool success, int read, byte[] data, object state);
 
-    public delegate void DiskIOWriteCallback(bool success, object state);
+    public delegate void DiskIOWriteCallback(bool success, int written, object state);
 
     internal static class DiskIO
     {
@@ -39,10 +39,10 @@ namespace Torrent.Client
             ioHandle.Set();
         }
 
-        public static void QueueWrite(Stream stream, byte[] data, long offset, long length, DiskIOWriteCallback callback,
+        public static void QueueWrite(Stream stream, byte[] data, long fileOffset, int dataOffset, long length, DiskIOWriteCallback callback,
                                       object state)
         {
-            DiskIOWriteState writeData = writeCache.Get().Init(stream, data, offset, length, callback, state);
+            DiskIOWriteState writeData = writeCache.Get().Init(stream, data, fileOffset, dataOffset, length, callback, state);
             writeQueue.Enqueue(() => Write(writeData));
             ioHandle.Set();
         }
@@ -50,6 +50,7 @@ namespace Torrent.Client
         private static void StartDiskThread()
         {
             var diskThread = new Thread(DiskLoop);
+            diskThread.IsBackground = true;
             diskThread.Start();
         }
 
@@ -74,14 +75,14 @@ namespace Torrent.Client
         {
             try
             {
-                state.Stream.Seek(state.Offset, SeekOrigin.Begin);
-                state.Stream.Write(state.Data, 0, state.Data.Length);
-                state.Callback(true, state.State);
+                state.Stream.Seek(state.FileOffset, SeekOrigin.Begin);
+                state.Stream.Write(state.Data, state.DataOffset, (int)state.Length);
+                state.Callback(true, (int)state.Length, state.State);
                 writeCache.Put(state);
             }
             catch (Exception)
             {
-                state.Callback(false, state.State);
+                state.Callback(false, 0, state.State);
                 writeCache.Put(state);
             }
         }
@@ -92,13 +93,13 @@ namespace Torrent.Client
             {
                 state.Stream.Seek(state.StreamOffset, SeekOrigin.Begin);
                 int read = state.Stream.Read(state.Buffer, 0, (int)state.Length);
-                if (read != state.Length) state.Callback(false, null, state.State);
-                else state.Callback(true, state.Buffer, state.State);
+                if (read != state.Length) state.Callback(false, read, null, state.State);
+                else state.Callback(true, read, state.Buffer, state.State);
                 readCache.Put(state);
             }
             catch (Exception)
             {
-                state.Callback(false, null, state.State);
+                state.Callback(false, 0, null, state.State);
                 readCache.Put(state);
             }
         }
@@ -146,7 +147,8 @@ namespace Torrent.Client
         {
             public Stream Stream { get; private set; }
             public byte[] Data { get; private set; }
-            public long Offset { get; private set; }
+            public long FileOffset { get; private set; }
+            public int DataOffset { get; private set; }
             public long Length { get; private set; }
             public DiskIOWriteCallback Callback { get; private set; }
             public object State { get; private set; }
@@ -155,16 +157,17 @@ namespace Torrent.Client
 
             public ICacheable Init()
             {
-                return Init(null, null, 0, 0, null, null);
+                return Init(null, null, 0, 0, 0, null, null);
             }
 
             #endregion
 
-            public DiskIOWriteState Init(Stream stream, byte[] data, long offset, long length,
+            public DiskIOWriteState Init(Stream stream, byte[] data, long fileOffset, int dataOffset, long length,
                                          DiskIOWriteCallback callback, object state)
             {
                 Stream = stream;
-                Offset = offset;
+                FileOffset = fileOffset;
+                DataOffset = dataOffset;
                 Length = length;
                 Data = data;
                 Callback = callback;

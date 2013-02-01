@@ -16,7 +16,7 @@
         public RequestMessage()
         {
             Index = -1;
-            Begin = -1;
+            Offset = -1;
             Length = -1;
         }
 
@@ -24,12 +24,12 @@
         /// Initializes a new empty instance of the Torrent.Client.RequestMessage class.
         /// </summary>
         /// <param name="index">The zero-based piece index.</param>
-        /// <param name="begin">The zero-based byte offset within the piece.</param>
+        /// <param name="offset">The zero-based byte offset within the piece.</param>
         /// <param name="length">The requested length.</param>
-        public RequestMessage(int index, int begin, int length)
+        public RequestMessage(int index, int offset, int length)
         {
             Index = index;
-            Begin = begin;
+            Offset = offset;
             Length = length;
         }
 
@@ -41,7 +41,7 @@
         /// <summary>
         /// The zero-based byte offset within the piece.
         /// </summary>
-        public int Begin { get; private set; }
+        public int Offset { get; private set; }
 
         /// <summary>
         /// The requested length.
@@ -67,7 +67,7 @@
             ReadInt(buffer, ref offset);
             ReadByte(buffer, ref offset);
             Index = ReadInt(buffer, ref offset);
-            Begin = ReadInt(buffer, ref offset);
+            Offset = ReadInt(buffer, ref offset);
             Length = ReadInt(buffer, ref offset);
         }
 
@@ -83,7 +83,7 @@
             offset += Write(buffer, offset, 13);
             offset += Write(buffer, offset, (byte) 6);
             offset += Write(buffer, offset, Index);
-            offset += Write(buffer, offset, Begin);
+            offset += Write(buffer, offset, Offset);
             offset += Write(buffer, offset, Length);
             return offset - start;
         }
@@ -94,7 +94,7 @@
         /// <returns>The string containing the RequestMessage data representation.</returns>
         public override string ToString()
         {
-            return string.Format("Request message: Index: {0}, Begin: {1}, Length: {2}", Index, Begin, Length);
+            return string.Format("Request message: Index: {0}, Offset: {1}, Length: {2}", Index, Offset, Length);
         }
 
         /// <summary>
@@ -108,7 +108,7 @@
 
             if (msg == null)
                 return false;
-            return Index == msg.Index && Begin == msg.Begin && Length == msg.Length;
+            return Index == msg.Index && Offset == msg.Offset && Length == msg.Length;
         }
 
         /// <summary>
@@ -117,7 +117,7 @@
         /// <returns>An integer representing the hash code of this instace of the RequestMessage class.</returns>
         public override int GetHashCode()
         {
-            return MessageLength.GetHashCode() ^ Id.GetHashCode() ^ Index.GetHashCode() ^ Begin.GetHashCode() ^
+            return MessageLength.GetHashCode() ^ Id.GetHashCode() ^ Index.GetHashCode() ^ Offset.GetHashCode() ^
                    Length.GetHashCode();
         }
     }

@@ -239,6 +239,7 @@ namespace Torrent.Client
             var peer = (PeerState) state;
             if (success)
             {
+                OnReceivedMessage(message);
                 if (message is BitfieldMessage)
                 {
                     HandleBitfield(message, peer);
@@ -252,7 +253,12 @@ namespace Torrent.Client
                 else if (message is UnchokeMessage)
                 {
                     peer.AmChoked = false;
-                    SendMessageTo(peer, new RequestMessage(Global.Instance.NextRandom(Data.Checksums.Count), 0, 1024*16));
+                    for (int i = 0; i < 20; i++)
+                    {
+                        var requestData = pieceManager.GetRandomEmptyPiece();
+                        if (requestData != null)
+                            SendMessageTo(peer, new RequestMessage((int)requestData.Block, (int)requestData.Offset, requestData.Length));
+                    }
                 }
                 else if (message is InterestedMessage)
                 {
@@ -269,10 +275,10 @@ namespace Torrent.Client
                 else if(message is PieceMessage)
                 {
                     var pieceMessage = message as PieceMessage;
-                    pieceManager.AddPiece(new Piece(pieceMessage.Block, pieceMessage.Index, pieceMessage.Begin), PieceAdded, null);
+                    pieceManager.AddPiece(new Piece(pieceMessage.Data, pieceMessage.Index, pieceMessage.Offset, pieceMessage.Data.Length), PieceAdded, null);
                 }
                 MessageIO.ReceiveMessage(peer.Socket, peer, MessageReceived);
-                OnReceivedMessage(message);
+                
             }
             else
             {
