@@ -24,10 +24,12 @@ namespace Torrent.Client
         public IPEndPoint EndPoint { get; set; }
         public string ID { get; set; }
         public BitArray Bitfield { get; set; }
+        public int PiecesReceived { get; set; }
+        public bool Top { get; set; }
 
         public override string ToString()
         {
-            return string.Format("{0}, sent: {1}, received: {2}", EndPoint, SentHandshake, ReceivedHandshake);
+            return string.Format("{0}, R: {1}, T: {2}, C: {3}", EndPoint, PiecesReceived, Top, AmChoked);
         }
     }
 }

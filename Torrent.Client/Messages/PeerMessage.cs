@@ -45,6 +45,9 @@ namespace Torrent.Client.Messages
 
         public static PeerMessage CreateFromBytes(byte[] buffer, int offset, int count)
         {
+            if(buffer.Length < offset+count)
+                throw new ArgumentException("Buffer is too small.");
+
             PeerMessage message;
 
             int length = IPAddress.HostToNetworkOrder(BitConverter.ToInt32(buffer, offset));
@@ -60,6 +63,7 @@ namespace Torrent.Client.Messages
                 return message;
             }
 
+            
             byte id = buffer[offset + 4];
             if (!messages.ContainsKey(id))
                 throw new TorrentException("Unknown message.");

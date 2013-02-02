@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:Torrent.GuiTest"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="d" x:Class="Torrent.GuiTest.MainWindow"
-        Title="Torrent Data" Width="723" AllowDrop="True" Drop="Window_Drop" Height="610">
+        Title="Torrent Data" Width="723" AllowDrop="True" Drop="Window_Drop" Height="642">
     <StackPanel>
         <Grid Margin="3">
             <Grid.ColumnDefinitions>
@@ -44,6 +44,14 @@
             </Grid.ColumnDefinitions>
             <Label Grid.Column="0" Content="Announce URL:"/>
             <TextBox x:Name="AnnounceURLTextBox" Grid.Column="1" IsEnabled="False" Text="{Binding AnnounceURL}"/>
+        </Grid>
+        <Grid Margin="3">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="6*" MinWidth="200"/>
+            </Grid.ColumnDefinitions>
+            <Label Grid.Column="0" Content="Downloaded:"/>
+            <TextBox  Grid.Column="1" IsEnabled="False" Text="{Binding Downloaded}"/>
         </Grid>
         <Grid Margin="3">
             <Grid.ColumnDefinitions>

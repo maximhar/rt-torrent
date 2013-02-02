@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 using Torrent.Client.Messages;
@@ -98,6 +99,7 @@ namespace Torrent.Client
                     return;
                 }
                 var newBuffer = new byte[read + messageLength];
+                
                 BufferCopy(newBuffer, 0, data.Buffer, 0, read);
                 data.Buffer = newBuffer;
                 NetworkIO.Receive(data.Socket, data.Buffer, read, messageLength, data, EndReceiveCallback);
@@ -119,9 +121,18 @@ namespace Torrent.Client
                 receiveCache.Put(data);
                 return;
             }
-            PeerMessage message = PeerMessage.CreateFromBytes(data.Buffer, 0, read + 4);
-            data.Callback(true, message, data.State);
-            receiveCache.Put(data);
+            try
+            {
+                PeerMessage message = PeerMessage.CreateFromBytes(data.Buffer, 0, read + 4);
+                data.Callback(true, message, data.State);
+                receiveCache.Put(data);
+            }
+            catch(Exception)
+            {
+                data.Callback(false, null, data.State);
+                receiveCache.Put(data);
+            }
+            
         }
 
         private static void BufferCopy(byte[] destination, int destOffset, byte[] source, int srcOffset, int count)

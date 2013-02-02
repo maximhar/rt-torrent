@@ -33,6 +33,7 @@ namespace Torrent.GuiTest
         int pieceLength;
         string announceURL;
         private int pieceCount;
+        private long downloaded;
 
         /// <summary>
         /// Gets or sets an ObservableCollection of FileEntries representing the files in the the torrent.
@@ -122,6 +123,16 @@ namespace Torrent.GuiTest
             }
         }
 
+        public long Downloaded
+        {
+            get { return downloaded; }
+            set
+            {
+                downloaded = value;
+                OnPropertyChanged("Downloaded");
+            }
+        }
+
         /// <summary>
         /// Gets or sets and ObservableCollection of PeerEndpoints of the torrent.
         /// </summary>
@@ -190,6 +201,8 @@ namespace Torrent.GuiTest
                 torrent.Stopping += torrent_Stopping;
                 torrent.ReceivedMessage +=torrent_ReceivedMessage;
                 torrent.SentMessage += torrent_SentMessage;
+                torrent.PeersChanged += torrent_PeersChanged;
+                torrent.DownloadedBytes += torrent_DownloadedBytes;
                 torrent.Start();
                 
             }
@@ -197,6 +210,16 @@ namespace Torrent.GuiTest
             {
                 HandleException(e);
             }
+        }
+
+        void torrent_DownloadedBytes(object sender, long e)
+        {
+            Downloaded = e;
+        }
+
+        void torrent_PeersChanged(object sender, IEnumerable<PeerState> e)
+        {
+            Peers = new ObservableCollection<PeerState>(e);
         }
 
         void torrent_SentMessage(object sender, PeerMessage e)
@@ -207,21 +230,6 @@ namespace Torrent.GuiTest
         private void torrent_ReceivedMessage(object sender, PeerMessage e)
         {
             dispatcher.Invoke(() => AddMessage("Received: " + e));
-        }
-
-        void torrent_ReceivedHandshake(object sender, EndPoint e)
-        {
-            dispatcher.Invoke(() => AddMessage("Handshake received from: " + ((IPEndPoint)e).ToString()));
-        }
-
-        void torrent_SentHandshake(object sender, EndPoint e)
-        {
-            dispatcher.Invoke(() => AddMessage("Handshake sent to: " + e));
-        }
-
-        void torrent_GotTcpMessage(object sender, string e)
-        {
-            dispatcher.Invoke(() => AddMessage("Message from client: " + e));
         }
 
         public void Stop()

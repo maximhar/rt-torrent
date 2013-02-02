@@ -24,6 +24,8 @@ namespace Torrent.Client
         private List<IPEndPoint> Endpoints;
         private volatile bool stop;
         private PieceManager pieceManager;
+        private TransferManager transfer;
+        private long downloaded = 0;
         /// <summary>
         /// Initialize a torrent transfer with metadata from a file on the filesystem.
         /// </summary>
@@ -55,6 +57,7 @@ namespace Torrent.Client
             localHandshake = new HandshakeMessage(Global.Instance.PeerId, new byte[8], Data.InfoHash,
                                                   "BitTorrent protocol");
             pieceManager = new PieceManager(Data);
+            transfer = new TransferManager(Data, PieceRequested, PieceDownloaded);
         }
 
         /// <summary>
@@ -93,7 +96,7 @@ namespace Torrent.Client
             {
                 RegisterForListen();
                 HandshakeTracker();
-                ConnectToPeers();
+                StartTransfer();
                 WaitForStop();
             }
             catch (Exception e)
@@ -101,6 +104,17 @@ namespace Torrent.Client
                 OnRaisedException(e);
             }
             StopActions();
+        }
+
+        private void StartTransfer()
+        {
+            transfer.PeerListChanged += transfer_PeerListChanged;
+            transfer.Start(Endpoints);
+        }
+
+        void transfer_PeerListChanged(object sender, EventArgs e)
+        {
+            PeersChanged(this, transfer.Peers.Values.ToArray());
         }
 
         private void StartActions()
@@ -115,6 +129,24 @@ namespace Torrent.Client
             PeerListener.Register(Data.InfoHash, ReceivedPeer);
         }
 
+        private void PieceDownloaded(Piece piece)
+        {
+            pieceManager.AddPiece(piece, PieceWritten, piece);
+        }
+
+        private void PieceWritten(bool success, object state)
+        {
+            var piece = state as Piece;
+            Interlocked.Add(ref downloaded, piece.Data.Length);
+            OnWrotePiece(piece);
+            OnDownloadedBytes(downloaded);
+        }
+
+        private Piece PieceRequested(PieceInfo pieceinfo)
+        {
+            throw new NotImplementedException();
+        }
+
         private void PeerListener_RaisedException(object sender, Exception e)
         {
             OnRaisedException(e);
@@ -123,9 +155,7 @@ namespace Torrent.Client
 
         private void ReceivedPeer(PeerState peer)
         {
-            Debug.WriteLine("I got a peer who connected to me first!");
-            InitializePeer(peer);
-            SendMessage(peer.Socket, localHandshake, peer, HandshakeSent);
+            transfer.AddNewPeer(peer);
         }
 
         private void HandshakeTracker()
@@ -133,48 +163,12 @@ namespace Torrent.Client
             TrackerResponse info = tracker.AnnounceStart(Data.InfoHash, Global.Instance.PeerId,
                                                          Global.Instance.ListeningPort,
                                                          0, 0, Data.Files.Sum(f => f.Length));
-            Endpoints = info.Endpoints; //gotta pee k
+            Endpoints = info.Endpoints;
         }
-
-
-        private void ConnectToPeers()
-        {
-            foreach (IPEndPoint peerEndpoint in Endpoints)
-            {
-                if (stop) break;
-                PeerState peer = InitializePeer(peerEndpoint);
-                NetworkIO.Connect(peer.Socket, peer.EndPoint, peer, PeerConnected);
-            }
-        }
-
-        private PeerState InitializePeer(IPEndPoint peerEndpoint)
-        {
-            var peer = new PeerState(new Socket(SocketType.Stream, ProtocolType.Tcp), peerEndpoint)
-                           {Bitfield = new BitArray(Data.Checksums.Count)};
-            return peer;
-        }
-
-        private PeerState InitializePeer(PeerState peer)
-        {
-            peer.Bitfield = new BitArray(Data.Checksums.Count);
-            return peer;
-        }
-
-        private void PeerConnected(bool success, int transmitted, object state)
-        {
-            if (stop) return;
-            var peer = (PeerState) state;
-            if (success)
-            {
-                SendMessage(peer.Socket, localHandshake, peer, HandshakeSent);
-            }
-        }
-
 
         private void StopActions()
         {
             OnStopping();
-            ClosePeerSockets();
             DeregisterFromListen();
             Running = false;
         }
@@ -185,14 +179,6 @@ namespace Torrent.Client
             PeerListener.RaisedException -= PeerListener_RaisedException;
         }
 
-        private void ClosePeerSockets()
-        {
-            foreach (var peer in Peers)
-            {
-                ClosePeerSocket(peer.Value);
-            }
-        }
-
         private void WaitForStop()
         {
             while (true)
@@ -200,151 +186,6 @@ namespace Torrent.Client
                 Thread.Sleep(100);
                 if (stop) break;
             }
-        }
-
-        private void HandshakeReceived(bool success, PeerMessage message, object state)
-        {
-            var peer = (PeerState) state;
-            var handshake = (HandshakeMessage) message;
-            if (success)
-            {
-                OnReceivedMessage(message);
-                peer.ReceivedHandshake = true;
-                peer.ID = handshake.PeerID;
-
-                if (peer.ID == Global.Instance.PeerId) return;
-
-                if (!peer.SentHandshake)
-                {
-                    SendMessage(peer.Socket, localHandshake, peer, HandshakeSent);
-                }
-                else
-                {
-                    HandshakeCompleted(peer);
-                }
-            }
-        }
-
-        private void HandshakeCompleted(PeerState peer)
-        {
-            Debug.WriteLine("Successful handshake.");
-            Peers.AddOrUpdate(peer.ID, peer, (id, s) => s);
-            OnGotPeers();
-
-            MessageIO.ReceiveMessage(peer.Socket, peer, MessageReceived);
-        }
-
-        private void MessageReceived(bool success, PeerMessage message, object state)
-        {
-            var peer = (PeerState) state;
-            if (success)
-            {
-                OnReceivedMessage(message);
-                if (message is BitfieldMessage)
-                {
-                    HandleBitfield(message, peer);
-                    peer.AmInterested = true;
-                    SendMessage(peer.Socket, new InterestedMessage(), peer, MessageSent);
-                }
-                else if (message is HaveMessage)
-                {
-                    HandleHave(message, peer);
-                }
-                else if (message is UnchokeMessage)
-                {
-                    peer.AmChoked = false;
-                    for (int i = 0; i < 20; i++)
-                    {
-                        var requestData = pieceManager.GetRandomEmptyPiece();
-                        if (requestData != null)
-                            SendMessageTo(peer, new RequestMessage((int)requestData.Block, (int)requestData.Offset, requestData.Length));
-                    }
-                }
-                else if (message is InterestedMessage)
-                {
-                    peer.IsInterested = true;
-                }
-                else if (message is ChokeMessage)
-                {
-                    peer.AmChoked = true;
-                }
-                else if (message is NotInterestedMessage)
-                {
-                    peer.IsInterested = false;
-                }
-                else if(message is PieceMessage)
-                {
-                    var pieceMessage = message as PieceMessage;
-                    pieceManager.AddPiece(new Piece(pieceMessage.Data, pieceMessage.Index, pieceMessage.Offset, pieceMessage.Data.Length), PieceAdded, null);
-                }
-                MessageIO.ReceiveMessage(peer.Socket, peer, MessageReceived);
-                
-            }
-            else
-            {
-                ClosePeerSocket(peer);
-            }
-        }
-
-        private void PieceAdded(bool success, object state)
-        {
-            Debug.WriteLine("Piece written: " + success);
-        }
-
-        private void HandleHave(PeerMessage message, PeerState peer)
-        {
-            var have = (HaveMessage) message;
-            peer.Bitfield.Set(have.PieceIndex, true);
-        }
-
-        private void HandleBitfield(PeerMessage message, PeerState peer)
-        {
-            peer.Bitfield = ((BitfieldMessage) message).Bitfield;
-        }
-
-        private static void ClosePeerSocket(PeerState peer)
-        {
-            if (peer != null && peer.Socket != null && peer.Socket.Connected)
-            {
-                Debug.WriteLine("Closing socket with " + peer.Socket.RemoteEndPoint);
-                peer.Socket.Shutdown(SocketShutdown.Both);
-                peer.Socket.Close();
-            }
-        }
-
-        private void HandshakeSent(bool success, int sent, object state)
-        {
-            var peer = (PeerState) state;
-            if (success)
-            {
-                peer.SentHandshake = true;
-                if (peer.ID == Global.Instance.PeerId) return;
-
-                if (!peer.ReceivedHandshake)
-                {
-                    MessageIO.ReceiveHandshake(peer.Socket, peer, HandshakeReceived);
-                }
-                else
-                {
-                    HandshakeCompleted(peer);
-                }
-            }
-        }
-
-        private void MessageSent(bool success, int sent, object state)
-        {
-            Debug.WriteLine("I sent some message, success: " + success);
-        }
-
-        private void SendMessageTo(PeerState peer, PeerMessage message)
-        {
-            SendMessage(peer.Socket, message, peer, MessageSent);
-        }
-
-        private void SendMessage(Socket socket, PeerMessage message, PeerState state, MessageSentCallback callback)
-        {
-            MessageIO.SendMessage(socket, message, state, callback);
-            OnSentMessage(message);
         }
 
         #region Events
@@ -407,6 +248,30 @@ namespace Torrent.Client
         public event EventHandler<PeerMessage> ReceivedMessage;
 
         public event EventHandler<PeerMessage> SentMessage;
+
+        public event EventHandler<Piece> WrotePiece;
+
+        public void OnWrotePiece(Piece e)
+        {
+            EventHandler<Piece> handler = WrotePiece;
+            if(handler != null) handler(this, e);
+        }
+
+        public event EventHandler<IEnumerable<PeerState>> PeersChanged;
+
+        public void OnPeersChanged(IEnumerable<PeerState> e)
+        {
+            EventHandler<IEnumerable<PeerState>> handler = PeersChanged;
+            if(handler != null) handler(this, e);
+        }
+
+        public event EventHandler<long> DownloadedBytes;
+
+        public void OnDownloadedBytes(long e)
+        {
+            EventHandler<long> handler = DownloadedBytes;
+            if(handler != null) handler(this, e);
+        }
 
         #endregion
     }
