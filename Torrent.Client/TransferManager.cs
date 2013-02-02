@@ -47,7 +47,7 @@ namespace Torrent.Client
                                              "BitTorrent protocol");
             Connect(peerEndpoints);
             Timer calculateTopPeers = new Timer(CalculateTopPeers);
-            calculateTopPeers.Change(0, 500);
+            calculateTopPeers.Change(5000, 500);
         }
 
         private void CalculateTopPeers(object state)
@@ -182,13 +182,6 @@ namespace Torrent.Client
                 else if(message is UnchokeMessage)
                 {
                     peer.AmChoked = false;
-                    for(int i = 0; i < 5; i++)
-                    {
-                        PieceInfo requestData = strategist.Next();
-                        if(requestData != PieceInfo.Empty)
-                            SendMessageTo(peer,
-                                          new RequestMessage(requestData.Index, requestData.Offset, requestData.Length));
-                    }
                 }
                 else if(message is InterestedMessage)
                 {
@@ -214,12 +207,14 @@ namespace Torrent.Client
                                                 pieceMessage.Data.Length));
                     }
                 }
-                MessageIO.ReceiveMessage(peer.Socket, peer, MessageReceived);
+                Thread.Sleep(50);
+                
                 if(!peer.AmChoked)
                 {
-                    int count = 0;
-                    if (tops.Contains(peer)) count = 20;
-                    for (int i = 0; i < 5; i++)
+                    int count = 1;
+                    if (tops.Contains(peer)) count = 10;
+                    if (!tops.Any()) count = 5;
+                    for (int i = 0; i < count; i++)
                     {
                         PieceInfo requestData = strategist.Next();
                         if (requestData != PieceInfo.Empty && peer.Bitfield[requestData.Index])
@@ -228,10 +223,11 @@ namespace Torrent.Client
                     }
                 }
             }
-            else
+            else if(!peer.Socket.Connected)
             {
                 ClosePeerSocket(peer);
             }
+            MessageIO.ReceiveMessage(peer.Socket, peer, MessageReceived);
         }
 
         private void MessageSent(bool success, int sent, object state)

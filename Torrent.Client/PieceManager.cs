@@ -137,6 +137,9 @@ namespace Torrent.Client
         {
             FileStream stream;
             if(openStreams.TryGetValue(file.Name, out stream)) return stream;
+            var dir = Path.GetDirectoryName(file.Name);
+            if(dir!=string.Empty && !Directory.Exists(dir))
+                Directory.CreateDirectory(dir);
             stream = File.Open(file.Name, FileMode.OpenOrCreate, FileAccess.ReadWrite);
             openStreams.TryAdd(file.Name, stream);
             return stream;
