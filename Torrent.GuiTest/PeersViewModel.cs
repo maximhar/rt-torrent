@@ -33,7 +33,13 @@ namespace Torrent.GuiTest
         int pieceLength;
         string announceURL;
         private int pieceCount;
-        private long downloaded;
+        private string downloaded;
+        private long filesSize;
+        private string totalSize;
+        private string percentDone;
+        private string speed;
+        private long oldSize;
+        private DateTime past;
 
         /// <summary>
         /// Gets or sets an ObservableCollection of FileEntries representing the files in the the torrent.
@@ -123,9 +129,9 @@ namespace Torrent.GuiTest
             }
         }
 
-        public long Downloaded
+        public string Downloaded
         {
-            get { return downloaded; }
+            get { return downloaded + " / " + totalSize + " ( "+percentDone+" ) Speed: " + speed; }
             set
             {
                 downloaded = value;
@@ -196,6 +202,13 @@ namespace Torrent.GuiTest
                 if (torrent.Data.AnnounceList != null)
                     torrent.Data.AnnounceList.ForEach(a => Announces.Add(a));
 
+                filesSize = 0;
+                foreach (var file in files)
+                {
+                    filesSize += file.Length;
+                }
+                totalSize = Global.Instance.FileSizeFormat(filesSize);
+
                 torrent.GotPeers += torrent_GotPeers;
                 torrent.RaisedException += torrent_RaisedException;
                 torrent.Stopping += torrent_Stopping;
@@ -214,7 +227,15 @@ namespace Torrent.GuiTest
 
         void torrent_DownloadedBytes(object sender, long e)
         {
-            Downloaded = e;
+            if ((DateTime.Now - past).TotalSeconds > 1)
+            {
+                speed = Global.Instance.FileSizeFormat((long)((double)(e - oldSize) / (DateTime.Now - past).TotalSeconds)) + "/s";
+                past = DateTime.Now;
+                oldSize = e;
+            }
+            Downloaded = Global.Instance.FileSizeFormat(e);
+            percentDone = String.Format("{0:0.0}%", (double)e * 100 / (double)filesSize);
+
         }
 
         void torrent_PeersChanged(object sender, IEnumerable<PeerState> e)

@@ -38,32 +38,8 @@ namespace Torrent.Client
         /// <returns></returns>
         public override string ToString()
         {
-            string size = FileSizeFormat(Length);
+            string size = Global.Instance.FileSizeFormat(Length);
             return String.Format("{0} | {1}", Name, size);
-        }
-
-        private string FileSizeFormat(long size)
-        {
-            const int KB = 1024;
-            const int MB = 1048576;
-            const int GB = 1073741824;
-
-            if (size < KB)
-            {
-                return string.Format("{0} bytes", size);
-            }
-            else if (size < MB)
-            {
-                return string.Format("{0:0.00} KB", ((float) size/KB));
-            }
-            else if (size < GB)
-            {
-                return string.Format("{0:0.00} MB", ((float) size/MB));
-            }
-            else
-            {
-                return string.Format("{0:0.00} GB", ((float) size/GB));
-            }
         }
     }
 }

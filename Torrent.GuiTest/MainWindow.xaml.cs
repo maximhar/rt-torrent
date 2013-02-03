@@ -28,11 +28,6 @@ namespace Torrent.GuiTest
             this.DataContext = model;
         }
 
-        private void GetPeersButton_Click(object sender, RoutedEventArgs e)
-        {
-            model.GetPeers(AnnounceUrlTextBox.Text);
-        }
-
         private void Window_Drop(object sender, DragEventArgs e)
         {
             var str = (string[])e.Data.GetData(DataFormats.FileDrop);
