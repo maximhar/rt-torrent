@@ -55,27 +55,37 @@ namespace Torrent.Client
 
         private void RequestFromTopPeers(object state)
         {
+            if (stop) return;
+            Stopwatch sw = new Stopwatch();
+            sw.Start();
             foreach (var peerState in tops)
             {
                 peerState.Top = true;
                 if (!peerState.AmChoked)
                 {
-                    for (int i = 0; i < (peerState.PiecesReceived == 0 ? 2 : peerState.PiecesReceived+1); i++)
+                    int count = peerState.PiecesReceived == 0 ? 2 : peerState.PiecesReceived + 1;
+                    for (int i = 0; i < count; i++)
                     {
+                        if (stop) return;
                         PieceInfo requestData = strategist.Next();
                         if (requestData != PieceInfo.Empty && peerState.Bitfield[requestData.Index])
                             SendMessageTo(peerState,
                                           new RequestMessage(requestData.Index, requestData.Offset, requestData.Length));
                     }
+                    
                     if (peerState.PiecesReceived > highestRate)
                         highestRate = peerState.PiecesReceived;
                 }
+                
             }
+            sw.Stop();
+            Debug.WriteLine("Sent requests in " + sw.ElapsedMilliseconds);
             OnPeerListChanged();
         }
 
         private void CalculateTopPeers(object state)
         {
+            if (stop) return;
             tops = Peers.Values.Where(p => !p.AmChoked).OrderByDescending(p => p.PiecesReceived).Take(6).ToList();
             if (tops.Count >= 6) tops.Remove(tops.Last());
             var suitableRandom = Peers.Values.Where(p => !tops.Contains(p) && !p.AmChoked);
@@ -188,6 +198,7 @@ namespace Torrent.Client
 
         private void MessageReceived(bool success, PeerMessage message, object state)
         {
+            if (stop) return;
             var peer = (PeerState)state;
             Debug.WriteLine("Message received " + message);
             if(success)
@@ -312,7 +323,7 @@ namespace Torrent.Client
                     if(Peers != null)
                         foreach(var peerState in Peers)
                         {
-                            peerState.Value.Socket.Close();
+                            ClosePeerSocket(peerState.Value);
                         }
                 }
                 disposed = true;

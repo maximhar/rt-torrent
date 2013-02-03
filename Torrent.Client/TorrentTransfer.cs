@@ -170,6 +170,7 @@ namespace Torrent.Client
         {
             OnStopping();
             DeregisterFromListen();
+            transfer.Dispose();
             Running = false;
         }
 
@@ -261,6 +262,8 @@ namespace Torrent.Client
 
         public void OnPeersChanged(IEnumerable<PeerState> e)
         {
+            if (stop) return;
+         
             EventHandler<IEnumerable<PeerState>> handler = PeersChanged;
             if(handler != null) handler(this, e);
         }
@@ -269,6 +272,7 @@ namespace Torrent.Client
 
         public void OnDownloadedBytes(long e)
         {
+            if (stop) return;
             EventHandler<long> handler = DownloadedBytes;
             if(handler != null) handler(this, e);
         }
