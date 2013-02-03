@@ -99,8 +99,7 @@ namespace Torrent.Client
                     return;
                 }
                 var newBuffer = new byte[read + messageLength];
-                
-                BufferCopy(newBuffer, 0, data.Buffer, 0, read);
+                Buffer.BlockCopy(newBuffer, 0, data.Buffer, 0, read);
                 data.Buffer = newBuffer;
                 NetworkIO.Receive(data.Socket, data.Buffer, read, messageLength, data, EndReceiveCallback);
             }

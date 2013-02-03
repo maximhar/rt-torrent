@@ -18,21 +18,20 @@ namespace Torrent.Client
     public class TransferManager : IDisposable
     {
         private readonly ObtainedPieceDelegate obtainedPiece;
+        private int queueLimit = 20;
         private readonly PieceStrategist strategist;
         private readonly TorrentData torrentData;
         private bool disposed;
         private HandshakeMessage handshake;
-        private RequestPieceDelegate requestPiece;
         private volatile bool stop;
         public List<PeerState> tops;
-        private int highestRate = 0;
+        private Timer firePeersEvent;
         public TransferManager(TorrentData data, RequestPieceDelegate requestHandler,
                                ObtainedPieceDelegate obtainedHandler)
         {
             Peers = new ConcurrentDictionary<string, PeerState>();
             torrentData = data;
             strategist = new PieceStrategist(data);
-            requestPiece = requestHandler;
             obtainedPiece = obtainedHandler;
             handshake = new HandshakeMessage(Global.Instance.PeerId, new byte[8], data.InfoHash, "BitTorrent protocol");
             tops = new List<PeerState>();
@@ -47,61 +46,30 @@ namespace Torrent.Client
             handshake = new HandshakeMessage(Global.Instance.PeerId, new byte[8], torrentData.InfoHash,
                                              "BitTorrent protocol");
             Connect(peerEndpoints);
-            Timer calculateTopPeers = new Timer(CalculateTopPeers);
-            calculateTopPeers.Change(1000, 10000);
-            Timer request = new Timer(RequestFromTopPeers);
-            request.Change(1000, 200);
+            firePeersEvent = new Timer(FirePeers);
+            firePeersEvent.Change(200, 1000);
         }
 
-        private void RequestFromTopPeers(object state)
+        private void FirePeers(object state)
         {
             if (stop) return;
-            Stopwatch sw = new Stopwatch();
-            sw.Start();
-            foreach (var peerState in tops)
+            if(strategist.EndGame())
             {
-                peerState.Top = true;
-                if (!peerState.AmChoked)
+                foreach(var peerState in Peers.Values)
                 {
-                    int count = peerState.PiecesReceived == 0 ? 2 : peerState.PiecesReceived + 1;
-                    for (int i = 0; i < count; i++)
-                    {
-                        if (stop) return;
-                        PieceInfo requestData = strategist.Next();
-                        if (requestData != PieceInfo.Empty && peerState.Bitfield[requestData.Index])
-                            SendMessageTo(peerState,
-                                          new RequestMessage(requestData.Index, requestData.Offset, requestData.Length));
-                    }
-                    
-                    if (peerState.PiecesReceived > highestRate)
-                        highestRate = peerState.PiecesReceived;
+                    SendRequests(peerState);
                 }
-                
             }
-            sw.Stop();
-            Debug.WriteLine("Sent requests in " + sw.ElapsedMilliseconds);
             OnPeerListChanged();
-        }
-
-        private void CalculateTopPeers(object state)
-        {
-            if (stop) return;
-            tops = Peers.Values.Where(p => !p.AmChoked).OrderByDescending(p => p.PiecesReceived).Take(6).ToList();
-            if (tops.Count >= 6) tops.Remove(tops.Last());
-            var suitableRandom = Peers.Values.Where(p => !tops.Contains(p) && !p.AmChoked);
-            if(suitableRandom.Any())
-                tops.Add(suitableRandom.Random());
-            foreach(var peerState in Peers.Values)
-            {
-                peerState.PiecesReceived = 0;
-                peerState.Top = false;
-            }
         }
 
         public void Stop()
         {
             if(disposed) throw new TorrentException("Transfer manager disposed.");
             stop = true;
+            if(firePeersEvent!=null)
+                firePeersEvent.Dispose();
+            OnStopping(EventArgs.Empty);
         }
 
         public void AddEndpoints(IEnumerable<IPEndPoint> peerEndpoints)
@@ -190,9 +158,7 @@ namespace Torrent.Client
 
         private void HandshakeCompleted(PeerState peer)
         {
-            Debug.WriteLine("Successful handshake.");
             AddPeer(peer);
-
             MessageIO.ReceiveMessage(peer.Socket, peer, MessageReceived);
         }
 
@@ -200,13 +166,12 @@ namespace Torrent.Client
         {
             if (stop) return;
             var peer = (PeerState)state;
-            Debug.WriteLine("Message received " + message);
             if(success)
             {
                 if(message is BitfieldMessage)
                 {
                     HandleBitfield(message, peer);
-                    SendMessageTo(peer, new InterestedMessage());
+                    SelectPeer(peer);
                 }
                 else if(message is HaveMessage)
                 {
@@ -215,6 +180,10 @@ namespace Torrent.Client
                 else if(message is UnchokeMessage)
                 {
                     peer.AmChoked = false;
+                    if(peer.AmInterested)
+                    {
+                        SendRequests(peer);
+                    }
                 }
                 else if(message is InterestedMessage)
                 {
@@ -242,22 +211,46 @@ namespace Torrent.Client
             
         }
 
+        private void SelectPeer(PeerState peer)
+        {
+            SendMessageTo(peer, new InterestedMessage());
+            peer.AmInterested = true;
+        }
+
         private void HandlePiece(PieceMessage pieceMessage, PeerState peer)
         {
+            peer.PiecesReceived++;
             var info = new PieceInfo(pieceMessage.Index, pieceMessage.Offset, pieceMessage.Data.Length);
             if(strategist.Need(info))
             {
-                peer.PiecesReceived++;
                 strategist.Received(info);
+                peer.LastReceived = DateTime.Now;
                 obtainedPiece(new Piece(pieceMessage.Data, pieceMessage.Index, pieceMessage.Offset,
                                         pieceMessage.Data.Length));
+            }
+            if(peer.PiecesReceived >= queueLimit-1)
+            {
+                peer.PiecesReceived = 0;
+                SendRequests(peer);
+            }
+        }
+
+        private void SendRequests(PeerState peer)
+        {
+            for(int i = 0; i < queueLimit; i++)
+            {
+                if(stop) return;
+                PieceInfo requestData = strategist.Next(peer.Bitfield);
+                if(strategist.Complete())
+                    Stop();
+                if(peer.Bitfield[requestData.Index] && requestData!=PieceInfo.Empty)
+                    SendMessageTo(peer,
+                                  new RequestMessage(requestData.Index, requestData.Offset, requestData.Length));
             }
         }
 
         private void MessageSent(bool success, int sent, object state)
         {
-            Debug.WriteLine("I sent some message, success: " + success);
-            //if(!success) RemovePeer((state as PeerState).ID);
         }
 
         private void ClosePeerSocket(PeerState peer)
@@ -323,7 +316,7 @@ namespace Torrent.Client
                     if(Peers != null)
                         foreach(var peerState in Peers)
                         {
-                            ClosePeerSocket(peerState.Value);
+                            peerState.Value.Socket.Dispose();
                         }
                 }
                 disposed = true;
@@ -339,5 +332,12 @@ namespace Torrent.Client
         }
 
         public event EventHandler PeerListChanged;
+        public event EventHandler Stopping;
+
+        public void OnStopping(EventArgs e)
+        {
+            EventHandler handler = Stopping;
+            if(handler != null) handler(this, e);
+        }
     }
 }

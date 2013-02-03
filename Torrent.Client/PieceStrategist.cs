@@ -33,18 +33,39 @@ namespace Torrent.Client
                 unavailable.Add(i);
         }
 
-        public PieceInfo Next()
+        public PieceInfo Next(BitArray bitfield)
         {
             if (available == pieceCount)
                 return PieceInfo.Empty;
-            int index;
-            lock (unavailable)
+            PieceInfo piece;
+            int counter = 0;
+            do
             {
-                index = unavailable.Random();
-            }
-            Debug.WriteLine("Strategist requested piece " + index);
-                return Piece.FromAbsoluteAddress((long)index*pieceSize, blockSize, pieceSize,
+                counter++;
+                int index;
+                lock(unavailable)
+                {
+                    index = unavailable.Random();
+                }
+                
+                piece = Piece.FromAbsoluteAddress((long)index*pieceSize, blockSize, pieceSize,
                                                  totalSize);
+                if (counter > 100) 
+                    return PieceInfo.Empty;
+            } while (!bitfield[piece.Index]);
+
+            //Debug.WriteLine("Strategist requested piece " + piece.Index);
+            return piece;
+        }
+
+        public bool Complete()
+        {
+            return available == pieceCount;
+        }
+
+        public bool EndGame()
+        {
+            return unavailable.Count < (pieceCount/100);
         }
 
         public void Received(PieceInfo piece)
@@ -63,7 +84,10 @@ namespace Torrent.Client
         public bool Need(PieceInfo piece)
         {
             long address = Piece.GetAbsoluteAddress(piece.Index, piece.Offset, blockSize) / pieceSize;
-            return unavailable.Contains((int)address);
+            
+            bool res = unavailable.Contains((int)address);
+            Debug.WriteLine("Piece incoming:" + address + " | need: " + res);
+            return res;
         }
     }
 

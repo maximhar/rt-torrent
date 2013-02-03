@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Net;
 using System.Net.Sockets;
 
@@ -26,6 +27,7 @@ namespace Torrent.Client
         public BitArray Bitfield { get; set; }
         public int PiecesReceived { get; set; }
         public bool Top { get; set; }
+        public DateTime LastReceived { get; set; }
 
         public override string ToString()
         {

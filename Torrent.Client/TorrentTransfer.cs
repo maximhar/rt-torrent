@@ -109,7 +109,13 @@ namespace Torrent.Client
         private void StartTransfer()
         {
             transfer.PeerListChanged += transfer_PeerListChanged;
+            transfer.Stopping += transfer_Stopping;
             transfer.Start(Endpoints);
+        }
+
+        void transfer_Stopping(object sender, EventArgs e)
+        {
+            Stop();
         }
 
         void transfer_PeerListChanged(object sender, EventArgs e)
@@ -170,6 +176,9 @@ namespace Torrent.Client
         {
             OnStopping();
             DeregisterFromListen();
+            transfer.PeerListChanged -= transfer_PeerListChanged;
+            transfer.Stopping -= transfer_Stopping;
+            pieceManager.Dispose();
             transfer.Dispose();
             Running = false;
         }
@@ -191,14 +200,6 @@ namespace Torrent.Client
 
         #region Events
 
-        private void OnGotPeers()
-        {
-            if (GotPeers != null)
-            {
-                GotPeers(this, EventArgs.Empty);
-            }
-        }
-
         private void OnRaisedException(Exception e)
         {
             if (RaisedException != null)
@@ -212,22 +213,6 @@ namespace Torrent.Client
             if (Stopping != null)
             {
                 Stopping(this, EventArgs.Empty);
-            }
-        }
-
-        private void OnSentMessage(PeerMessage msg)
-        {
-            if (SentMessage != null)
-            {
-                SentMessage(this, msg);
-            }
-        }
-
-        private void OnReceivedMessage(PeerMessage msg)
-        {
-            if (ReceivedMessage != null)
-            {
-                ReceivedMessage(this, msg);
             }
         }
 
