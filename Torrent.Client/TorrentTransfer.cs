@@ -26,6 +26,7 @@ namespace Torrent.Client
         private PieceManager pieceManager;
         private TransferManager transfer;
         private long downloaded = 0;
+        private Timer downloadTimer;
         /// <summary>
         /// Initialize a torrent transfer with metadata from a file on the filesystem.
         /// </summary>
@@ -79,6 +80,8 @@ namespace Torrent.Client
             var torrentThread = new Thread(StartThread);
             torrentThread.IsBackground = true;
             torrentThread.Start();
+            downloadTimer = new Timer((o) => OnDownloadedBytes(downloaded));
+            downloadTimer.Change(0, 250);
         }
 
         /// <summary>
@@ -145,7 +148,6 @@ namespace Torrent.Client
             var piece = state as Piece;
             Interlocked.Add(ref downloaded, piece.Data.Length);
             OnWrotePiece(piece);
-            OnDownloadedBytes(downloaded);
         }
 
         private Piece PieceRequested(PieceInfo pieceinfo)
@@ -175,11 +177,13 @@ namespace Torrent.Client
         private void StopActions()
         {
             OnStopping();
+            OnDownloadedBytes(downloaded);
             DeregisterFromListen();
             transfer.PeerListChanged -= transfer_PeerListChanged;
             transfer.Stopping -= transfer_Stopping;
             pieceManager.Dispose();
             transfer.Dispose();
+            downloadTimer.Dispose();
             Running = false;
         }
 

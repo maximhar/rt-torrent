@@ -20,6 +20,7 @@ namespace Torrent.Client
 
         private static readonly Cache<SendMessageState> sendCache = new Cache<SendMessageState>();
         private static readonly Cache<ReceiveMessageState> receiveCache = new Cache<ReceiveMessageState>();
+        private static readonly int MAX_LENGTH = 1026*16;
 
 
         public static void SendMessage(Socket socket, PeerMessage message, object state, MessageSentCallback callback)
@@ -92,6 +93,12 @@ namespace Torrent.Client
             if (success)
             {
                 int messageLength = IPAddress.HostToNetworkOrder(BitConverter.ToInt32(data.Buffer, 0));
+                if(messageLength>MAX_LENGTH)
+                {
+                    data.Callback(false, null, data.State);
+                    receiveCache.Put(data);
+                    return;
+                }
                 if (messageLength == 0)
                 {
                     data.Callback(true, new KeepAliveMessage(), data.State);

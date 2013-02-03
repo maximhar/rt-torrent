@@ -18,7 +18,7 @@ namespace Torrent.Client
     public class TransferManager : IDisposable
     {
         private readonly ObtainedPieceDelegate obtainedPiece;
-        private int queueLimit = 20;
+        private int queueLimit = 10;
         private readonly PieceStrategist strategist;
         private readonly TorrentData torrentData;
         private bool disposed;
@@ -220,15 +220,14 @@ namespace Torrent.Client
         private void HandlePiece(PieceMessage pieceMessage, PeerState peer)
         {
             peer.PiecesReceived++;
+            peer.LastReceived = DateTime.Now;
             var info = new PieceInfo(pieceMessage.Index, pieceMessage.Offset, pieceMessage.Data.Length);
-            if(strategist.Need(info))
+            if (strategist.Received(info))
             {
-                strategist.Received(info);
-                peer.LastReceived = DateTime.Now;
                 obtainedPiece(new Piece(pieceMessage.Data, pieceMessage.Index, pieceMessage.Offset,
                                         pieceMessage.Data.Length));
             }
-            if(peer.PiecesReceived >= queueLimit-1)
+            if(peer.PiecesReceived >= queueLimit - 1)
             {
                 peer.PiecesReceived = 0;
                 SendRequests(peer);
@@ -243,7 +242,7 @@ namespace Torrent.Client
                 PieceInfo requestData = strategist.Next(peer.Bitfield);
                 if(strategist.Complete())
                     Stop();
-                if(peer.Bitfield[requestData.Index] && requestData!=PieceInfo.Empty)
+                if(requestData!=PieceInfo.Empty)
                     SendMessageTo(peer,
                                   new RequestMessage(requestData.Index, requestData.Offset, requestData.Length));
             }

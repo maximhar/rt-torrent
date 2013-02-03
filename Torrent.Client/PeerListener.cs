@@ -36,7 +36,6 @@ namespace Torrent.Client
         {
             try
             {
-                Debug.WriteLine("PeerListener is listening!");
                 listenSocket.BeginAccept(EndAccept, listenSocket);
             }
             catch (Exception e)
@@ -75,7 +74,6 @@ namespace Torrent.Client
         {
             if (peer != null && peer.Socket != null && peer.Socket.Connected)
             {
-                Debug.WriteLine("Closing socket with (PEERLISTENER)" + peer.Socket.RemoteEndPoint);
                 peer.Socket.Shutdown(SocketShutdown.Both);
                 peer.Socket.Close();
             }
