@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
@@ -17,7 +18,7 @@ namespace Torrent.Client
         private readonly int piecesPerBlock;
         private readonly long totalSize;
         private readonly int pieceCount;
-        private readonly HashSet<int> unavailable; 
+        private readonly PieceAddressCollection<int> unavailable; 
         private int available = 0;
 
         public PieceStrategist(TorrentData data, int pieceSize = 16*1024)
@@ -27,7 +28,7 @@ namespace Torrent.Client
             piecesPerBlock = blockSize/this.pieceSize;
             totalSize = data.Files.Sum(f => f.Length);
             pieceCount = (int)Math.Ceiling((float)totalSize/pieceSize);
-            unavailable = new HashSet<int>();
+            unavailable = new PieceAddressCollection<int>();
             for (int i = 0; i < pieceCount; i++)
                 unavailable.Add(i);
         }
@@ -36,8 +37,12 @@ namespace Torrent.Client
         {
             if (available == pieceCount)
                 return PieceInfo.Empty;
-                int index = unavailable.Random();
-                Debug.WriteLine("Strategist requested piece " + index);
+            int index;
+            lock (unavailable)
+            {
+                index = unavailable.Random();
+            }
+            Debug.WriteLine("Strategist requested piece " + index);
                 return Piece.FromAbsoluteAddress((long)index*pieceSize, blockSize, pieceSize,
                                                  totalSize);
         }
@@ -59,6 +64,14 @@ namespace Torrent.Client
         {
             long address = Piece.GetAbsoluteAddress(piece.Index, piece.Offset, blockSize) / pieceSize;
             return unavailable.Contains((int)address);
+        }
+    }
+
+    public class PieceAddressCollection<T>:KeyedCollection<int,int>
+    {
+        protected override int GetKeyForItem(int item)
+        {
+            return item;
         }
     }
 }

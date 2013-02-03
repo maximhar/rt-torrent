@@ -114,7 +114,7 @@ namespace Torrent.Client
 
         void transfer_PeerListChanged(object sender, EventArgs e)
         {
-            PeersChanged(this, transfer.Peers.Values.ToArray());
+            OnPeersChanged(transfer.tops.ToArray());
         }
 
         private void StartActions()

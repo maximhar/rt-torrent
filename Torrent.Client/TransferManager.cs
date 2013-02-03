@@ -8,7 +8,7 @@ using System.Net.Sockets;
 using System.Threading;
 using System.Linq;
 using Torrent.Client.Messages;
-
+using Torrent.Client.Extensions;
 namespace Torrent.Client
 {
     public delegate Piece RequestPieceDelegate(PieceInfo pieceInfo);
@@ -24,7 +24,8 @@ namespace Torrent.Client
         private HandshakeMessage handshake;
         private RequestPieceDelegate requestPiece;
         private volatile bool stop;
-        private PeerState[] tops;
+        public List<PeerState> tops;
+        private int highestRate = 0;
         public TransferManager(TorrentData data, RequestPieceDelegate requestHandler,
                                ObtainedPieceDelegate obtainedHandler)
         {
@@ -34,7 +35,7 @@ namespace Torrent.Client
             requestPiece = requestHandler;
             obtainedPiece = obtainedHandler;
             handshake = new HandshakeMessage(Global.Instance.PeerId, new byte[8], data.InfoHash, "BitTorrent protocol");
-            tops = new PeerState[0];
+            tops = new List<PeerState>();
         }
 
         public ConcurrentDictionary<string, PeerState> Peers { get; private set; }
@@ -47,22 +48,44 @@ namespace Torrent.Client
                                              "BitTorrent protocol");
             Connect(peerEndpoints);
             Timer calculateTopPeers = new Timer(CalculateTopPeers);
-            calculateTopPeers.Change(5000, 500);
+            calculateTopPeers.Change(1000, 10000);
+            Timer request = new Timer(RequestFromTopPeers);
+            request.Change(1000, 200);
+        }
+
+        private void RequestFromTopPeers(object state)
+        {
+            foreach (var peerState in tops)
+            {
+                peerState.Top = true;
+                if (!peerState.AmChoked)
+                {
+                    for (int i = 0; i < (peerState.PiecesReceived == 0 ? 2 : peerState.PiecesReceived+1); i++)
+                    {
+                        PieceInfo requestData = strategist.Next();
+                        if (requestData != PieceInfo.Empty && peerState.Bitfield[requestData.Index])
+                            SendMessageTo(peerState,
+                                          new RequestMessage(requestData.Index, requestData.Offset, requestData.Length));
+                    }
+                    if (peerState.PiecesReceived > highestRate)
+                        highestRate = peerState.PiecesReceived;
+                }
+            }
+            OnPeerListChanged();
         }
 
         private void CalculateTopPeers(object state)
         {
-            var top = Peers.Values.OrderByDescending(p => p.PiecesReceived).Take(4);
-            tops = top.ToArray();
-            foreach(var peerState in Peers)
+            tops = Peers.Values.Where(p => !p.AmChoked).OrderByDescending(p => p.PiecesReceived).Take(6).ToList();
+            if (tops.Count >= 6) tops.Remove(tops.Last());
+            var suitableRandom = Peers.Values.Where(p => !tops.Contains(p) && !p.AmChoked);
+            if(suitableRandom.Any())
+                tops.Add(suitableRandom.Random());
+            foreach(var peerState in Peers.Values)
             {
-                peerState.Value.Top = false;
+                peerState.PiecesReceived = 0;
+                peerState.Top = false;
             }
-            foreach(var peerState in top)
-            {
-                peerState.Top = true;
-            }
-            OnPeerListChanged();
         }
 
         public void Stop()
@@ -172,8 +195,7 @@ namespace Torrent.Client
                 if(message is BitfieldMessage)
                 {
                     HandleBitfield(message, peer);
-                    peer.AmInterested = true;
-                    SendMessage(peer.Socket, new InterestedMessage(), peer, MessageSent);
+                    SendMessageTo(peer, new InterestedMessage());
                 }
                 else if(message is HaveMessage)
                 {
@@ -198,36 +220,27 @@ namespace Torrent.Client
                 else if(message is PieceMessage)
                 {
                     var pieceMessage = message as PieceMessage;
-                    var info = new PieceInfo(pieceMessage.Index, pieceMessage.Offset, pieceMessage.Data.Length);
-                    if (strategist.Need(info))
-                    {
-                        peer.PiecesReceived++;
-                        strategist.Received(info);
-                        obtainedPiece(new Piece(pieceMessage.Data, pieceMessage.Index, pieceMessage.Offset,
-                                                pieceMessage.Data.Length));
-                    }
+                    HandlePiece(pieceMessage, peer);
                 }
-                Thread.Sleep(50);
-                
-                if(!peer.AmChoked)
-                {
-                    int count = 1;
-                    if (tops.Contains(peer)) count = 10;
-                    if (!tops.Any()) count = 5;
-                    for (int i = 0; i < count; i++)
-                    {
-                        PieceInfo requestData = strategist.Next();
-                        if (requestData != PieceInfo.Empty && peer.Bitfield[requestData.Index])
-                            SendMessageTo(peer,
-                                          new RequestMessage(requestData.Index, requestData.Offset, requestData.Length));
-                    }
-                }
+                MessageIO.ReceiveMessage(peer.Socket, peer, MessageReceived);
             }
             else if(!peer.Socket.Connected)
             {
                 ClosePeerSocket(peer);
             }
-            MessageIO.ReceiveMessage(peer.Socket, peer, MessageReceived);
+            
+        }
+
+        private void HandlePiece(PieceMessage pieceMessage, PeerState peer)
+        {
+            var info = new PieceInfo(pieceMessage.Index, pieceMessage.Offset, pieceMessage.Data.Length);
+            if(strategist.Need(info))
+            {
+                peer.PiecesReceived++;
+                strategist.Received(info);
+                obtainedPiece(new Piece(pieceMessage.Data, pieceMessage.Index, pieceMessage.Offset,
+                                        pieceMessage.Data.Length));
+            }
         }
 
         private void MessageSent(bool success, int sent, object state)
