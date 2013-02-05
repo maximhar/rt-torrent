@@ -82,6 +82,7 @@ namespace Torrent.Client
                     available++;
                     return true;
                 }
+                Debug.WriteLine("Unneeded piece incoming:" + address);
                 return false;
             }
         }

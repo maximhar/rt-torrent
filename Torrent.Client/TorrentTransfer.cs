@@ -57,7 +57,7 @@ namespace Torrent.Client
             Peers = new ConcurrentDictionary<string, PeerState>();
             localHandshake = new HandshakeMessage(Global.Instance.PeerId, new byte[8], Data.InfoHash,
                                                   "BitTorrent protocol");
-            pieceManager = new PieceManager(Data);
+            pieceManager = new PieceManager(Data, Data.Name);
             transfer = new TransferManager(Data, PieceRequested, PieceDownloaded);
         }
 
@@ -272,8 +272,9 @@ namespace Torrent.Client
         {
             if (stop) return;
             int chokedBy = transfer.Peers.Values.Sum(p => p.AmChoked ? 1 : 0);
+            int queued = transfer.Peers.Values.Sum(p => p.PendingPieces);
             int totalPeers = transfer.Peers.Count;
-            var stats = new Stats(downloaded,totalPeers,chokedBy);
+            var stats = new Stats(downloaded, totalPeers, chokedBy, queued);
             EventHandler<Stats> handler = ReportStats;
             if (handler != null) handler(this, stats);
         }
@@ -284,12 +285,13 @@ namespace Torrent.Client
             public long DownloadedBytes { get; internal set; }
             public int TotalPeers { get; internal set; }
             public int ChokedBy { get; internal set; }
-
-            public Stats(long downloadedBytes, int totalPeers, int chokedBy):this()
+            public int QueuedRequests { get; internal set; }
+            public Stats(long downloadedBytes, int totalPeers, int chokedBy, int queued):this()
             {
                 this.DownloadedBytes = downloadedBytes;
                 this.TotalPeers = totalPeers;
                 this.ChokedBy = chokedBy;
+                this.QueuedRequests = queued;
             }
         }
     }

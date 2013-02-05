@@ -61,7 +61,12 @@ namespace Torrent.Client
                     SendRequests(peerState);
                 }
             }
-            OnPeerListChanged();
+            foreach(var peerState in Peers.Values)
+            {
+                if(peerState.AmChoked)
+                    SelectPeer(peerState);
+
+            }
         }
 
         public void Stop()
@@ -159,6 +164,7 @@ namespace Torrent.Client
 
         private void HandshakeCompleted(PeerState peer)
         {
+            peer.Bitfield = new BitArray(torrentData.Checksums.Count);
             AddPeer(peer);
             MessageIO.ReceiveMessage(peer.Socket, peer, MessageReceived);
         }
@@ -167,6 +173,7 @@ namespace Torrent.Client
         {
             if (stop) return;
             var peer = (PeerState)state;
+            if(!success) Debug.WriteLine("Failed to receive message.");
             if(success)
             {
                 if(message is BitfieldMessage)
@@ -244,41 +251,55 @@ namespace Torrent.Client
                 obtainedPiece(new Piece(pieceMessage.Data, pieceMessage.Index, pieceMessage.Offset,
                                         pieceMessage.Data.Length));
             }
-            if(peer.PiecesReceived >= queueLimit - 1)
-            {
-                peer.PiecesReceived = 0;
-                SendRequests(peer);
-            }
+            peer.PendingPieces--;
+            SendRequests(peer);
         }
 
         private void SendRequests(PeerState peer)
         {
-            for(int i = 0; i < queueLimit; i++)
+            int count = queueLimit - peer.PendingPieces;
+            for(int i = 0; i < count; i++)
             {
                 if(stop) return;
                 PieceInfo requestData = strategist.Next(peer.Bitfield);
                 if(strategist.Complete())
                     Stop();
-                if(requestData!=PieceInfo.Empty)
+                if (requestData != PieceInfo.Empty)
+                {
                     SendMessageTo(peer,
                                   new RequestMessage(requestData.Index, requestData.Offset, requestData.Length));
+                    peer.PendingPieces++;
+                }
             }
         }
 
         private void MessageSent(bool success, int sent, object state)
         {
+            if(!success) 
+            {
+                Debug.WriteLine("Failed to send message.");
+                ClosePeerSocket(state as PeerState);
+            }
         }
 
         private void ClosePeerSocket(PeerState peer)
         {
-            lock(peer)
-            if(peer.Socket != null && peer.Socket.Connected)
+            try
             {
-                Debug.WriteLine("Closing socket with " + peer.Socket.RemoteEndPoint);
-                peer.Socket.Shutdown(SocketShutdown.Both);
-                peer.Socket.Close();
-                RemovePeer(peer.ID);
+                lock(peer)
+                    if(peer.Socket != null)
+                    {
+                        Debug.WriteLine("Closing socket with " + peer.Socket.RemoteEndPoint);
+                        peer.Socket.Shutdown(SocketShutdown.Both);
+                        peer.Socket.Close();
+                        RemovePeer(peer.ID);
+                    }
             }
+            catch (Exception e)
+            {
+                Debug.WriteLine(e, "TransferManager.ClosePeerSocket");
+            }
+            
         }
 
         private void HandleHave(PeerMessage message, PeerState peer)

@@ -32,7 +32,7 @@ namespace Torrent.Client
 
         static public long GetAbsoluteAddress(int index, int offset, int blockSize)
         {
-            return index*blockSize + offset;
+            return (long)index*(long)blockSize + offset;
         }
     }
 }

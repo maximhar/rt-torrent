@@ -20,7 +20,7 @@ namespace Torrent.Client
 
         private static readonly Cache<SendMessageState> sendCache = new Cache<SendMessageState>();
         private static readonly Cache<ReceiveMessageState> receiveCache = new Cache<ReceiveMessageState>();
-        private static readonly int MAX_LENGTH = 1026*16;
+        private static readonly int MAX_LENGTH = 1024*17;
 
 
         public static void SendMessage(Socket socket, PeerMessage message, object state, MessageSentCallback callback)
@@ -74,6 +74,11 @@ namespace Torrent.Client
                 PeerMessage message = PeerMessage.CreateFromBytes(data.Buffer, 0, read);
                 data.Callback(true, message, data.State);
             }
+            catch(Exception e)
+            {
+                data.Callback(false, null, data.State);
+                Debug.WriteLine(e, "MessageIO.EndReceiveHandshake");
+            }
             finally
             {
                 receiveCache.Put(data);
@@ -90,63 +95,75 @@ namespace Torrent.Client
         private static void EndReceiveLength(bool success, int read, object state)
         {
             var data = (ReceiveMessageState) state;
-            if (success)
+            try
             {
-                int messageLength = IPAddress.HostToNetworkOrder(BitConverter.ToInt32(data.Buffer, 0));
-                if(messageLength>MAX_LENGTH)
+                if(success)
+                {
+                    int messageLength = IPAddress.HostToNetworkOrder(BitConverter.ToInt32(data.Buffer, 0));
+                    if(messageLength > MAX_LENGTH)
+                    {
+                        data.Callback(false, null, data.State);
+                        receiveCache.Put(data);
+                        return;
+                    }
+                    if(messageLength == 0)
+                    {
+                        data.Callback(true, new KeepAliveMessage(), data.State);
+                        receiveCache.Put(data);
+                        return;
+                    }
+                    var newBuffer = new byte[read + messageLength];
+                    Buffer.BlockCopy(newBuffer, 0, data.Buffer, 0, read);
+                    data.Buffer = newBuffer;
+                    NetworkIO.Receive(data.Socket, data.Buffer, read, messageLength, data, EndReceiveCallback);
+                }
+                else
                 {
                     data.Callback(false, null, data.State);
                     receiveCache.Put(data);
-                    return;
                 }
-                if (messageLength == 0)
-                {
-                    data.Callback(true, new KeepAliveMessage(), data.State);
-                    receiveCache.Put(data);
-                    return;
-                }
-                var newBuffer = new byte[read + messageLength];
-                Buffer.BlockCopy(newBuffer, 0, data.Buffer, 0, read);
-                data.Buffer = newBuffer;
-                NetworkIO.Receive(data.Socket, data.Buffer, read, messageLength, data, EndReceiveCallback);
             }
-            else
+            catch (Exception e)
             {
                 data.Callback(false, null, data.State);
                 receiveCache.Put(data);
+                Debug.WriteLine(e, "MessageIO.EndReceiveLength");
             }
+            
         }
 
 
         private static void EndReceive(bool success, int read, object state)
         {
-            var data = (ReceiveMessageState) state;
-            if (!success)
-            {
-                data.Callback(false, null, data.State);
-                receiveCache.Put(data);
-                return;
-            }
+            var data = (ReceiveMessageState)state;
             try
             {
-                PeerMessage message = PeerMessage.CreateFromBytes(data.Buffer, 0, read + 4);
-                data.Callback(true, message, data.State);
-                receiveCache.Put(data);
+                if(!success)
+                {
+                    data.Callback(false, null, data.State);
+                    receiveCache.Put(data);
+                    return;
+                }
+                try
+                {
+                    PeerMessage message = PeerMessage.CreateFromBytes(data.Buffer, 0, read + 4);
+                    data.Callback(true, message, data.State);
+                    receiveCache.Put(data);
+                }
+                catch(Exception)
+                {
+                    data.Callback(false, null, data.State);
+                    receiveCache.Put(data);
+                }
             }
-            catch(Exception)
+            catch (Exception e)
             {
                 data.Callback(false, null, data.State);
                 receiveCache.Put(data);
+                Debug.WriteLine(e, "MessageIO.EndReceive");
             }
             
-        }
-
-        private static void BufferCopy(byte[] destination, int destOffset, byte[] source, int srcOffset, int count)
-        {
-            for (int i = 0; i < count; i++)
-            {
-                destination[destOffset + i] = source[srcOffset + i];
-            }
+            
         }
 
         #region Nested type: ReceiveMessageState

@@ -132,7 +132,8 @@ namespace Torrent.GuiTest
         private int totalPeers;
         public string Downloaded
         {
-            get { return downloaded + " / " + totalSize + " ( "+percentDone+" ) Speed: " + speed + " Total peers: " + totalPeers + " | Choked by " + chokedBy + " peers."; }
+            get { return downloaded + " / " + totalSize + " ( "+percentDone+" ) Speed: " + speed + " Total peers: " 
+                + totalPeers + " | Choked by " + chokedBy + " peers, queued: " + queued; }
             set
             {
                 downloaded = value;
@@ -232,18 +233,18 @@ namespace Torrent.GuiTest
             DownloadedBytes(e.DownloadedBytes);
             chokedBy = e.ChokedBy;
             totalPeers = e.TotalPeers;
+            queued = e.QueuedRequests;
         }
 
-        void DownloadedBytes(long downloadedBytes)
+        void DownloadedBytes(long downloadedBytes) // see now here it calcs that and it calcs it only if 1 sec has passed and most importantly only when we call this. i think that i have to redo it like the timer one
         {
-            if ((DateTime.Now - past).TotalSeconds > 1)
-            {
-                speed = Global.Instance.FileSizeFormat((long)((double)(downloadedBytes - oldSize) / (DateTime.Now - past).TotalSeconds)) + "/s";
-                past = DateTime.Now;
-                oldSize = downloadedBytes;
-            }
+            speed =
+                Global.Instance.FileSizeFormat(
+                    (long)((double)(downloadedBytes - oldSize)/(DateTime.Now - past).TotalSeconds)) + "/s";
+            past = DateTime.Now;
+            oldSize = downloadedBytes;
             Downloaded = Global.Instance.FileSizeFormat(downloadedBytes);
-            percentDone = String.Format("{0:0.0}%", (double)downloadedBytes * 100 / (double)filesSize);
+            percentDone = String.Format("{0:0.0}%", (double)downloadedBytes*100/(double)filesSize);
 
         }
 
@@ -316,6 +317,7 @@ namespace Torrent.GuiTest
         }
 
         public event PropertyChangedEventHandler PropertyChanged;
+        private int queued;
 
 
 

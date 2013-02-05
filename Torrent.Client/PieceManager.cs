@@ -21,9 +21,10 @@ namespace Torrent.Client
         private readonly Cache<PieceReadState> readCache;
         private readonly TorrentData torrentData;
         private readonly Cache<PieceWriteState> writeCache;
+        private readonly string mainDir;
         private bool disposed;
 
-        public PieceManager(TorrentData data)
+        public PieceManager(TorrentData data, string mainDir)
         {
             piecesPerBlock = (int)Math.Ceiling((double)data.PieceLength/PieceSize);
             readCache = new Cache<PieceReadState>();
@@ -31,6 +32,7 @@ namespace Torrent.Client
             openStreams = new ConcurrentDictionary<string, FileStream>();
             torrentData = data;
             blockSize = data.PieceLength;
+            this.mainDir = mainDir;
         }
 
         #region IDisposable Members
@@ -135,13 +137,14 @@ namespace Torrent.Client
 
         private FileStream OpenStreamOrGetFromDictionary(FileEntry file)
         {
+            string finalPath = Path.Combine(mainDir, file.Name);
             FileStream stream;
-            if(openStreams.TryGetValue(file.Name, out stream)) return stream;
-            var dir = Path.GetDirectoryName(file.Name);
+            if(openStreams.TryGetValue(finalPath, out stream)) return stream;
+            var dir = Path.GetDirectoryName(finalPath);
             if(dir!=string.Empty && !Directory.Exists(dir))
                 Directory.CreateDirectory(dir);
-            stream = File.Open(file.Name, FileMode.OpenOrCreate, FileAccess.ReadWrite);
-            openStreams.TryAdd(file.Name, stream);
+            stream = File.Open(finalPath, FileMode.OpenOrCreate, FileAccess.ReadWrite);
+            openStreams.TryAdd(finalPath, stream);
             return stream;
         }
 
