@@ -26,7 +26,7 @@ namespace Torrent.Client
         private PieceManager pieceManager;
         private TransferManager transfer;
         private long downloaded = 0;
-        private Timer downloadTimer;
+        private Timer statsReportTimer;
         /// <summary>
         /// Initialize a torrent transfer with metadata from a file on the filesystem.
         /// </summary>
@@ -62,7 +62,7 @@ namespace Torrent.Client
         }
 
         /// <summary>
-        /// The metadata decribing the torrent.
+        /// The metadata describing the torrent.
         /// </summary>
         public TorrentData Data { get; private set; }
 
@@ -80,8 +80,8 @@ namespace Torrent.Client
             var torrentThread = new Thread(StartThread);
             torrentThread.IsBackground = true;
             torrentThread.Start();
-            downloadTimer = new Timer((o) => OnDownloadedBytes(downloaded));
-            downloadTimer.Change(0, 250);
+            statsReportTimer = new Timer((o) => OnStatsReport());
+            statsReportTimer.Change(0, 250);
         }
 
         /// <summary>
@@ -177,13 +177,13 @@ namespace Torrent.Client
         private void StopActions()
         {
             OnStopping();
-            OnDownloadedBytes(downloaded);
+            OnStatsReport();
             DeregisterFromListen();
             transfer.PeerListChanged -= transfer_PeerListChanged;
             transfer.Stopping -= transfer_Stopping;
             pieceManager.Dispose();
             transfer.Dispose();
-            downloadTimer.Dispose();
+            statsReportTimer.Dispose();
             Running = false;
         }
 
@@ -248,6 +248,15 @@ namespace Torrent.Client
         }
 
         public event EventHandler<IEnumerable<PeerState>> PeersChanged;
+        public event EventHandler<IEnumerable<PeerState>> PeersWhoChokedMeChanged;
+        
+        private void OnPeersWhoChokedMeChanged(IEnumerable<PeerState> e)
+        {
+            if (stop) return;
+         
+            EventHandler<IEnumerable<PeerState>> handler = PeersWhoChokedMeChanged;
+            if(handler != null) handler(this, e);
+        }
 
         public void OnPeersChanged(IEnumerable<PeerState> e)
         {
@@ -257,15 +266,31 @@ namespace Torrent.Client
             if(handler != null) handler(this, e);
         }
 
-        public event EventHandler<long> DownloadedBytes;
+        public event EventHandler<Stats> ReportStats;
 
-        public void OnDownloadedBytes(long e)
+        public void OnStatsReport()
         {
             if (stop) return;
-            EventHandler<long> handler = DownloadedBytes;
-            if(handler != null) handler(this, e);
+            int chokedBy = transfer.Peers.Values.Sum(p => p.AmChoked ? 1 : 0);
+            int totalPeers = transfer.Peers.Count;
+            var stats = new Stats(downloaded,totalPeers,chokedBy);
+            EventHandler<Stats> handler = ReportStats;
+            if (handler != null) handler(this, stats);
         }
-
         #endregion
+
+        public struct Stats
+        {
+            public long DownloadedBytes { get; internal set; }
+            public int TotalPeers { get; internal set; }
+            public int ChokedBy { get; internal set; }
+
+            public Stats(long downloadedBytes, int totalPeers, int chokedBy):this()
+            {
+                this.DownloadedBytes = downloadedBytes;
+                this.TotalPeers = totalPeers;
+                this.ChokedBy = chokedBy;
+            }
+        }
     }
 }

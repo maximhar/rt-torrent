@@ -25,6 +25,7 @@ namespace Torrent.Client
         private HandshakeMessage handshake;
         private volatile bool stop;
         public List<PeerState> tops;
+        public int peersWhoChokedMe;
         private Timer firePeersEvent;
         public TransferManager(TorrentData data, RequestPieceDelegate requestHandler,
                                ObtainedPieceDelegate obtainedHandler)
@@ -47,7 +48,7 @@ namespace Torrent.Client
                                              "BitTorrent protocol");
             Connect(peerEndpoints);
             firePeersEvent = new Timer(FirePeers);
-            firePeersEvent.Change(200, 1000);
+            firePeersEvent.Change(200, 1000); //lemme remember what I did :D
         }
 
         private void FirePeers(object state)
@@ -180,10 +181,12 @@ namespace Torrent.Client
                 else if(message is UnchokeMessage)
                 {
                     peer.AmChoked = false;
+                    RemovePeerWhoChokedMe(peer);
                     if(peer.AmInterested)
                     {
                         SendRequests(peer);
                     }
+
                 }
                 else if(message is InterestedMessage)
                 {
@@ -192,6 +195,7 @@ namespace Torrent.Client
                 else if(message is ChokeMessage)
                 {
                     peer.AmChoked = true;
+                    AddPeerWhoChokedMe(peer);
                 }
                 else if(message is NotInterestedMessage)
                 {
@@ -209,6 +213,19 @@ namespace Torrent.Client
                 ClosePeerSocket(peer);
             }
             
+        }
+
+        private void RemovePeerWhoChokedMe(PeerState peer)
+        {
+            if (peersWhoChokedMe == 0) return;
+            peersWhoChokedMe--;
+            OnPeersWhoChokedMeChanged();
+        }
+
+        private void AddPeerWhoChokedMe(PeerState peer)
+        {
+            peersWhoChokedMe++;
+            OnPeersWhoChokedMeChanged();
         }
 
         private void SelectPeer(PeerState peer)
@@ -332,6 +349,13 @@ namespace Torrent.Client
 
         public event EventHandler PeerListChanged;
         public event EventHandler Stopping;
+        public event EventHandler PeersWhoChokedMeChanged;
+
+        private void OnPeersWhoChokedMeChanged()
+        {
+            if (PeersWhoChokedMeChanged != null)
+                PeersWhoChokedMeChanged(this, EventArgs.Empty);
+        }
 
         public void OnStopping(EventArgs e)
         {

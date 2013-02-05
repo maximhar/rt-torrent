@@ -128,10 +128,11 @@ namespace Torrent.GuiTest
                 OnPropertyChanged("Name");
             }
         }
-
+        private int chokedBy;
+        private int totalPeers;
         public string Downloaded
         {
-            get { return downloaded + " / " + totalSize + " ( "+percentDone+" ) Speed: " + speed; }
+            get { return downloaded + " / " + totalSize + " ( "+percentDone+" ) Speed: " + speed + " Total peers: " + totalPeers + " | Choked by " + chokedBy + " peers."; }
             set
             {
                 downloaded = value;
@@ -215,7 +216,8 @@ namespace Torrent.GuiTest
                 torrent.ReceivedMessage +=torrent_ReceivedMessage;
                 torrent.SentMessage += torrent_SentMessage;
                 torrent.PeersChanged += torrent_PeersChanged;
-                torrent.DownloadedBytes += torrent_DownloadedBytes;
+                torrent.ReportStats += torrent_ReportStatsChanged;
+
                 torrent.Start();
                 
             }
@@ -225,16 +227,23 @@ namespace Torrent.GuiTest
             }
         }
 
-        void torrent_DownloadedBytes(object sender, long e)
+        private void torrent_ReportStatsChanged(object sender, TorrentTransfer.Stats e)
+        {
+            DownloadedBytes(e.DownloadedBytes);
+            chokedBy = e.ChokedBy;
+            totalPeers = e.TotalPeers;
+        }
+
+        void DownloadedBytes(long downloadedBytes)
         {
             if ((DateTime.Now - past).TotalSeconds > 1)
             {
-                speed = Global.Instance.FileSizeFormat((long)((double)(e - oldSize) / (DateTime.Now - past).TotalSeconds)) + "/s";
+                speed = Global.Instance.FileSizeFormat((long)((double)(downloadedBytes - oldSize) / (DateTime.Now - past).TotalSeconds)) + "/s";
                 past = DateTime.Now;
-                oldSize = e;
+                oldSize = downloadedBytes;
             }
-            Downloaded = Global.Instance.FileSizeFormat(e);
-            percentDone = String.Format("{0:0.0}%", (double)e * 100 / (double)filesSize);
+            Downloaded = Global.Instance.FileSizeFormat(downloadedBytes);
+            percentDone = String.Format("{0:0.0}%", (double)downloadedBytes * 100 / (double)filesSize);
 
         }
 
@@ -307,5 +316,9 @@ namespace Torrent.GuiTest
         }
 
         public event PropertyChangedEventHandler PropertyChanged;
+
+
+
+
     }
 }

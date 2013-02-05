@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:Torrent.GuiTest"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="d" x:Class="Torrent.GuiTest.MainWindow"
-        Title="Torrent Data" Width="723" AllowDrop="True" Drop="Window_Drop" Height="705">
+        Title="Torrent Data" Width="723" AllowDrop="True" Drop="Window_Drop" Height="715">
     <StackPanel>
         <Grid Margin="3">
             <Grid.ColumnDefinitions>
@@ -68,12 +68,8 @@
         <Grid>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="*" MinWidth="200"/>
             </Grid.ColumnDefinitions>
             <GroupBox Header="Peers" Grid.Column="0">
-                <ListBox Height="100" ItemsSource="{Binding Peers}" FontFamily="Courier New" BorderThickness="0px"/>
-            </GroupBox>
-            <GroupBox Header="Peers who choked me" Grid.Column="1">
                 <ListBox Height="100" ItemsSource="{Binding Peers}" FontFamily="Courier New" BorderThickness="0px"/>
             </GroupBox>
         </Grid>
