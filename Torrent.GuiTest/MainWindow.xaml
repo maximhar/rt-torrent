@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:Torrent.GuiTest"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="d" x:Class="Torrent.GuiTest.MainWindow"
-        Title="Torrent Data" Width="723" AllowDrop="True" Drop="Window_Drop" Height="642">
+        Title="Torrent Data" Width="723" AllowDrop="True" Drop="Window_Drop" Height="705">
     <StackPanel>
         <Grid Margin="3">
             <Grid.ColumnDefinitions>
@@ -61,11 +61,27 @@
             <Label Grid.Column="0" Content="Piece count:"/>
             <TextBox x:Name="PieceCountTextBox" Grid.Column="1" IsEnabled="False" Text="{Binding PieceCount}"/>
         </Grid>
-        <ListBox Height="80" ItemsSource="{Binding Files}" FontFamily="Courier New" />
-        <ListBox Height="100" ItemsSource="{Binding Peers}" FontFamily="Courier New" />
-        <ListBox Height="180" ItemsSource="{Binding Messages}" FontFamily="Courier New" />
+        <GroupBox Header="Files">
+            <ListBox Height="80" ItemsSource="{Binding Files}" FontFamily="Courier New" BorderThickness="0px"/>
+        </GroupBox>
+        
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*" MinWidth="200"/>
+            </Grid.ColumnDefinitions>
+            <GroupBox Header="Peers" Grid.Column="0">
+                <ListBox Height="100" ItemsSource="{Binding Peers}" FontFamily="Courier New" BorderThickness="0px"/>
+            </GroupBox>
+            <GroupBox Header="Peers who choked me" Grid.Column="1">
+                <ListBox Height="100" ItemsSource="{Binding Peers}" FontFamily="Courier New" BorderThickness="0px"/>
+            </GroupBox>
+        </Grid>
+        <GroupBox Header="Messages">
+            <ListBox Height="180" ItemsSource="{Binding Messages}" FontFamily="Courier New" BorderThickness="0px"/>
+        </GroupBox>
         <StackPanel Orientation="Horizontal">
-            <Button Name="StopButton" Click="StopButton_Click">Stop</Button>
+            <Button Name="StopButton" Click="StopButton_Click" Width="720">Stop</Button>
         </StackPanel>
     </StackPanel>
 </Window>
