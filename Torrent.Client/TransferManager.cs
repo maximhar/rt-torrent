@@ -7,6 +7,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using System.Linq;
+using Torrent.Client.Events;
 using Torrent.Client.Messages;
 using Torrent.Client.Extensions;
 namespace Torrent.Client
@@ -40,15 +41,18 @@ namespace Torrent.Client
 
         public ConcurrentDictionary<string, PeerState> Peers { get; private set; }
 
+        public TransferState State { get; private set; }
+
         public void Start(IEnumerable<IPEndPoint> peerEndpoints)
         {
             if(disposed) throw new TorrentException("Transfer manager disposed.");
             stop = false;
+            ChangeState(TransferState.Downloading);
             handshake = new HandshakeMessage(Global.Instance.PeerId, new byte[8], torrentData.InfoHash,
                                              "BitTorrent protocol");
             Connect(peerEndpoints);
             firePeersEvent = new Timer(FirePeers);
-            firePeersEvent.Change(200, 1000); //lemme remember what I did :D
+            firePeersEvent.Change(200, 1000);
         }
 
         private void FirePeers(object state)
@@ -69,13 +73,13 @@ namespace Torrent.Client
             }
         }
 
-        public void Stop()
+        public void Stop(bool success)
         {
             if(disposed) throw new TorrentException("Transfer manager disposed.");
             stop = true;
             if(firePeersEvent!=null)
                 firePeersEvent.Dispose();
-            OnStopping(EventArgs.Empty);
+            OnStopping(success);
         }
 
         public void AddEndpoints(IEnumerable<IPEndPoint> peerEndpoints)
@@ -101,7 +105,7 @@ namespace Torrent.Client
 
         private PeerState InitializePeer(IPEndPoint peerEndpoint)
         {
-            var peer = new PeerState(new Socket(SocketType.Stream, ProtocolType.Tcp), peerEndpoint)
+            var peer = new PeerState(new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp), peerEndpoint)
                            {Bitfield = new BitArray(torrentData.Checksums.Count)};
             return peer;
         }
@@ -262,8 +266,11 @@ namespace Torrent.Client
             {
                 if(stop) return;
                 PieceInfo requestData = strategist.Next(peer.Bitfield);
-                if(strategist.Complete())
-                    Stop();
+                if (strategist.Complete())
+                {
+                    Stop(true);
+                    ChangeState(TransferState.Finished);
+                }
                 if (requestData != PieceInfo.Empty)
                 {
                     SendMessageTo(peer,
@@ -335,6 +342,13 @@ namespace Torrent.Client
             Peers.TryAdd(peer.ID, peer);
             OnPeerListChanged();
         }
+
+        private void ChangeState(TransferState state)
+        {
+            State = state;
+            OnStateChanged(state);
+        }
+
         #region IDisposable
 
         public void Dispose()
@@ -349,7 +363,7 @@ namespace Torrent.Client
             {
                 if(disposing)
                 {
-                    Stop();
+                    Stop(true);
                     if(Peers != null)
                         foreach(var peerState in Peers)
                         {
@@ -371,6 +385,14 @@ namespace Torrent.Client
         public event EventHandler PeerListChanged;
         public event EventHandler Stopping;
         public event EventHandler PeersWhoChokedMeChanged;
+        public event EventHandler<EventArgs<TransferState>> StateChanged;
+
+        public void OnStateChanged(TransferState e)
+        {
+            EventHandler<EventArgs<TransferState>> handler = StateChanged;
+            if(handler != null) handler(this, new EventArgs<TransferState>(e));
+        }
+
 
         private void OnPeersWhoChokedMeChanged()
         {
@@ -378,10 +400,10 @@ namespace Torrent.Client
                 PeersWhoChokedMeChanged(this, EventArgs.Empty);
         }
 
-        public void OnStopping(EventArgs e)
+        public void OnStopping(bool success)
         {
             EventHandler handler = Stopping;
-            if(handler != null) handler(this, e);
+            if(handler != null) handler(this, new EventArgs<bool>(success));
         }
     }
 }

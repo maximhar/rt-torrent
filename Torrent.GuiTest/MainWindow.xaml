@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:Torrent.GuiTest"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="d" x:Class="Torrent.GuiTest.MainWindow"
-        Title="Torrent Data" Width="723" AllowDrop="True" Drop="Window_Drop" Height="715">
+        Title="Torrent Data" Width="723" AllowDrop="True" Drop="Window_Drop" Height="586">
     <StackPanel>
         <Grid Margin="3">
             <Grid.ColumnDefinitions>
@@ -11,7 +11,7 @@
                 <ColumnDefinition Width="6*" MinWidth="200"/>
             </Grid.ColumnDefinitions>
             <Label Grid.Column="0" Content="Torrent path:"/>
-            <TextBox Grid.Column="1" x:Name="AnnounceUrlTextBox" AllowDrop="True"/>
+            <TextBox Grid.Column="1" x:Name="TorrentPathTextBox" AllowDrop="True"/>
         </Grid>
         <Grid Margin="3">
             <Grid.ColumnDefinitions>
@@ -69,9 +69,6 @@
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
-            <GroupBox Header="Peers" Grid.Column="0">
-                <ListBox Height="100" ItemsSource="{Binding Peers}" FontFamily="Courier New" BorderThickness="0px"/>
-            </GroupBox>
         </Grid>
         <GroupBox Header="Messages">
             <ListBox Height="180" ItemsSource="{Binding Messages}" FontFamily="Courier New" BorderThickness="0px"/>

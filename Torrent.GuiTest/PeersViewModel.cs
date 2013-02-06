@@ -12,6 +12,7 @@ using Torrent.Client;
 using MoreLinq;
 using System.Windows.Threading;
 using System.Net;
+using Torrent.Client.Events;
 using Torrent.Client.Messages;
 
 namespace Torrent.GuiTest
@@ -191,7 +192,7 @@ namespace Torrent.GuiTest
                 Peers.Clear();
                 Announces.Clear();
                 Files.Clear();
-
+                AddMessage("Attempting to open torrent file.");
                 torrent = new TorrentTransfer(path);
                 PieceLength = torrent.Data.PieceLength;
                 PieceCount = torrent.Data.Checksums.Count;
@@ -211,24 +212,27 @@ namespace Torrent.GuiTest
                 }
                 totalSize = Global.Instance.FileSizeFormat(filesSize);
 
-                torrent.GotPeers += torrent_GotPeers;
                 torrent.RaisedException += torrent_RaisedException;
                 torrent.Stopping += torrent_Stopping;
-                torrent.ReceivedMessage +=torrent_ReceivedMessage;
-                torrent.SentMessage += torrent_SentMessage;
                 torrent.PeersChanged += torrent_PeersChanged;
                 torrent.ReportStats += torrent_ReportStatsChanged;
-
+                torrent.StateChanged += torrent_StateChanged;
                 torrent.Start();
                 
             }
             catch (Exception e)
             {
                 HandleException(e);
+                MessageBox.Show("Damn: " + e);
             }
         }
 
-        private void torrent_ReportStatsChanged(object sender, TorrentTransfer.Stats e)
+        void torrent_StateChanged(object sender, EventArgs<TorrentState> e)
+        {
+            dispatcher.Invoke(new Action(() => AddMessage("State: " + e.Value)));
+        }
+
+        private void torrent_ReportStatsChanged(object sender, StatsEventArgs e)
         {
             DownloadedBytes(e.DownloadedBytes);
             chokedBy = e.ChokedBy;
@@ -248,19 +252,19 @@ namespace Torrent.GuiTest
 
         }
 
-        void torrent_PeersChanged(object sender, IEnumerable<PeerState> e)
+        void torrent_PeersChanged(object sender, EventArgs<IEnumerable<PeerState>> e)
         {
-            Peers = new ObservableCollection<PeerState>(e);
+            Peers = new ObservableCollection<PeerState>(e.Value);
         }
 
         void torrent_SentMessage(object sender, PeerMessage e)
         {
-            dispatcher.Invoke(() => AddMessage("Sent: " + e));
+            dispatcher.Invoke(new Action(() => AddMessage("Sent: " + e)));
         }
 
         private void torrent_ReceivedMessage(object sender, PeerMessage e)
         {
-            dispatcher.Invoke(() => AddMessage("Received: " + e));
+            dispatcher.Invoke(new Action(() => AddMessage("Received: " + e)));
         }
 
         public void Stop()
@@ -278,7 +282,7 @@ namespace Torrent.GuiTest
 
         void torrent_Stopping(object sender, EventArgs e)
         {
-            dispatcher.Invoke(() => AddMessage("Torrent said it's stopping."));
+            dispatcher.Invoke(new Action(() => AddMessage("Torrent said it's stopping.")));
         }
 
         private void AddMessage(string message)
@@ -291,20 +295,20 @@ namespace Torrent.GuiTest
             AddMessage(string.Format("Ooops. Something bad happened. {0}", e.Message));
         }
 
-        void torrent_RaisedException(object sender, Exception e)
+        void torrent_RaisedException(object sender, EventArgs<Exception> e)
         {
-            dispatcher.Invoke(new Action(() => HandleException(e)));
+            dispatcher.Invoke(new Action(() => HandleException(e.Value)));
         }
 
         void torrent_GotPeers(object sender, EventArgs e)
         {
             if (torrent.Peers != null)
             {
-                dispatcher.Invoke(() =>
-                    {
-                        Peers.Clear();
-                        torrent.Peers.ForEach(p => Peers.Add(p.Value));
-                    });
+                dispatcher.Invoke(new Action(() =>
+                                            {
+                                                Peers.Clear();
+                                                torrent.Peers.ForEach(p => Peers.Add(p.Value));
+                                            }));
             }
         }
 
@@ -318,9 +322,6 @@ namespace Torrent.GuiTest
 
         public event PropertyChangedEventHandler PropertyChanged;
         private int queued;
-
-
-
-
+        private TorrentState state;
     }
 }

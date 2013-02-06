@@ -97,7 +97,7 @@ namespace Torrent.Client
 
         private void BindSocket()
         {
-            Listener = new Socket(SocketType.Stream, ProtocolType.Tcp);
+            Listener = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             Listener.Bind(new IPEndPoint(IPAddress.Any, LISTEN_PORT));
             Listener.Listen(10);
         }

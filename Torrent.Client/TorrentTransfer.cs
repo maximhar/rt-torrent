@@ -9,6 +9,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
+using Torrent.Client.Events;
 using Torrent.Client.Messages;
 
 namespace Torrent.Client
@@ -70,12 +71,14 @@ namespace Torrent.Client
 
         public bool Running { get; private set; }
 
+        public TorrentState State { get; private set; }
+
         /// <summary>
         /// Starts the torrent transfer on a new thread.
         /// </summary>
         public void Start()
         {
-            if (Running) throw new TorrentException("Already started.");
+            if (State != TorrentState.NotRunning) throw new TorrentException("Already started.");
 
             var torrentThread = new Thread(StartThread);
             torrentThread.IsBackground = true;
@@ -113,7 +116,24 @@ namespace Torrent.Client
         {
             transfer.PeerListChanged += transfer_PeerListChanged;
             transfer.Stopping += transfer_Stopping;
+            transfer.StateChanged += TransferOnStateChanged;
             transfer.Start(Endpoints);
+        }
+
+        private void TransferOnStateChanged(object sender, EventArgs<TransferState> eventArgs)
+        {
+            if(eventArgs.Value == TransferState.Finished)
+            {
+                ChangeState(TorrentState.Finished);
+            }
+            else if(eventArgs.Value == TransferState.Downloading)
+            {
+                ChangeState(TorrentState.Downloading);
+            }
+            else if(eventArgs.Value == TransferState.Seeding)
+            {
+                ChangeState(TorrentState.Seeding);
+            }
         }
 
         void transfer_Stopping(object sender, EventArgs e)
@@ -155,9 +175,10 @@ namespace Torrent.Client
             throw new NotImplementedException();
         }
 
-        private void PeerListener_RaisedException(object sender, Exception e)
+        private void PeerListener_RaisedException(object sender, EventArgs<Exception> e)
         {
-            OnRaisedException(e);
+            OnRaisedException(e.Value);
+            ChangeState(TorrentState.Failed);
             Stop();
         }
 
@@ -168,14 +189,25 @@ namespace Torrent.Client
 
         private void HandshakeTracker()
         {
+            ChangeState(TorrentState.WaitingForTracker);
             TrackerResponse info = tracker.AnnounceStart(Data.InfoHash, Global.Instance.PeerId,
                                                          Global.Instance.ListeningPort,
                                                          0, 0, Data.Files.Sum(f => f.Length));
             Endpoints = info.Endpoints;
         }
 
+        private void ChangeState(TorrentState state)
+        {
+            State = state;
+            OnStateChanged(state);
+        }
+
         private void StopActions()
         {
+            if(State != TorrentState.Finished || State != TorrentState.NotRunning)
+            {
+                ChangeState(TorrentState.NotRunning);
+            }
             OnStopping();
             OnStatsReport();
             DeregisterFromListen();
@@ -208,7 +240,7 @@ namespace Torrent.Client
         {
             if (RaisedException != null)
             {
-                RaisedException(this, e);
+                RaisedException(this, new EventArgs<Exception>(e));
             }
         }
 
@@ -221,52 +253,34 @@ namespace Torrent.Client
         }
 
         /// <summary>
-        /// Fires when the torrent receives peers from the tracker.
-        /// </summary>
-        public event EventHandler GotPeers;
-
-        /// <summary>
         /// Fires when an exception occurs in the transfer thread.
         /// </summary>
-        public event EventHandler<Exception> RaisedException;
+        public event EventHandler<EventArgs<Exception>> RaisedException;
 
         /// <summary>
         /// Fires just prior to the transfer's complete stop.
         /// </summary>
         public event EventHandler Stopping;
 
-        public event EventHandler<PeerMessage> ReceivedMessage;
-
-        public event EventHandler<PeerMessage> SentMessage;
-
-        public event EventHandler<Piece> WrotePiece;
+        public event EventHandler<EventArgs<Piece>> WrotePiece;
 
         public void OnWrotePiece(Piece e)
         {
-            EventHandler<Piece> handler = WrotePiece;
-            if(handler != null) handler(this, e);
+            EventHandler<EventArgs<Piece>> handler = WrotePiece;
+            if(handler != null) handler(this, new EventArgs<Piece>(e));
         }
 
-        public event EventHandler<IEnumerable<PeerState>> PeersChanged;
-        public event EventHandler<IEnumerable<PeerState>> PeersWhoChokedMeChanged;
-        
-        private void OnPeersWhoChokedMeChanged(IEnumerable<PeerState> e)
-        {
-            if (stop) return;
-         
-            EventHandler<IEnumerable<PeerState>> handler = PeersWhoChokedMeChanged;
-            if(handler != null) handler(this, e);
-        }
+        public event EventHandler<EventArgs<IEnumerable<PeerState>>> PeersChanged;
 
         public void OnPeersChanged(IEnumerable<PeerState> e)
         {
             if (stop) return;
-         
-            EventHandler<IEnumerable<PeerState>> handler = PeersChanged;
-            if(handler != null) handler(this, e);
+
+            EventHandler<EventArgs<IEnumerable<PeerState>>> handler = PeersChanged;
+            if(handler != null) handler(this, new EventArgs<IEnumerable<PeerState>>(e));
         }
 
-        public event EventHandler<Stats> ReportStats;
+        public event EventHandler<StatsEventArgs> ReportStats;
 
         public void OnStatsReport()
         {
@@ -274,25 +288,19 @@ namespace Torrent.Client
             int chokedBy = transfer.Peers.Values.Sum(p => p.AmChoked ? 1 : 0);
             int queued = transfer.Peers.Values.Sum(p => p.PendingPieces);
             int totalPeers = transfer.Peers.Count;
-            var stats = new Stats(downloaded, totalPeers, chokedBy, queued);
-            EventHandler<Stats> handler = ReportStats;
+            var stats = new StatsEventArgs(downloaded, totalPeers, chokedBy, queued);
+            EventHandler<StatsEventArgs> handler = ReportStats;
             if (handler != null) handler(this, stats);
         }
-        #endregion
 
-        public struct Stats
+        public event EventHandler<EventArgs<TorrentState>> StateChanged;
+
+        public void OnStateChanged(TorrentState e)
         {
-            public long DownloadedBytes { get; internal set; }
-            public int TotalPeers { get; internal set; }
-            public int ChokedBy { get; internal set; }
-            public int QueuedRequests { get; internal set; }
-            public Stats(long downloadedBytes, int totalPeers, int chokedBy, int queued):this()
-            {
-                this.DownloadedBytes = downloadedBytes;
-                this.TotalPeers = totalPeers;
-                this.ChokedBy = chokedBy;
-                this.QueuedRequests = queued;
-            }
+            EventHandler<EventArgs<TorrentState>> handler = StateChanged;
+            if(handler != null) handler(this, new EventArgs<TorrentState>(e));
         }
+
+        #endregion
     }
 }

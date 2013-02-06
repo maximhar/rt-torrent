@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
+using Torrent.Client.Events;
 using Torrent.Client.Messages;
 
 namespace Torrent.Client
@@ -46,11 +47,18 @@ namespace Torrent.Client
 
         private static void EndAccept(IAsyncResult ar)
         {
-            var socket = (Socket) ar.AsyncState; //this is very werid :D
-            Socket newsocket = socket.EndAccept(ar);
-            var peer = new PeerState(newsocket, (IPEndPoint) newsocket.RemoteEndPoint);
-            MessageIO.ReceiveHandshake(newsocket, peer, HandshakeReceived);
-            BeginListening();
+            try
+            {
+                var socket = (Socket)ar.AsyncState;
+                Socket newsocket = socket.EndAccept(ar);
+                var peer = new PeerState(newsocket, (IPEndPoint)newsocket.RemoteEndPoint);
+                MessageIO.ReceiveHandshake(newsocket, peer, HandshakeReceived);
+                BeginListening();
+            }
+            catch (Exception e)
+            {
+                RaiseException(e);
+            }
         }
 
         private static void HandshakeReceived(bool success, PeerMessage message, object state)
@@ -83,10 +91,10 @@ namespace Torrent.Client
         {
             if (RaisedException != null)
             {
-                RaisedException(null, e);
+                RaisedException(null, new EventArgs<Exception>(e));
             }
         }
 
-        public static event EventHandler<Exception> RaisedException;
+        public static event EventHandler<EventArgs<Exception>> RaisedException;
     }
 }

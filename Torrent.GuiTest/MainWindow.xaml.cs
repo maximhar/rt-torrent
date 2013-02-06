@@ -31,8 +31,8 @@ namespace Torrent.GuiTest
         private void Window_Drop(object sender, DragEventArgs e)
         {
             var str = (string[])e.Data.GetData(DataFormats.FileDrop);
-            AnnounceUrlTextBox.Text = str.FirstOrDefault();
-            model.GetPeers(AnnounceUrlTextBox.Text);
+            TorrentPathTextBox.Text = str.FirstOrDefault();
+            model.GetPeers(TorrentPathTextBox.Text);
         }
 
         private void StopButton_Click(object sender, RoutedEventArgs e)
