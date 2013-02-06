@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Threading;
 
 namespace Torrent.Client
 {
@@ -23,6 +24,8 @@ namespace Torrent.Client
         private readonly Cache<PieceWriteState> writeCache;
         private readonly string mainDir;
         private bool disposed;
+        private int queuedWrites = 0;
+
 
         public PieceManager(TorrentData data, string mainDir)
         {
@@ -53,6 +56,7 @@ namespace Torrent.Client
             {
                 DiskIO.QueueWrite(part.FileStream, piece.Data, part.FileOffset, part.DataOffset, part.Length,
                                   EndAddPiece, data);
+                Interlocked.Increment(ref queuedWrites);
             }
         }
 
@@ -83,7 +87,7 @@ namespace Torrent.Client
                 }
             }
             else data.Callback(false, data.State);
-
+            Interlocked.Decrement(ref queuedWrites);
             writeCache.Put(data);
         }
 
@@ -240,5 +244,13 @@ namespace Torrent.Client
         }
 
         #endregion
+
+        public void Wait()
+        {
+            while(queuedWrites > 0)
+            {
+                Thread.Sleep(50);
+            }
+        }
     }
 }

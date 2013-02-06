@@ -9,6 +9,7 @@ namespace Torrent.Client
     {
         NotRunning,
         WaitingForTracker,
+        WaitingForDisk,
         Downloading,
         Seeding,
         Finished,

@@ -270,6 +270,7 @@ namespace Torrent.Client
                 {
                     Stop(true);
                     ChangeState(TransferState.Finished);
+                    return;
                 }
                 if (requestData != PieceInfo.Empty)
                 {

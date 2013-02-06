@@ -9,10 +9,10 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using Torrent.Client;
-using MoreLinq;
 using System.Windows.Threading;
 using System.Net;
 using Torrent.Client.Events;
+using Torrent.Client.Extensions;
 using Torrent.Client.Messages;
 
 namespace Torrent.GuiTest

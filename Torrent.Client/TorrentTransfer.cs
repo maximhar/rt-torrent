@@ -92,7 +92,7 @@ namespace Torrent.Client
         /// </summary>
         public void Stop()
         {
-            stop = true;
+            stopping = true;
         }
 
         private void StartThread()
@@ -204,10 +204,13 @@ namespace Torrent.Client
 
         private void StopActions()
         {
+            ChangeState(TorrentState.WaitingForDisk);
+            pieceManager.Wait();
             if(State != TorrentState.Finished || State != TorrentState.NotRunning)
             {
                 ChangeState(TorrentState.NotRunning);
             }
+            stop = true;
             OnStopping();
             OnStatsReport();
             DeregisterFromListen();
@@ -230,7 +233,7 @@ namespace Torrent.Client
             while (true)
             {
                 Thread.Sleep(100);
-                if (stop) break;
+                if (stopping) break;
             }
         }
 
@@ -294,6 +297,7 @@ namespace Torrent.Client
         }
 
         public event EventHandler<EventArgs<TorrentState>> StateChanged;
+        private bool stopping;
 
         public void OnStateChanged(TorrentState e)
         {
