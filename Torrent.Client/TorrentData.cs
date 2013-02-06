@@ -6,8 +6,8 @@ using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
-using MoreLinq;
 using Torrent.Client.Bencoding;
+using Torrent.Client.Extensions;
 
 namespace Torrent.Client
 {

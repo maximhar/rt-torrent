@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Net;
-using MoreLinq;
 using Torrent.Client.Bencoding;
+using Torrent.Client.Extensions;
 
 namespace Torrent.Client
 {

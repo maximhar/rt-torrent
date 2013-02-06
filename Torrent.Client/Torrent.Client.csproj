@@ -101,9 +101,6 @@
     <CodeContractsAnalysisWarningLevel>0</CodeContractsAnalysisWarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="MoreLinq">
-      <HintPath>..\External Libraries\MoreLinq\MoreLinq.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
   </ItemGroup>
@@ -118,6 +115,7 @@
     <Compile Include="Cache.cs" />
     <Compile Include="DiskIO.cs" />
     <Compile Include="Events\EventArgs.cs" />
+    <Compile Include="Extensions\BitArrayExtensions.cs" />
     <Compile Include="Extensions\IEnumerableExtensions.cs" />
     <Compile Include="ICacheable.cs" />
     <Compile Include="InfoHash.cs" />

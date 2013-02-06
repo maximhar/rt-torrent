@@ -1,7 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using System.Text;
-using MoreLinq;
+using Torrent.Client.Extensions;
 
 namespace Torrent.Client.Bencoding
 {

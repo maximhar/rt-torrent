@@ -6,7 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Text;
-using MoreLinq;
+using Torrent.Client.Extensions;
 
 namespace Torrent.Client
 {
