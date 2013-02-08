@@ -62,7 +62,8 @@ namespace Torrent.Client
 
         public bool Complete()
         {
-            return available == pieceCount;
+            lock(unavailable)
+                return available == pieceCount;
         }
 
         public bool EndGame()
@@ -85,15 +86,6 @@ namespace Torrent.Client
                 Debug.WriteLine("Unneeded piece incoming:" + address);
                 return false;
             }
-        }
-
-        public bool Need(PieceInfo piece)
-        {
-            long address = Piece.GetAbsoluteAddress(piece.Index, piece.Offset, blockSize) / pieceSize;
-            
-            bool res = unavailable.Contains((int)address);
-            
-            return res;
         }
     }
 

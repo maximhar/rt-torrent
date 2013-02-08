@@ -76,10 +76,11 @@ namespace Torrent.Client
 
         private void EndAddPiece(bool success, int written, object state)
         {
+            
             var data = (PieceWriteState)state;
-
             if(success)
             {
+                Interlocked.Decrement(ref queuedWrites);
                 data.Remaining -= written;
                 if(data.Remaining == 0)
                 {
@@ -87,13 +88,12 @@ namespace Torrent.Client
                 }
             }
             else data.Callback(false, data.State);
-            Interlocked.Decrement(ref queuedWrites);
             writeCache.Put(data);
         }
 
         private void EndGetPiece(bool success, int read, byte[] pieceData, object state)
         {
-            var data = (PieceReadState)state; //that should work :D so its test time? no, lets do it for writing too
+            var data = (PieceReadState)state;
             if(success)
             {
                 data.Remaining -= read;
@@ -160,11 +160,12 @@ namespace Torrent.Client
                 {
                     if(openStreams != null)
                     {
-                        foreach(var stream in openStreams)
+                        foreach(var stream in openStreams.Values)
                         {
-                            if(stream.Value != null)
+                            if(stream != null)
                             {
-                                stream.Value.Dispose();
+                                stream.Flush();
+                                stream.Dispose();
                             }
                         }
                     }
@@ -247,10 +248,10 @@ namespace Torrent.Client
 
         public void Wait()
         {
-            while(queuedWrites > 0)
+            do
             {
-                Thread.Sleep(50);
-            }
+                Thread.Sleep(100);
+            } while(queuedWrites > 0);
         }
     }
 }

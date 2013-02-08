@@ -80,8 +80,7 @@ namespace Torrent.Client
         {
             if (State != TorrentState.NotRunning) throw new TorrentException("Already started.");
 
-            var torrentThread = new Thread(StartThread);
-            torrentThread.IsBackground = true;
+            var torrentThread = new Thread(StartThread) {IsBackground = true};
             torrentThread.Start();
             statsReportTimer = new Timer((o) => OnStatsReport());
             statsReportTimer.Change(0, 250);
