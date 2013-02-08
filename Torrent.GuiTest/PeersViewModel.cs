@@ -247,7 +247,7 @@ namespace Torrent.GuiTest
             queued = e.QueuedRequests;
         }
 
-        void DownloadedBytes(long downloadedBytes) // see now here it calcs that and it calcs it only if 1 sec has passed and most importantly only when we call this. i think that i have to redo it like the timer one
+        void DownloadedBytes(long downloadedBytes)
         {
             speed =
                 Global.Instance.FileSizeFormat(
@@ -257,7 +257,12 @@ namespace Torrent.GuiTest
             Downloaded = Global.Instance.FileSizeFormat(downloadedBytes);
             percentDone = String.Format("{0:0.0}%", (double)downloadedBytes*100/(double)filesSize);
             averageSpeed = Global.Instance.FileSizeFormat((long)((double)(downloadedBytes) / (DateTime.Now - begin).TotalSeconds)) + "/s";
-            var elapsedTime= DateTime.Now - begin;
+            TotalElapsedTime();
+        }
+
+        private void TotalElapsedTime()
+        {
+            var elapsedTime = DateTime.Now - begin;
             if (elapsedTime.TotalSeconds < 10)
                 totalTime = elapsedTime.ToString(@"%s") + " s";
             else if (elapsedTime.TotalSeconds < 60)
