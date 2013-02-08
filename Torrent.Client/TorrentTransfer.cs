@@ -236,6 +236,7 @@ namespace Torrent.Client
             do
             {
                 Thread.Sleep(100);
+                if (stop) break;
             } while (downloaded < total);
         }
 
@@ -304,7 +305,6 @@ namespace Torrent.Client
 
         public void OnStatsReport()
         {
-            if (stop) return;
             int chokedBy = transfer.Peers.Values.Sum(p => p.AmChoked ? 1 : 0);
             int queued = transfer.Peers.Values.Sum(p => p.PendingPieces);
             int totalPeers = transfer.Peers.Count;
