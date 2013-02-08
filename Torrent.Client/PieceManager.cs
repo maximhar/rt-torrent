@@ -50,7 +50,7 @@ namespace Torrent.Client
 
         public void AddPiece(Piece piece, PieceWrittenDelegate callback, object state)
         {
-            IEnumerable<PieceFileInfo> parts = GetParts(piece.Info.Index, piece.Info.Offset, piece.Data.Length);
+            IEnumerable<PieceFileInfo> parts = GetParts(piece.Info.Index, piece.Info.Offset, piece.Info.Length);
             PieceWriteState data = writeCache.Get().Init(callback, piece.Data.Length, piece, state);
             foreach(PieceFileInfo part in parts)
             {
@@ -65,12 +65,10 @@ namespace Torrent.Client
             IEnumerable<PieceFileInfo> files = GetParts(block, offset, length);
             var buffer = new byte[length];
             var piece = new Piece(buffer, block, offset, length);
-            int partOffset = 0;
             PieceReadState data = readCache.Get().Init(piece, callback, length, state);
             foreach(PieceFileInfo part in files)
             {
                 DiskIO.QueueRead(part.FileStream, buffer, 0, part.FileOffset, part.Length, EndGetPiece, data);
-                partOffset += (int)part.Length;
             }
         }
 

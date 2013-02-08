@@ -26,8 +26,11 @@ namespace Torrent.Client
         private volatile bool stop;
         private PieceManager pieceManager;
         private TransferManager transfer;
+        private long total = 0;
         private long downloaded = 0;
         private Timer statsReportTimer;
+        private AutoResetEvent pieceWriteWaiter = new AutoResetEvent(false);
+
         /// <summary>
         /// Initialize a torrent transfer with metadata from a file on the filesystem.
         /// </summary>
@@ -60,6 +63,7 @@ namespace Torrent.Client
                                                   "BitTorrent protocol");
             pieceManager = new PieceManager(Data, Data.Name);
             transfer = new TransferManager(Data, PieceRequested, PieceDownloaded);
+            total = Data.Files.Sum(f => f.Length);
         }
 
         /// <summary>
@@ -160,13 +164,15 @@ namespace Torrent.Client
         private void PieceDownloaded(Piece piece)
         {
             pieceManager.AddPiece(piece, PieceWritten, piece);
+            pieceWriteWaiter.WaitOne();
         }
 
         private void PieceWritten(bool success, object state)
         {
             var piece = state as Piece;
-            Interlocked.Add(ref downloaded, piece.Data.Length);
+            Interlocked.Add(ref downloaded, piece.Info.Length);
             OnWrotePiece(piece);
+            pieceWriteWaiter.Set();
         }
 
         private Piece PieceRequested(PieceInfo pieceinfo)
@@ -204,7 +210,7 @@ namespace Torrent.Client
         private void StopActions()
         {
             ChangeState(TorrentState.WaitingForDisk);
-            pieceManager.Wait();
+            WaitForCompletion();
             if(State != TorrentState.Finished || State != TorrentState.NotRunning)
             {
                 ChangeState(TorrentState.NotRunning);
@@ -219,6 +225,14 @@ namespace Torrent.Client
             transfer.Dispose();
             statsReportTimer.Dispose();
             Running = false;
+        }
+
+        private void WaitForCompletion()
+        {
+            do
+            {
+                Thread.Sleep(100);
+            } while (downloaded < total);
         }
 
         private void DeregisterFromListen()
