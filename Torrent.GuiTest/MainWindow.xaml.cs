@@ -39,5 +39,8 @@ namespace Torrent.GuiTest
         {
             model.Stop();
         }
+
+        
+
     }
 }

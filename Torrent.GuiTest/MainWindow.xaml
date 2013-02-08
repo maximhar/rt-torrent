@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:Torrent.GuiTest"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="d" x:Class="Torrent.GuiTest.MainWindow"
-        Title="Torrent Data" Width="723" AllowDrop="True" Drop="Window_Drop" Height="586">
+        Title="Torrent Data" Width="850" AllowDrop="True" Drop="Window_Drop" Height="590">
     <StackPanel>
         <Grid Margin="3">
             <Grid.ColumnDefinitions>
@@ -73,8 +73,8 @@
         <GroupBox Header="Messages">
             <ListBox Height="180" ItemsSource="{Binding Messages}" FontFamily="Courier New" BorderThickness="0px"/>
         </GroupBox>
-        <StackPanel Orientation="Horizontal">
-            <Button Name="StopButton" Click="StopButton_Click" Width="720">Stop</Button>
+        <StackPanel>
+            <Button x:Name="StopButton" Click="StopButton_Click" Content="Stop"/>
         </StackPanel>
     </StackPanel>
 </Window>

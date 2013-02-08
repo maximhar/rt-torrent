@@ -14,6 +14,7 @@ using System.Net;
 using Torrent.Client.Events;
 using Torrent.Client.Extensions;
 using Torrent.Client.Messages;
+using System.Globalization;
 
 namespace Torrent.GuiTest
 {
@@ -39,8 +40,11 @@ namespace Torrent.GuiTest
         private string totalSize;
         private string percentDone;
         private string speed;
+        private string averageSpeed;
         private long oldSize;
         private DateTime past;
+        private DateTime begin = DateTime.Now;
+        private string totalTime;
 
         /// <summary>
         /// Gets or sets an ObservableCollection of FileEntries representing the files in the the torrent.
@@ -133,8 +137,11 @@ namespace Torrent.GuiTest
         private int totalPeers;
         public string Downloaded
         {
-            get { return downloaded + " / " + totalSize + " ( "+percentDone+" ) Speed: " + speed + " Total peers: " 
-                + totalPeers + " | Choked by " + chokedBy + " peers, queued: " + queued; }
+            get
+            {
+                return downloaded + " / " + totalSize + " ( " + percentDone + " ) Speed: " + speed + " Average: " + averageSpeed + " Total peers: "
+                    + totalPeers + " | Choked by " + chokedBy + " peers, queued: " + queued + " Total time: " + totalTime;
+            }
             set
             {
                 downloaded = value;
@@ -249,7 +256,8 @@ namespace Torrent.GuiTest
             oldSize = downloadedBytes;
             Downloaded = Global.Instance.FileSizeFormat(downloadedBytes);
             percentDone = String.Format("{0:0.0}%", (double)downloadedBytes*100/(double)filesSize);
-
+            averageSpeed = Global.Instance.FileSizeFormat((long)((double)(downloadedBytes) / (DateTime.Now - begin).TotalSeconds)) + "/s";
+            totalTime = (DateTime.Now - begin).ToString(@"mm\:ss");
         }
 
         void torrent_PeersChanged(object sender, EventArgs<IEnumerable<PeerState>> e)
