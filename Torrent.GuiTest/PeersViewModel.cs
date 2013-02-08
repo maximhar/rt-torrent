@@ -257,16 +257,6 @@ namespace Torrent.GuiTest
             Peers = new ObservableCollection<PeerState>(e.Value);
         }
 
-        void torrent_SentMessage(object sender, PeerMessage e)
-        {
-            dispatcher.Invoke(new Action(() => AddMessage("Sent: " + e)));
-        }
-
-        private void torrent_ReceivedMessage(object sender, PeerMessage e)
-        {
-            dispatcher.Invoke(new Action(() => AddMessage("Received: " + e)));
-        }
-
         public void Stop()
         {
             if (torrent != null && torrent.Running)

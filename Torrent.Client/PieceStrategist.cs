@@ -62,8 +62,8 @@ namespace Torrent.Client
 
         public bool Complete()
         {
-            lock(unavailable)
-                return available == pieceCount;
+            lock (unavailable)
+                return !unavailable.Any();
         }
 
         public bool EndGame()
@@ -76,7 +76,7 @@ namespace Torrent.Client
             int address = (int)(Piece.GetAbsoluteAddress(piece.Index, piece.Offset, blockSize)/pieceSize);
             lock (unavailable)
             {
-                if(unavailable.Contains(address))
+                if(unavailable.Contains(address) && piece.Length > 0)
                 {
                     Debug.WriteLine("Needed piece incoming:" + address);
                     unavailable.Remove(address);

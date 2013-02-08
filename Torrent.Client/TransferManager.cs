@@ -24,7 +24,7 @@ namespace Torrent.Client
         private readonly TorrentData torrentData;
         private bool disposed;
         private HandshakeMessage handshake;
-        private volatile bool stop;
+        private volatile bool stop = true;
         public List<PeerState> tops;
         public int peersWhoChokedMe;
         private Timer firePeersEvent;
@@ -85,11 +85,13 @@ namespace Torrent.Client
         public void AddEndpoints(IEnumerable<IPEndPoint> peerEndpoints)
         {
             if(disposed) throw new TorrentException("Transfer manager disposed.");
+            if (stop) return;
             Connect(peerEndpoints);
         }
 
         public void AddNewPeer(PeerState peer)
         {
+            if (stop) return;
             HandshakePeer(peer);
         }
 

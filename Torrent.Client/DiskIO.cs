@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading;
+using System.Linq;
 
 namespace Torrent.Client
 {
@@ -11,8 +13,8 @@ namespace Torrent.Client
 
     internal static class DiskIO
     {
-        private static readonly ConcurrentQueue<Action> readQueue;
-        private static readonly ConcurrentQueue<Action> writeQueue;
+        private static readonly ConcurrentQueue<DiskIOReadState> readQueue;
+        private static readonly ConcurrentQueue<DiskIOWriteState> writeQueue;
 
         private static readonly Cache<DiskIOReadState> readCache;
         private static readonly Cache<DiskIOWriteState> writeCache;
@@ -21,8 +23,8 @@ namespace Torrent.Client
 
         static DiskIO()
         {
-            readQueue = new ConcurrentQueue<Action>();
-            writeQueue = new ConcurrentQueue<Action>();
+            readQueue = new ConcurrentQueue<DiskIOReadState>();
+            writeQueue = new ConcurrentQueue<DiskIOWriteState>();
             readCache = new Cache<DiskIOReadState>();
             writeCache = new Cache<DiskIOWriteState>();
             ioHandle = new AutoResetEvent(false);
@@ -35,16 +37,16 @@ namespace Torrent.Client
         {
             DiskIOReadState readData = readCache.Get().Init(stream, buffer, bufferOffset, streamOffset, length, callback,
                                                             state);
-            readQueue.Enqueue(() => Read(readData));
-            ioHandle.Set();
+            readQueue.Enqueue(readData);
+            if (readQueue.Count > 1000) ioHandle.Set();
         }
 
         public static void QueueWrite(Stream stream, byte[] data, long fileOffset, int dataOffset, long length, DiskIOWriteCallback callback,
                                       object state)
         {
             DiskIOWriteState writeData = writeCache.Get().Init(stream, data, fileOffset, dataOffset, length, callback, state);
-            writeQueue.Enqueue(() => Write(writeData));
-            ioHandle.Set();
+            writeQueue.Enqueue(writeData);
+            if(writeQueue.Count>1000) ioHandle.Set();
         }
 
         private static void StartDiskThread()
@@ -58,15 +60,32 @@ namespace Torrent.Client
         {
             while (true)
             {
-                ioHandle.WaitOne();
+                ioHandle.WaitOne(200);
                 bool write = true, read = true;
-                while (write || read)
+                var readList = new List<DiskIOReadState>();
+                var writeList = new List<DiskIOWriteState>();
+                while (write)
                 {
-                    Action result;
+                    DiskIOWriteState result;
                     write = writeQueue.TryDequeue(out result);
-                    if (write) result();
+                    if(write) writeList.Add(result);
+                }
+                while (read)
+                {
+                    DiskIOReadState result;
                     read = readQueue.TryDequeue(out result);
-                    if (read) result();
+                    if (read) readList.Add(result);
+                }
+                var orderedReads = readList.OrderBy(r => r.Stream.Length).ThenBy(r => r.StreamOffset).ToList();
+                foreach(var readState in orderedReads)
+                {
+                    Read(readState);
+                }
+
+                var orderedWrites = writeList.OrderBy(r => r.Stream.Length).ThenBy(r => r.FileOffset).ToList();
+                foreach (var writeState in orderedWrites)
+                {
+                    Write(writeState);
                 }
             }
         }

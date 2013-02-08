@@ -161,18 +161,22 @@ namespace Torrent.Client
             PeerListener.Register(Data.InfoHash, ReceivedPeer);
         }
 
+        private int piecesDownloaded = 0;
+        private int piecesWritten = 0;
+
         private void PieceDownloaded(Piece piece)
         {
+            Trace.Assert(piece.Info.Length > 0);
             pieceManager.AddPiece(piece, PieceWritten, piece);
-            pieceWriteWaiter.WaitOne();
+            Interlocked.Increment(ref piecesDownloaded);
         }
 
         private void PieceWritten(bool success, object state)
         {
             var piece = state as Piece;
             Interlocked.Add(ref downloaded, piece.Info.Length);
+            Interlocked.Increment(ref piecesWritten);
             OnWrotePiece(piece);
-            pieceWriteWaiter.Set();
         }
 
         private Piece PieceRequested(PieceInfo pieceinfo)
@@ -209,12 +213,12 @@ namespace Torrent.Client
 
         private void StopActions()
         {
-            ChangeState(TorrentState.WaitingForDisk);
-            WaitForCompletion();
-            if(State != TorrentState.Finished || State != TorrentState.NotRunning)
+            if (State == TorrentState.Finished)
             {
-                ChangeState(TorrentState.NotRunning);
+                ChangeState(TorrentState.WaitingForDisk);
+                WaitForCompletion();
             }
+            ChangeState(TorrentState.NotRunning);
             stop = true;
             OnStopping();
             OnStatsReport();

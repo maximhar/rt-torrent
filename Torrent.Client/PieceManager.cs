@@ -50,16 +50,18 @@ namespace Torrent.Client
 
         public void AddPiece(Piece piece, PieceWrittenDelegate callback, object state)
         {
+            Wait(5000);
             IEnumerable<PieceFileInfo> parts = GetParts(piece.Info.Index, piece.Info.Offset, piece.Info.Length);
-            PieceWriteState data = writeCache.Get().Init(callback, piece.Data.Length, piece, state);
+            var totalLen = parts.Sum(p => p.Length);
+            PieceWriteState data = writeCache.Get().Init(callback, (int)totalLen, piece, state);
+            Debug.Assert(parts.Any());
             foreach(PieceFileInfo part in parts)
             {
                 DiskIO.QueueWrite(part.FileStream, piece.Data, part.FileOffset, part.DataOffset, part.Length,
                                   EndAddPiece, data);
-                Interlocked.Increment(ref queuedWrites);
             }
         }
-
+        HashSet<PieceWriteState> nonwritten = new HashSet<PieceWriteState>(); 
         public void GetPiece(int block, int offset, int length, PieceReadDelegate callback, object state)
         {
             IEnumerable<PieceFileInfo> files = GetParts(block, offset, length);
@@ -76,11 +78,11 @@ namespace Torrent.Client
         {
             
             var data = (PieceWriteState)state;
+            lock(state)
             if(success)
             {
-                Interlocked.Decrement(ref queuedWrites);
                 data.Remaining -= written;
-                if(data.Remaining == 0)
+                if(data.Remaining <= 0)
                 {
                     data.Callback(true, data.State);
                 }
@@ -244,12 +246,12 @@ namespace Torrent.Client
 
         #endregion
 
-        public void Wait()
+        private void Wait(int count)
         {
-            do
+            while(queuedWrites > count)
             {
-                Thread.Sleep(100);
-            } while(queuedWrites > 0);
+                Thread.Sleep(10);
+            }
         }
     }
 }
