@@ -257,7 +257,16 @@ namespace Torrent.GuiTest
             Downloaded = Global.Instance.FileSizeFormat(downloadedBytes);
             percentDone = String.Format("{0:0.0}%", (double)downloadedBytes*100/(double)filesSize);
             averageSpeed = Global.Instance.FileSizeFormat((long)((double)(downloadedBytes) / (DateTime.Now - begin).TotalSeconds)) + "/s";
-            totalTime = (DateTime.Now - begin).ToString(@"mm\:ss");
+            var elapsedTime= DateTime.Now - begin;
+            if (elapsedTime.TotalSeconds < 10)
+                totalTime = elapsedTime.ToString(@"%s") + " s";
+            else if (elapsedTime.TotalSeconds < 60)
+                totalTime = elapsedTime.ToString(@"ss") + " s";
+            else if (elapsedTime.TotalMinutes < 10)
+                totalTime = elapsedTime.ToString(@"m\:ss ");
+            else if (elapsedTime.TotalMinutes < 60)
+                totalTime = elapsedTime.ToString(@"mm\:ss");
+            else totalTime = elapsedTime.ToString(@"h\:mm\:ss");
         }
 
         void torrent_PeersChanged(object sender, EventArgs<IEnumerable<PeerState>> e)
