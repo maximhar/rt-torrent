@@ -1,14 +1,14 @@
 namespace Torrent.Client
 {
-    public struct PieceInfo
+    public struct BlockInfo
     {
-        public static PieceInfo Empty = new PieceInfo(0,0,0);
+        public static BlockInfo Empty = new BlockInfo(0,0,0);
 
         public int Index { get; private set; }
         public int Offset { get; private set; }
         public int Length { get; private set; }
 
-        public PieceInfo(int index, int offset, int length):this()
+        public BlockInfo(int index, int offset, int length):this()
         {
             Index = index;
             Offset = offset;
@@ -17,7 +17,7 @@ namespace Torrent.Client
 
         #region Equality members
 
-        public bool Equals(PieceInfo other)
+        public bool Equals(BlockInfo other)
         {
             return Index == other.Index && Offset == other.Offset && Length == other.Length;
         }
@@ -25,7 +25,7 @@ namespace Torrent.Client
         public override bool Equals(object obj)
         {
             if(ReferenceEquals(null, obj)) return false;
-            return obj is PieceInfo && Equals((PieceInfo)obj);
+            return obj is BlockInfo && Equals((BlockInfo)obj);
         }
 
         public override int GetHashCode()
@@ -39,12 +39,12 @@ namespace Torrent.Client
             }
         }
 
-        public static bool operator ==(PieceInfo left, PieceInfo right)
+        public static bool operator ==(BlockInfo left, BlockInfo right)
         {
             return left.Equals(right);
         }
 
-        public static bool operator !=(PieceInfo left, PieceInfo right)
+        public static bool operator !=(BlockInfo left, BlockInfo right)
         {
             return !left.Equals(right);
         }

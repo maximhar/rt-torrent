@@ -66,6 +66,8 @@ namespace Torrent.Client
         /// </summary>
         public int PieceLength { get; private set; }
 
+        public int PieceCount { get; private set; }
+
         /// <summary>
         /// Name of the torrent.
         /// </summary>
@@ -188,6 +190,7 @@ namespace Torrent.Client
             Checksums = checksumList.AsReadOnly();
             Files = decodedFiles.AsReadOnly();
             PieceLength = pieceLength;
+            PieceCount = Checksums.Count;
             Name = name;
             InfoHash = ComputeInfoHash(info);
             Announces = CreateAnnouces(AnnounceURL, AnnounceList);

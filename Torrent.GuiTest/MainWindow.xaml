@@ -34,7 +34,7 @@
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="6*" MinWidth="200"/>
             </Grid.ColumnDefinitions>
-            <Label Grid.Column="0" Content="Piece length:"/>
+            <Label Grid.Column="0" Content="Block length:"/>
             <TextBox x:Name="PieceLengthTextBox" Grid.Column="1" IsEnabled="False" Text="{Binding PieceLength}"/>
         </Grid>
         <Grid Margin="3">
@@ -58,7 +58,7 @@
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="6*" MinWidth="200"/>
             </Grid.ColumnDefinitions>
-            <Label Grid.Column="0" Content="Piece count:"/>
+            <Label Grid.Column="0" Content="Block count:"/>
             <TextBox x:Name="PieceCountTextBox" Grid.Column="1" IsEnabled="False" Text="{Binding PieceCount}"/>
         </Grid>
         <GroupBox Header="Files">

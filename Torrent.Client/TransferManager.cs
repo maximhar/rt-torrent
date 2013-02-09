@@ -12,9 +12,9 @@ using Torrent.Client.Messages;
 using Torrent.Client.Extensions;
 namespace Torrent.Client
 {
-    public delegate Piece RequestPieceDelegate(PieceInfo pieceInfo);
+    public delegate Block RequestPieceDelegate(BlockInfo pieceInfo);
 
-    public delegate void ObtainedPieceDelegate(Piece piece);
+    public delegate void ObtainedPieceDelegate(Block piece);
 
     public class TransferManager : IDisposable
     {
@@ -251,34 +251,34 @@ namespace Torrent.Client
         {
             peer.PiecesReceived++;
             peer.LastReceived = DateTime.Now;
-            var info = new PieceInfo(pieceMessage.Index, pieceMessage.Offset, pieceMessage.Data.Length);
+            var info = new BlockInfo(pieceMessage.Index, pieceMessage.Offset, pieceMessage.Data.Length);
             if (strategist.Received(info))
             {
-                obtainedPiece(new Piece(pieceMessage.Data, pieceMessage.Index, pieceMessage.Offset,
+                obtainedPiece(new Block(pieceMessage.Data, pieceMessage.Index, pieceMessage.Offset,
                                         pieceMessage.Data.Length));
             }
-            peer.PendingPieces--;
+            peer.PendingBlocks--;
             SendRequests(peer);
         }
 
         private void SendRequests(PeerState peer)
         {
-            int count = queueLimit - peer.PendingPieces;
+            int count = queueLimit - peer.PendingBlocks;
             for(int i = 0; i < count; i++)
             {
                 if(stop) return;
-                PieceInfo requestData = strategist.Next(peer.Bitfield);
+                BlockInfo requestData = strategist.Next(peer.Bitfield);
                 if (strategist.Complete())
                 {
                     Stop(true);
                     ChangeState(TransferState.Finished);
                     return;
                 }
-                if (requestData != PieceInfo.Empty)
+                if (requestData != BlockInfo.Empty)
                 {
                     SendMessageTo(peer,
                                   new RequestMessage(requestData.Index, requestData.Offset, requestData.Length));
-                    peer.PendingPieces++;
+                    peer.PendingBlocks++;
                 }
             }
         }

@@ -8,33 +8,33 @@ using System.Threading;
 
 namespace Torrent.Client
 {
-    public delegate void PieceReadDelegate(bool success, Piece piece, object state);
+    public delegate void BlockReadDelegate(bool success, Block block, object state);
 
-    public delegate void PieceWrittenDelegate(bool success, object state);
+    public delegate void BlockWrittenDelegate(bool success, object state);
 
-    public class PieceManager : IDisposable
+    public class BlockManager : IDisposable
     {
-        public readonly int PieceSize = 1024*16;
+        public readonly int BlockSize = 1024*16;
 
-        private readonly int blockSize;
+        private readonly int pieceSize;
         private readonly ConcurrentDictionary<string, FileStream> openStreams;
-        private readonly int piecesPerBlock;
-        private readonly Cache<PieceReadState> readCache;
+        private readonly int blocksPerPiece;
+        private readonly Cache<BlockReadState> readCache;
         private readonly TorrentData torrentData;
-        private readonly Cache<PieceWriteState> writeCache;
+        private readonly Cache<BlockWriteState> writeCache;
         private readonly string mainDir;
         private bool disposed;
         private int queuedWrites = 0;
 
 
-        public PieceManager(TorrentData data, string mainDir)
+        public BlockManager(TorrentData data, string mainDir)
         {
-            piecesPerBlock = (int)Math.Ceiling((double)data.PieceLength/PieceSize);
-            readCache = new Cache<PieceReadState>();
-            writeCache = new Cache<PieceWriteState>();
+            blocksPerPiece = (int)Math.Ceiling((double)data.PieceLength/BlockSize);
+            readCache = new Cache<BlockReadState>();
+            writeCache = new Cache<BlockWriteState>();
             openStreams = new ConcurrentDictionary<string, FileStream>();
             torrentData = data;
-            blockSize = data.PieceLength;
+            pieceSize = data.PieceLength;
             this.mainDir = mainDir;
         }
 
@@ -48,58 +48,67 @@ namespace Torrent.Client
 
         #endregion
 
-        public void AddPiece(Piece piece, PieceWrittenDelegate callback, object state)
+        public void AddBlock(Block block, BlockWrittenDelegate callback, object state)
         {
             Wait(5000);
-            IEnumerable<PieceFileInfo> parts = GetParts(piece.Info.Index, piece.Info.Offset, piece.Info.Length);
+            IEnumerable<BlockPartInfo> parts = GetParts(block.Info.Index, block.Info.Offset, block.Info.Length);
             var totalLen = parts.Sum(p => p.Length);
-            PieceWriteState data = writeCache.Get().Init(callback, (int)totalLen, piece, state);
-            Debug.Assert(parts.Any());
-            foreach(PieceFileInfo part in parts)
+            BlockWriteState data = writeCache.Get().Init(callback, (int)totalLen, block, state);
+            Trace.Assert(parts.Any());
+            Interlocked.Increment(ref blocksToWrite);
+            foreach(BlockPartInfo part in parts)
             {
-                DiskIO.QueueWrite(part.FileStream, piece.Data, part.FileOffset, part.DataOffset, part.Length,
-                                  EndAddPiece, data);
+                DiskIO.QueueWrite(part.FileStream, block.Data, part.FileOffset, part.DataOffset, part.Length,
+                                  EndAddBlock, data);
+                Interlocked.Increment(ref partsToWrite);
             }
         }
-        HashSet<PieceWriteState> nonwritten = new HashSet<PieceWriteState>(); 
-        public void GetPiece(int block, int offset, int length, PieceReadDelegate callback, object state)
+        HashSet<BlockWriteState> nonwritten = new HashSet<BlockWriteState>();
+        private int writtenBlocks;
+        private int blocksToWrite;
+        private int writtenParts;
+        private int partsToWrite;
+
+        public void GetBlock(int pieceIndex, int offset, int length, BlockReadDelegate callback, object state)
         {
-            IEnumerable<PieceFileInfo> files = GetParts(block, offset, length);
+            IEnumerable<BlockPartInfo> parts = GetParts(pieceIndex, offset, length);
             var buffer = new byte[length];
-            var piece = new Piece(buffer, block, offset, length);
-            PieceReadState data = readCache.Get().Init(piece, callback, length, state);
-            foreach(PieceFileInfo part in files)
+            var block = new Block(buffer, pieceIndex, offset, length);
+            BlockReadState data = readCache.Get().Init(block, callback, length, state);
+            foreach(BlockPartInfo part in parts)
             {
-                DiskIO.QueueRead(part.FileStream, buffer, 0, part.FileOffset, part.Length, EndGetPiece, data);
+                DiskIO.QueueRead(part.FileStream, buffer, 0, part.FileOffset, part.Length, EndGetBlock, data);
             }
         }
 
-        private void EndAddPiece(bool success, int written, object state)
+        private void EndAddBlock(bool success, int written, object state)
         {
             
-            var data = (PieceWriteState)state;
+            var data = (BlockWriteState)state;
             lock(state)
             if(success)
             {
+                Interlocked.Increment(ref writtenParts);
                 data.Remaining -= written;
                 if(data.Remaining <= 0)
                 {
                     data.Callback(true, data.State);
+                    Interlocked.Increment(ref writtenBlocks);
                 }
             }
             else data.Callback(false, data.State);
             writeCache.Put(data);
         }
 
-        private void EndGetPiece(bool success, int read, byte[] pieceData, object state)
+        private void EndGetBlock(bool success, int read, byte[] pieceData, object state)
         {
-            var data = (PieceReadState)state;
+            var data = (BlockReadState)state;
             if(success)
             {
                 data.Remaining -= read;
                 if(data.Remaining == 0)
                 {
-                    data.Callback(true, data.Piece, data.State);
+                    data.Callback(true, data.Block, data.State);
                 }
             }
             else data.Callback(false, null, data.State);
@@ -107,10 +116,10 @@ namespace Torrent.Client
             readCache.Put(data);
         }
 
-        private IEnumerable<PieceFileInfo> GetParts(int block, int offset, int length)
+        private IEnumerable<BlockPartInfo> GetParts(int pieceIndex, int offset, int length)
         {
-            var files = new List<PieceFileInfo>();
-            long requestedOffset = Piece.GetAbsoluteAddress(block, offset, blockSize);
+            var pieces = new List<BlockPartInfo>();
+            long requestedOffset = Block.GetAbsoluteAddress(pieceIndex, offset, pieceSize);
             long currentOffset = 0;
             long remaining = length;
             foreach(FileEntry file in torrentData.Files)
@@ -120,9 +129,9 @@ namespace Torrent.Client
                 {
                     long relativePosition = requestedOffset - currentOffset;
                     long partLength = Math.Min(file.Length - relativePosition, remaining);
-                    FileStream stream = OpenStreamOrGetFromDictionary(file);
+                    FileStream stream = GetStream(file);
 
-                    files.Add(new PieceFileInfo
+                    pieces.Add(new BlockPartInfo
                                   {
                                       FileStream = stream,
                                       FileOffset = relativePosition,
@@ -136,10 +145,10 @@ namespace Torrent.Client
                 }
                 currentOffset += file.Length;
             }
-            return files.ToArray();
+            return pieces.ToArray();
         }
 
-        private FileStream OpenStreamOrGetFromDictionary(FileEntry file)
+        private FileStream GetStream(FileEntry file)
         {
             string finalPath = Path.Combine(mainDir, file.Name);
             FileStream stream;
@@ -174,9 +183,9 @@ namespace Torrent.Client
             }
         }
 
-        #region Nested type: PieceFileInfo
+        #region Nested type: BlockPartInfo
 
-        public struct PieceFileInfo
+        public struct BlockPartInfo
         {
             public FileStream FileStream { get; set; }
             public long FileOffset { get; set; }
@@ -186,12 +195,12 @@ namespace Torrent.Client
 
         #endregion
 
-        #region Nested type: PieceReadState
+        #region Nested type: BlockReadState
 
-        public class PieceReadState : ICacheable
+        public class BlockReadState : ICacheable
         {
-            public Piece Piece { get; private set; }
-            public PieceReadDelegate Callback { get; private set; }
+            public Block Block { get; private set; }
+            public BlockReadDelegate Callback { get; private set; }
             public object State { get; private set; }
             public int Remaining { get; internal set; }
 
@@ -204,9 +213,9 @@ namespace Torrent.Client
 
             #endregion
 
-            public PieceReadState Init(Piece piece, PieceReadDelegate callback, int remaining, object state)
+            public BlockReadState Init(Block block, BlockReadDelegate callback, int remaining, object state)
             {
-                Piece = piece;
+                Block = block;
                 Callback = callback;
                 State = state;
                 Remaining = remaining;
@@ -216,14 +225,14 @@ namespace Torrent.Client
 
         #endregion
 
-        #region Nested type: PieceWriteState
+        #region Nested type: BlockWriteState
 
-        public class PieceWriteState : ICacheable
+        public class BlockWriteState : ICacheable
         {
-            public PieceWrittenDelegate Callback { get; private set; }
+            public BlockWrittenDelegate Callback { get; private set; }
             public object State { get; private set; }
             public int Remaining { get; internal set; }
-            public Piece Piece { get; private set; }
+            public Block Block { get; private set; }
 
             #region ICacheable Members
 
@@ -234,12 +243,12 @@ namespace Torrent.Client
 
             #endregion
 
-            public PieceWriteState Init(PieceWrittenDelegate callback, int remaining, Piece piece, object state)
+            public BlockWriteState Init(BlockWrittenDelegate callback, int remaining, Block block, object state)
             {
                 Callback = callback;
                 State = state;
                 Remaining = remaining;
-                Piece = piece;
+                Block = block;
                 return this;
             }
         }

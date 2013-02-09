@@ -28,7 +28,7 @@ namespace Torrent.Client
         public int PiecesReceived { get; set; }
         public bool Top { get; set; }
         public DateTime LastReceived { get; set; }
-        public int PendingPieces { get; set; }
+        public int PendingBlocks { get; set; }
 
         public override string ToString()
         {

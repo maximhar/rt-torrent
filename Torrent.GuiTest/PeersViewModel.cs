@@ -263,12 +263,8 @@ namespace Torrent.GuiTest
         private void TotalElapsedTime()
         {
             var elapsedTime = DateTime.Now - begin;
-            if (elapsedTime.TotalSeconds < 10)
-                totalTime = elapsedTime.ToString(@"%s") + " s";
-            else if (elapsedTime.TotalSeconds < 60)
+            if (elapsedTime.TotalSeconds < 60)
                 totalTime = elapsedTime.ToString(@"ss") + " s";
-            else if (elapsedTime.TotalMinutes < 10)
-                totalTime = elapsedTime.ToString(@"m\:ss ");
             else if (elapsedTime.TotalMinutes < 60)
                 totalTime = elapsedTime.ToString(@"mm\:ss");
             else totalTime = elapsedTime.ToString(@"h\:mm\:ss");

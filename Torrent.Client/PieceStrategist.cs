@@ -13,31 +13,31 @@ namespace Torrent.Client
     public class PieceStrategist
     {
         private object syncRoot = new object();
-        private readonly int pieceSize;
         private readonly int blockSize;
-        private readonly int piecesPerBlock;
+        private readonly int pieceSize;
+        private readonly int blocksPerPiece;
         private readonly long totalSize;
-        private readonly int pieceCount;
-        private readonly PieceAddressCollection<int> unavailable; 
+        private readonly int blockCount;
+        private readonly BlockAddressCollection<int> unavailable; 
         private int available = 0;
 
-        public PieceStrategist(TorrentData data, int pieceSize = 16*1024)
+        public PieceStrategist(TorrentData data, int blockSize = 16*1024)
         {
-            this.pieceSize = pieceSize;
-            blockSize = data.PieceLength;
-            piecesPerBlock = blockSize/this.pieceSize;
+            this.blockSize = blockSize;
+            pieceSize = data.PieceLength;
+            blocksPerPiece = pieceSize/this.blockSize;
             totalSize = data.Files.Sum(f => f.Length);
-            pieceCount = (int)Math.Ceiling((float)totalSize/pieceSize);
-            unavailable = new PieceAddressCollection<int>();
-            for (int i = 0; i < pieceCount; i++)
+            blockCount = (int)Math.Ceiling((float)totalSize/blockSize);
+            unavailable = new BlockAddressCollection<int>();
+            for (int i = 0; i < blockCount; i++)
                 unavailable.Add(i);
         }
 
-        public PieceInfo Next(BitArray bitfield)
+        public BlockInfo Next(BitArray bitfield)
         {
-            if (available == pieceCount)
-                return PieceInfo.Empty;
-            PieceInfo piece;
+            if (available == blockCount)
+                return BlockInfo.Empty;
+            BlockInfo block;
             int counter = 0;
             do
             {
@@ -47,17 +47,17 @@ namespace Torrent.Client
                 {
                     if (unavailable.Any())
                         index = unavailable.Random();
-                    else return PieceInfo.Empty;
+                    else return BlockInfo.Empty;
                 }
                 
-                piece = Piece.FromAbsoluteAddress((long)index*pieceSize, blockSize, pieceSize,
+                block = Block.FromAbsoluteAddress((long)index*blockSize, pieceSize, blockSize,
                                                  totalSize);
                 if (counter > 10)
-                    return piece;
-            } while (!bitfield[piece.Index]);
+                    return block;
+            } while (!bitfield[block.Index]);
 
-            Debug.WriteLine("Strategist requested piece " + piece.Index);
-            return piece;
+            Debug.WriteLine("Strategist requested block " + block.Index);
+            return block;
         }
 
         public bool Complete()
@@ -68,28 +68,28 @@ namespace Torrent.Client
 
         public bool EndGame()
         {
-            return unavailable.Count < (pieceCount/100);
+            return unavailable.Count < (blockCount/100);
         }
 
-        public bool Received(PieceInfo piece)
+        public bool Received(BlockInfo block)
         {
-            int address = (int)(Piece.GetAbsoluteAddress(piece.Index, piece.Offset, blockSize)/pieceSize);
+            int address = (int)(Block.GetAbsoluteAddress(block.Index, block.Offset, pieceSize)/blockSize);
             lock (unavailable)
             {
-                if(unavailable.Contains(address) && piece.Length > 0)
+                if(unavailable.Contains(address) && block.Length > 0)
                 {
-                    Debug.WriteLine("Needed piece incoming:" + address);
+                    Debug.WriteLine("Needed block incoming:" + address);
                     unavailable.Remove(address);
                     available++;
                     return true;
                 }
-                Debug.WriteLine("Unneeded piece incoming:" + address);
+                Debug.WriteLine("Unneeded block incoming:" + address);
                 return false;
             }
         }
     }
 
-    public class PieceAddressCollection<T>:KeyedCollection<int,int>
+    public class BlockAddressCollection<T>:KeyedCollection<int,int>
     {
         protected override int GetKeyForItem(int item)
         {

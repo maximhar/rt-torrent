@@ -24,12 +24,11 @@ namespace Torrent.Client
         private readonly TrackerClient tracker;
         private List<IPEndPoint> Endpoints;
         private volatile bool stop;
-        private PieceManager pieceManager;
+        private BlockManager blockManager;
         private TransferManager transfer;
         private long total = 0;
         private long downloaded = 0;
         private Timer statsReportTimer;
-        private AutoResetEvent pieceWriteWaiter = new AutoResetEvent(false);
 
         /// <summary>
         /// Initialize a torrent transfer with metadata from a file on the filesystem.
@@ -61,8 +60,8 @@ namespace Torrent.Client
             Peers = new ConcurrentDictionary<string, PeerState>();
             localHandshake = new HandshakeMessage(Global.Instance.PeerId, new byte[8], Data.InfoHash,
                                                   "BitTorrent protocol");
-            pieceManager = new PieceManager(Data, Data.Name);
-            transfer = new TransferManager(Data, PieceRequested, PieceDownloaded);
+            blockManager = new BlockManager(Data, Data.Name);
+            transfer = new TransferManager(Data, BlockRequested, BlockDownloaded);
             total = Data.Files.Sum(f => f.Length);
         }
 
@@ -161,25 +160,25 @@ namespace Torrent.Client
             PeerListener.Register(Data.InfoHash, ReceivedPeer);
         }
 
-        private int piecesDownloaded = 0;
-        private int piecesWritten = 0;
+        private int blocksDownloaded = 0;
+        private int blocksWritten = 0;
 
-        private void PieceDownloaded(Piece piece)
+        private void BlockDownloaded(Block block)
         {
-            Trace.Assert(piece.Info.Length > 0);
-            pieceManager.AddPiece(piece, PieceWritten, piece);
-            Interlocked.Increment(ref piecesDownloaded);
+            Trace.Assert(block.Info.Length > 0);
+            blockManager.AddBlock(block, BlockWritten, block);
+            Interlocked.Increment(ref blocksDownloaded);
         }
 
-        private void PieceWritten(bool success, object state)
+        private void BlockWritten(bool success, object state)
         {
-            var piece = state as Piece;
-            Interlocked.Add(ref downloaded, piece.Info.Length);
-            Interlocked.Increment(ref piecesWritten);
-            OnWrotePiece(piece);
+            var block = state as Block;
+            Interlocked.Add(ref downloaded, block.Info.Length);
+            Interlocked.Increment(ref blocksWritten);
+            OnWroteBlock(block);
         }
 
-        private Piece PieceRequested(PieceInfo pieceinfo)
+        private Block BlockRequested(BlockInfo blockInfo)
         {
             throw new NotImplementedException();
         }
@@ -225,7 +224,7 @@ namespace Torrent.Client
             DeregisterFromListen();
             transfer.PeerListChanged -= transfer_PeerListChanged;
             transfer.Stopping -= transfer_Stopping;
-            pieceManager.Dispose();
+            blockManager.Dispose();
             transfer.Dispose();
             statsReportTimer.Dispose();
             Running = false;
@@ -283,12 +282,12 @@ namespace Torrent.Client
         /// </summary>
         public event EventHandler Stopping;
 
-        public event EventHandler<EventArgs<Piece>> WrotePiece;
+        public event EventHandler<EventArgs<Block>> WroteBlock;
 
-        public void OnWrotePiece(Piece e)
+        public void OnWroteBlock(Block e)
         {
-            EventHandler<EventArgs<Piece>> handler = WrotePiece;
-            if(handler != null) handler(this, new EventArgs<Piece>(e));
+            EventHandler<EventArgs<Block>> handler = WroteBlock;
+            if(handler != null) handler(this, new EventArgs<Block>(e));
         }
 
         public event EventHandler<EventArgs<IEnumerable<PeerState>>> PeersChanged;
@@ -306,7 +305,7 @@ namespace Torrent.Client
         public void OnStatsReport()
         {
             int chokedBy = transfer.Peers.Values.Sum(p => p.AmChoked ? 1 : 0);
-            int queued = transfer.Peers.Values.Sum(p => p.PendingPieces);
+            int queued = transfer.Peers.Values.Sum(p => p.PendingBlocks);
             int totalPeers = transfer.Peers.Count;
             var stats = new StatsEventArgs(downloaded, totalPeers, chokedBy, queued);
             EventHandler<StatsEventArgs> handler = ReportStats;

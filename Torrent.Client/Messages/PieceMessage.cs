@@ -94,7 +94,7 @@
         /// <returns>The string containing the PieceMessage data representation.</returns>
         public override string ToString()
         {
-            return string.Format("Piece message: Index: {0}, Offset: {1}, Block.Length: {2}", Index, Offset, Data.Length);
+            return string.Format("Block message: Index: {0}, Offset: {1}, Block.Length: {2}", Index, Offset, Data.Length);
         }
 
         /// <summary>
