@@ -3,7 +3,7 @@
     /// <summary>
     /// Provides a container class for the NotInterestedMessage data for peer communication.
     /// </summary>
-    internal class NotInterestedMessage : PeerMessage
+    public class NotInterestedMessage : PeerMessage
     {
         /// <summary>
         /// The ID of the message

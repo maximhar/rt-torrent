@@ -3,7 +3,7 @@
     /// <summary>
     /// Provides a container class for the InterestedMessage data for peer communication.
     /// </summary>
-    internal class InterestedMessage : PeerMessage
+    public class InterestedMessage : PeerMessage
     {
         /// <summary>
         /// The ID of the message

@@ -68,6 +68,8 @@ namespace Torrent.Client
 
         public int PieceCount { get; private set; }
 
+        public long TotalLength { get; private set; }
+
         /// <summary>
         /// Name of the torrent.
         /// </summary>
@@ -194,6 +196,7 @@ namespace Torrent.Client
             Name = name;
             InfoHash = ComputeInfoHash(info);
             Announces = CreateAnnouces(AnnounceURL, AnnounceList);
+            TotalLength = Files.Sum(f => f.Length);
         }
 
         private IEnumerable<string> CreateAnnouces(string AnnounceURL, ReadOnlyCollection<string> AnnounceList)

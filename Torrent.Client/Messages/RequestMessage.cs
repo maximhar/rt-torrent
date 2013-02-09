@@ -3,7 +3,7 @@
     /// <summary>
     /// Provides a container class for the RequestMessage data for peer communication.
     /// </summary>
-    internal class RequestMessage : PeerMessage
+    public class RequestMessage : PeerMessage
     {
         /// <summary>
         /// The ID of the message

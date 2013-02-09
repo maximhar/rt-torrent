@@ -220,7 +220,6 @@ namespace Torrent.GuiTest
                 totalSize = Global.Instance.FileSizeFormat(filesSize);
 
                 torrent.RaisedException += torrent_RaisedException;
-                torrent.Stopping += torrent_Stopping;
                 torrent.PeersChanged += torrent_PeersChanged;
                 torrent.ReportStats += torrent_ReportStatsChanged;
                 torrent.StateChanged += torrent_StateChanged;
@@ -306,18 +305,6 @@ namespace Torrent.GuiTest
         void torrent_RaisedException(object sender, EventArgs<Exception> e)
         {
             dispatcher.Invoke(new Action(() => HandleException(e.Value)));
-        }
-
-        void torrent_GotPeers(object sender, EventArgs e)
-        {
-            if (torrent.Peers != null)
-            {
-                dispatcher.Invoke(new Action(() =>
-                                            {
-                                                Peers.Clear();
-                                                torrent.Peers.ForEach(p => Peers.Add(p.Value));
-                                            }));
-            }
         }
 
         private void OnPropertyChanged(string name)

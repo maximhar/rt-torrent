@@ -3,7 +3,7 @@
     /// <summary>
     /// Provides a container class for the PieceMessage data for peer communication.
     /// </summary>
-    internal class PieceMessage : PeerMessage
+    public class PieceMessage : PeerMessage
     {
         /// <summary>
         /// The ID of the message

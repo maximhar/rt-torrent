@@ -10,7 +10,7 @@ using Torrent.Client.Extensions;
 
 namespace Torrent.Client
 {
-    public class PieceStrategist
+    public class BlockStrategist
     {
         private object syncRoot = new object();
         private readonly int blockSize;
@@ -21,7 +21,7 @@ namespace Torrent.Client
         private readonly BlockAddressCollection<int> unavailable; 
         private int available = 0;
 
-        public PieceStrategist(TorrentData data, int blockSize = 16*1024)
+        public BlockStrategist(TorrentData data, int blockSize = 16*1024)
         {
             this.blockSize = blockSize;
             pieceSize = data.PieceLength;

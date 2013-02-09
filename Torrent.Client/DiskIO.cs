@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Threading;
 using System.Linq;
@@ -60,32 +61,39 @@ namespace Torrent.Client
         {
             while (true)
             {
-                ioHandle.WaitOne(200);
-                bool write = true, read = true;
-                var readList = new List<DiskIOReadState>();
-                var writeList = new List<DiskIOWriteState>();
-                while (write)
+                try
                 {
-                    DiskIOWriteState result;
-                    write = writeQueue.TryDequeue(out result);
-                    if(write) writeList.Add(result);
-                }
-                while (read)
-                {
-                    DiskIOReadState result;
-                    read = readQueue.TryDequeue(out result);
-                    if (read) readList.Add(result);
-                }
-                var orderedReads = readList.OrderBy(r => r.Stream.Length).ThenBy(r => r.StreamOffset).ToList();
-                foreach(var readState in orderedReads)
-                {
-                    Read(readState);
-                }
+                    ioHandle.WaitOne(200);
+                    bool write = true, read = true;
+                    var readList = new List<DiskIOReadState>();
+                    var writeList = new List<DiskIOWriteState>();
+                    while (write)
+                    {
+                        DiskIOWriteState result;
+                        write = writeQueue.TryDequeue(out result);
+                        if(write) writeList.Add(result);
+                    }
+                    while (read)
+                    {
+                        DiskIOReadState result;
+                        read = readQueue.TryDequeue(out result);
+                        if (read) readList.Add(result);
+                    }
+                    var orderedReads = readList.OrderBy(r => r.Stream.Length).ThenBy(r => r.StreamOffset).ToList();
+                    foreach(var readState in orderedReads)
+                    {
+                        Read(readState);
+                    }
 
-                var orderedWrites = writeList.OrderBy(r => r.Stream.Length).ThenBy(r => r.FileOffset).ToList();
-                foreach (var writeState in orderedWrites)
+                    var orderedWrites = writeList.OrderBy(r => r.Stream.Length).ThenBy(r => r.FileOffset).ToList();
+                    foreach (var writeState in orderedWrites)
+                    {
+                        Write(writeState);
+                    }
+                }
+                catch(Exception e)
                 {
-                    Write(writeState);
+                    Debug.WriteLine("DiskIO", e);
                 }
             }
         }

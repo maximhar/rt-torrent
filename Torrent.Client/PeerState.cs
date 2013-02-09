@@ -2,7 +2,7 @@
 using System.Collections;
 using System.Net;
 using System.Net.Sockets;
-
+using Torrent.Client.Extensions;
 namespace Torrent.Client
 {
     public class PeerState
@@ -29,6 +29,27 @@ namespace Torrent.Client
         public bool Top { get; set; }
         public DateTime LastReceived { get; set; }
         public int PendingBlocks { get; set; }
+        public bool Seeder
+        {
+            get { return Bitfield.AllSet(); }
+        }
+        public bool NoBlocks
+        {
+            get { return Bitfield.AllUnset(); }
+        }
+
+
+        public static PeerState FromSocket(Socket socket, int bitfieldLength)
+        {
+            return new PeerState(socket, (IPEndPoint)socket.RemoteEndPoint)
+                       {
+                           Bitfield = new BitArray(bitfieldLength),
+                           AmChoked = true,
+                           AmInterested = false,
+                           IsChoked = true,
+                           IsInterested = false
+                       };
+        }
 
         public override string ToString()
         {

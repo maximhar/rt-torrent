@@ -3,7 +3,7 @@
     /// <summary>
     /// Provides a container class for the UnchokeMessage data for peer communication.
     /// </summary>
-    internal class UnchokeMessage : PeerMessage
+    public class UnchokeMessage : PeerMessage
     {
         /// <summary>
         /// The ID of the message

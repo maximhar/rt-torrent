@@ -3,7 +3,7 @@
     /// <summary>
     /// Provides a container class for the ChokeMessage data for peer communication.
     /// </summary>
-    internal class ChokeMessage : PeerMessage
+    public class ChokeMessage : PeerMessage
     {
         /// <summary>
         /// The ID of the message

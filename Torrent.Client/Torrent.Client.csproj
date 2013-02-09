@@ -114,11 +114,11 @@
     <Compile Include="Bencoding\BencodingParserException.cs" />
     <Compile Include="Cache.cs" />
     <Compile Include="DiskIO.cs" />
+    <Compile Include="DownloadMode.cs" />
     <Compile Include="Events\EventArgs.cs" />
     <Compile Include="Extensions\BitArrayExtensions.cs" />
     <Compile Include="Extensions\IEnumerableExtensions.cs" />
     <Compile Include="ICacheable.cs" />
-    <Compile Include="IMode.cs" />
     <Compile Include="InfoHash.cs" />
     <Compile Include="MessageIO.cs" />
     <Compile Include="Messages\BitfieldMessage.cs" />
@@ -143,7 +143,7 @@
     <Compile Include="Block.cs" />
     <Compile Include="BlockInfo.cs" />
     <Compile Include="BlockManager.cs" />
-    <Compile Include="PieceStrategist.cs" />
+    <Compile Include="BlockStrategist.cs" />
     <Compile Include="Events\StatsEventArgs.cs" />
     <Compile Include="TorrentData.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -156,7 +156,7 @@
     <Compile Include="TrackerRequest.cs" />
     <Compile Include="TrackerResponse.cs" />
     <Compile Include="Messages\UnchokeMessage.cs" />
-    <Compile Include="TransferManager.cs" />
+    <Compile Include="TransferMonitor.cs" />
     <Compile Include="TransferState.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -164,9 +164,6 @@
     <Content Include="Todos\Task 2.txt" />
     <Content Include="Todos\Task 3.txt" />
     <Content Include="Todos\Task 4.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="ModeDiagram.cd" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

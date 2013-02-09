@@ -7,7 +7,7 @@ namespace Torrent.Client.Messages
     /// <summary>
     /// Provides a container class for the BitfieldMessage data for peer communication.
     /// </summary>
-    internal class BitfieldMessage : PeerMessage
+    public class BitfieldMessage : PeerMessage
     {
         /// <summary>
         /// The ID of the message

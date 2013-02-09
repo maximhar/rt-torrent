@@ -5,7 +5,7 @@ namespace Torrent.Client.Messages
     /// <summary>
     /// Provides a container class for the HaveMessage data for peer communication.
     /// </summary>
-    internal class HaveMessage : PeerMessage
+    public class HaveMessage : PeerMessage
     {
         /// <summary>
         /// The ID of the message

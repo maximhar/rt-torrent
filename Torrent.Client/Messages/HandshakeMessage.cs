@@ -7,7 +7,7 @@ namespace Torrent.Client.Messages
     /// <summary>
     /// Provides a container class for the HandshakeMessage data for peer communication.
     /// </summary>
-    internal class HandshakeMessage : PeerMessage
+    public class HandshakeMessage : PeerMessage
     {
         /// <summary>
         /// Initializes a new empty instance of the Torrent.Client.HandshakeMessage class.

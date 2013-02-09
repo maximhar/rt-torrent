@@ -10,7 +10,7 @@ namespace Torrent.Client
 {
     public delegate void PeerConnectedCallback(PeerState peer);
 
-    internal static class PeerListener
+    public static class PeerListener
     {
         private static readonly ConcurrentDictionary<InfoHash, PeerConnectedCallback> innerDictionary;
         private static readonly Socket listenSocket;

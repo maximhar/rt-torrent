@@ -1,16 +1,10 @@
 ﻿using System;
-using System.Collections;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Diagnostics.Contracts;
 using System.IO;
 using System.Linq;
-using System.Net;
-using System.Net.Sockets;
 using System.Threading;
 using Torrent.Client.Events;
-using Torrent.Client.Messages;
 
 namespace Torrent.Client
 {
@@ -19,16 +13,11 @@ namespace Torrent.Client
     /// </summary>
     public class TorrentTransfer
     {
-        private const int PSTR_LENGTH = 19;
-        private readonly HandshakeMessage localHandshake;
         private readonly TrackerClient tracker;
-        private List<IPEndPoint> Endpoints;
         private volatile bool stop;
-        private BlockManager blockManager;
-        private TransferManager transfer;
-        private long total = 0;
-        private long downloaded = 0;
         private Timer statsReportTimer;
+
+        public TorrentMode Mode { get; private set; }
 
         /// <summary>
         /// Initialize a torrent transfer with metadata from a file on the filesystem.
@@ -47,8 +36,6 @@ namespace Torrent.Client
         {
             Contract.Requires(torrentStream != null);
 
-            Endpoints = new List<IPEndPoint>();
-
             using (torrentStream)
             using (var reader = new BinaryReader(torrentStream))
             {
@@ -57,20 +44,12 @@ namespace Torrent.Client
             }
 
             tracker = new TrackerClient(Data.Announces);
-            Peers = new ConcurrentDictionary<string, PeerState>();
-            localHandshake = new HandshakeMessage(Global.Instance.PeerId, new byte[8], Data.InfoHash,
-                                                  "BitTorrent protocol");
-            blockManager = new BlockManager(Data, Data.Name);
-            transfer = new TransferManager(Data, BlockRequested, BlockDownloaded);
-            total = Data.Files.Sum(f => f.Length);
         }
 
         /// <summary>
         /// The metadata describing the torrent.
         /// </summary>
         public TorrentData Data { get; private set; }
-
-        public ConcurrentDictionary<string, PeerState> Peers { get; private set; }
 
         public bool Running { get; private set; }
 
@@ -85,8 +64,6 @@ namespace Torrent.Client
 
             var torrentThread = new Thread(StartThread) {IsBackground = true};
             torrentThread.Start();
-            statsReportTimer = new Timer((o) => OnStatsReport());
-            statsReportTimer.Change(0, 250);
         }
 
         /// <summary>
@@ -102,8 +79,6 @@ namespace Torrent.Client
             StartActions();
             try
             {
-                RegisterForListen();
-                HandshakeTracker();
                 StartTransfer();
                 WaitForStop();
             }
@@ -116,36 +91,23 @@ namespace Torrent.Client
 
         private void StartTransfer()
         {
-            transfer.PeerListChanged += transfer_PeerListChanged;
-            transfer.Stopping += transfer_Stopping;
-            transfer.StateChanged += TransferOnStateChanged;
-            transfer.Start(Endpoints);
-        }
+            ChangeState(TorrentState.WaitingForTracker);
+            TrackerResponse info = tracker.AnnounceStart(Data.InfoHash, Global.Instance.PeerId,
+                                                         Global.Instance.ListeningPort,
+                                                         0, 0, Data.Files.Sum(f => f.Length));
+            var endpoints = info.Endpoints;
 
-        private void TransferOnStateChanged(object sender, EventArgs<TransferState> eventArgs)
-        {
-            if(eventArgs.Value == TransferState.Finished)
-            {
-                ChangeState(TorrentState.Finished);
-            }
-            else if(eventArgs.Value == TransferState.Downloading)
-            {
-                ChangeState(TorrentState.Downloading);
-            }
-            else if(eventArgs.Value == TransferState.Seeding)
-            {
-                ChangeState(TorrentState.Seeding);
-            }
-        }
-
-        void transfer_Stopping(object sender, EventArgs e)
-        {
-            Stop();
-        }
-
-        void transfer_PeerListChanged(object sender, EventArgs e)
-        {
-            OnPeersChanged(transfer.tops.ToArray());
+            var mode = new DownloadMode(new BlockManager(Data, Data.Name),
+                new BlockStrategist(Data), Data, new TransferMonitor(Data.InfoHash));            
+            mode.RaisedException += (s, e) => OnRaisedException(e.Value);
+            mode.FlushedToDisk += (s, e) => Stop();
+            mode.DownloadComplete += (s, e) => ChangeState(TorrentState.WaitingForDisk);
+            mode.Start();
+            mode.AddEndpoints(endpoints);
+            ChangeState(TorrentState.Downloading);
+            Mode = mode;
+            statsReportTimer = new Timer(o => OnStatsReport());
+            statsReportTimer.Change(0, 250);
         }
 
         private void StartActions()
@@ -154,95 +116,13 @@ namespace Torrent.Client
             Running = true;
         }
 
-        private void RegisterForListen()
-        {
-            PeerListener.RaisedException += PeerListener_RaisedException;
-            PeerListener.Register(Data.InfoHash, ReceivedPeer);
-        }
-
-        private int blocksDownloaded = 0;
-        private int blocksWritten = 0;
-
-        private void BlockDownloaded(Block block)
-        {
-            Trace.Assert(block.Info.Length > 0);
-            blockManager.AddBlock(block, BlockWritten, block);
-            Interlocked.Increment(ref blocksDownloaded);
-        }
-
-        private void BlockWritten(bool success, object state)
-        {
-            var block = state as Block;
-            Interlocked.Add(ref downloaded, block.Info.Length);
-            Interlocked.Increment(ref blocksWritten);
-            OnWroteBlock(block);
-        }
-
-        private Block BlockRequested(BlockInfo blockInfo)
-        {
-            throw new NotImplementedException();
-        }
-
-        private void PeerListener_RaisedException(object sender, EventArgs<Exception> e)
-        {
-            OnRaisedException(e.Value);
-            ChangeState(TorrentState.Failed);
-            Stop();
-        }
-
-        private void ReceivedPeer(PeerState peer)
-        {
-            transfer.AddNewPeer(peer);
-        }
-
-        private void HandshakeTracker()
-        {
-            ChangeState(TorrentState.WaitingForTracker);
-            TrackerResponse info = tracker.AnnounceStart(Data.InfoHash, Global.Instance.PeerId,
-                                                         Global.Instance.ListeningPort,
-                                                         0, 0, Data.Files.Sum(f => f.Length));
-            Endpoints = info.Endpoints;
-        }
-
-        private void ChangeState(TorrentState state)
-        {
-            State = state;
-            OnStateChanged(state);
-        }
-
         private void StopActions()
         {
-            if (State == TorrentState.Finished)
-            {
-                ChangeState(TorrentState.WaitingForDisk);
-                WaitForCompletion();
-            }
             ChangeState(TorrentState.NotRunning);
-            stop = true;
-            OnStopping();
-            OnStatsReport();
-            DeregisterFromListen();
-            transfer.PeerListChanged -= transfer_PeerListChanged;
-            transfer.Stopping -= transfer_Stopping;
-            blockManager.Dispose();
-            transfer.Dispose();
             statsReportTimer.Dispose();
+            Mode.Stop(true);
+            stop = true;
             Running = false;
-        }
-
-        private void WaitForCompletion()
-        {
-            do
-            {
-                Thread.Sleep(100);
-                if (stop) break;
-            } while (downloaded < total);
-        }
-
-        private void DeregisterFromListen()
-        {
-            PeerListener.Deregister(Data.InfoHash);
-            PeerListener.RaisedException -= PeerListener_RaisedException;
         }
 
         private void WaitForStop()
@@ -254,6 +134,16 @@ namespace Torrent.Client
             }
         }
 
+        private void ChangeState(TorrentState state)
+        {
+            if (State != state)
+            {
+                State = state;
+                OnStateChanged(state);
+            }
+        }
+
+
         #region Events
 
         private void OnRaisedException(Exception e)
@@ -261,14 +151,6 @@ namespace Torrent.Client
             if (RaisedException != null)
             {
                 RaisedException(this, new EventArgs<Exception>(e));
-            }
-        }
-
-        private void OnStopping()
-        {
-            if (Stopping != null)
-            {
-                Stopping(this, EventArgs.Empty);
             }
         }
 
@@ -280,7 +162,6 @@ namespace Torrent.Client
         /// <summary>
         /// Fires just prior to the transfer's complete stop.
         /// </summary>
-        public event EventHandler Stopping;
 
         public event EventHandler<EventArgs<Block>> WroteBlock;
 
@@ -304,10 +185,11 @@ namespace Torrent.Client
 
         public void OnStatsReport()
         {
-            int chokedBy = transfer.Peers.Values.Sum(p => p.AmChoked ? 1 : 0);
-            int queued = transfer.Peers.Values.Sum(p => p.PendingBlocks);
-            int totalPeers = transfer.Peers.Count;
-            var stats = new StatsEventArgs(downloaded, totalPeers, chokedBy, queued);
+            var downloaded = Mode.Monitor.BytesWritten;
+            var totalPeers = Mode.Peers.Count;
+            var chokedBy = Mode.Peers.Count(p => p.Value.AmChoked);
+
+            var stats = new StatsEventArgs(downloaded, totalPeers, chokedBy, 0);
             EventHandler<StatsEventArgs> handler = ReportStats;
             if (handler != null) handler(this, stats);
         }

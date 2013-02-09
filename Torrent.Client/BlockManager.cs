@@ -50,7 +50,7 @@ namespace Torrent.Client
 
         public void AddBlock(Block block, BlockWrittenDelegate callback, object state)
         {
-            Wait(5000);
+            //Wait(5000);
             IEnumerable<BlockPartInfo> parts = GetParts(block.Info.Index, block.Info.Offset, block.Info.Length);
             var totalLen = parts.Sum(p => p.Length);
             BlockWriteState data = writeCache.Get().Init(callback, (int)totalLen, block, state);
@@ -63,7 +63,7 @@ namespace Torrent.Client
                 Interlocked.Increment(ref partsToWrite);
             }
         }
-        HashSet<BlockWriteState> nonwritten = new HashSet<BlockWriteState>();
+
         private int writtenBlocks;
         private int blocksToWrite;
         private int writtenParts;
@@ -115,7 +115,7 @@ namespace Torrent.Client
 
             readCache.Put(data);
         }
-
+        
         private IEnumerable<BlockPartInfo> GetParts(int pieceIndex, int offset, int length)
         {
             var pieces = new List<BlockPartInfo>();
