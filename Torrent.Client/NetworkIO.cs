@@ -12,25 +12,25 @@ namespace Torrent.Client
         private static readonly AsyncCallback EndSendCallback = EndSend;
         private static readonly AsyncCallback EndConnectCallback = EndConnect;
 
-        private static readonly Cache<NetworkState> cache = new Cache<NetworkState>();
+        private static readonly Cache<NetworkState> Cache = new Cache<NetworkState>();
 
         public static void Receive(Socket socket, byte[] buffer, int offset, int count, object state,
                                    NetworkCallback callback)
         {
-            NetworkState data = cache.Get().Init(socket, buffer, offset, count, callback, state);
+            NetworkState data = Cache.Get().Init(socket, buffer, offset, count, callback, state);
             ReceiveBase(data);
         }
 
         public static void Send(Socket socket, byte[] buffer, int offset, int count, object state,
                                 NetworkCallback callback)
         {
-            NetworkState data = cache.Get().Init(socket, buffer, offset, count, callback, state);
+            NetworkState data = Cache.Get().Init(socket, buffer, offset, count, callback, state);
             SendBase(data);
         }
 
         public static void Connect(Socket socket, IPEndPoint endpoint, object state, NetworkCallback callback)
         {
-            NetworkState data = cache.Get().Init(socket, callback, state);
+            NetworkState data = Cache.Get().Init(socket, callback, state);
             try
             {
                 socket.BeginConnect(endpoint, EndConnectCallback, data);
@@ -38,7 +38,7 @@ namespace Torrent.Client
             catch
             {
                 callback(false, 0, state);
-                cache.Put(data);
+                Cache.Put(data);
             }
         }
 
@@ -51,7 +51,7 @@ namespace Torrent.Client
             catch
             {
                 data.Callback(false, 0, data.State);
-                cache.Put(data);
+                Cache.Put(data);
             }
         }
 
@@ -65,7 +65,7 @@ namespace Torrent.Client
             catch
             {
                 data.Callback(false, 0, data.State);
-                cache.Put(data);
+                Cache.Put(data);
             }
         }
 
@@ -78,7 +78,7 @@ namespace Torrent.Client
                 if (count == 0)
                 {
                     data.Callback(false, 0, data.State);
-                    cache.Put(data);
+                    Cache.Put(data);
                 }
                 else
                 {
@@ -87,7 +87,7 @@ namespace Torrent.Client
                     if (data.Remaining == 0)
                     {
                         data.Callback(true, data.Count, data.State);
-                        cache.Put(data);
+                        Cache.Put(data);
                     }
                     else
                     {
@@ -98,7 +98,7 @@ namespace Torrent.Client
             catch
             {
                 data.Callback(false, 0, data.State);
-                cache.Put(data);
+                Cache.Put(data);
             }
         }
 
@@ -111,7 +111,7 @@ namespace Torrent.Client
                 if (count == 0)
                 {
                     data.Callback(false, 0, data.State);
-                    cache.Put(data);
+                    Cache.Put(data);
                 }
                 else
                 {
@@ -120,7 +120,7 @@ namespace Torrent.Client
                     if (data.Remaining == 0)
                     {
                         data.Callback(true, data.Count, data.State);
-                        cache.Put(data);
+                        Cache.Put(data);
                     }
                     else
                     {
@@ -131,7 +131,7 @@ namespace Torrent.Client
             catch
             {
                 data.Callback(false, 0, data.State);
-                cache.Put(data);
+                Cache.Put(data);
             }
         }
 
@@ -143,13 +143,13 @@ namespace Torrent.Client
                 data.Socket.EndConnect(ar);
                 data.Callback(true, 0, data.State);
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 data.Callback(false, 0, data.State);
             }
             finally
             {
-                cache.Put(data);
+                Cache.Put(data);
             }
         }
 

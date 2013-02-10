@@ -16,7 +16,7 @@ namespace Torrent.Client
     /// </summary>
     public class TorrentData
     {
-        private const int CHECKSUM_SIZE = 20;
+        private const int ChecksumSize = 20;
         private readonly byte[] data;
 
         /// <summary>
@@ -94,7 +94,7 @@ namespace Torrent.Client
         /// Creates a .torrent file with the given data.
         /// </summary>
         /// <param name="name">The name of the file.</param>
-        /// <param name="inputFiles">A List<string> containing all the files to be added to the .torrent file.</param>
+        /// <param name="inputFiles">A List'string containing all the files to be added to the .torrent file.</param>
         /// <param name="filesDir">The root directory of all the files in the .torrent file.</param>
         /// <param name="announce">The announce URL of the tracker, in which the .torrent file will be uploaded to.</param>
         /// <param name="announceList">A list of announce URLs.</param>
@@ -296,11 +296,11 @@ namespace Torrent.Client
         private List<byte[]> GetRawChecksums(BencodedDictionary info, BencodedInteger pieceLength)
         {
             byte[] rawChecksums = Encoding.ASCII.GetBytes(info["pieces"] as BencodedString);
-            if (pieceLength == null || rawChecksums == null || rawChecksums.Length%CHECKSUM_SIZE != 0)
+            if (pieceLength == null || rawChecksums == null || rawChecksums.Length%ChecksumSize != 0)
                 throw new TorrentException(
                     string.Format(
                         "Invalid metadata, 'piece length'/'pieces' not of expected type, or invalid length of 'pieces'."));
-            IEnumerable<byte[]> slicedChecksums = rawChecksums.Batch(CHECKSUM_SIZE).Select(e => e.ToArray());
+            IEnumerable<byte[]> slicedChecksums = rawChecksums.Batch(ChecksumSize).Select(e => e.ToArray());
             return slicedChecksums.ToList();
         }
 

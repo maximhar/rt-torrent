@@ -33,7 +33,7 @@ namespace Torrent.Client
 
         public TransferMonitor(InfoHash hash)
         {
-            this.TorrentHash = hash;
+            TorrentHash = hash;
         }
 
         public void Received(int count)

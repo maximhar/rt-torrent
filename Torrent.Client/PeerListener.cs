@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Concurrent;
-using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 using Torrent.Client.Events;
@@ -12,32 +11,32 @@ namespace Torrent.Client
 
     public static class PeerListener
     {
-        private static readonly ConcurrentDictionary<InfoHash, PeerConnectedCallback> innerDictionary;
-        private static readonly Socket listenSocket;
+        private static readonly ConcurrentDictionary<InfoHash, PeerConnectedCallback> InnerDictionary;
+        private static readonly Socket ListenSocket;
 
         static PeerListener()
         {
-            listenSocket = Global.Instance.Listener;
-            innerDictionary = new ConcurrentDictionary<InfoHash, PeerConnectedCallback>();
+            ListenSocket = Global.Instance.Listener;
+            InnerDictionary = new ConcurrentDictionary<InfoHash, PeerConnectedCallback>();
             BeginListening();
         }
 
         public static bool Register(InfoHash infoHash, PeerConnectedCallback callback)
         {
-            return innerDictionary.TryAdd(infoHash, callback);
+            return InnerDictionary.TryAdd(infoHash, callback);
         }
 
         public static bool Deregister(InfoHash infoHash)
         {
             PeerConnectedCallback callback;
-            return innerDictionary.TryRemove(infoHash, out callback);
+            return InnerDictionary.TryRemove(infoHash, out callback);
         }
 
         private static void BeginListening()
         {
             try
             {
-                listenSocket.BeginAccept(EndAccept, listenSocket);
+                ListenSocket.BeginAccept(EndAccept, ListenSocket);
             }
             catch (Exception e)
             {
@@ -72,7 +71,7 @@ namespace Torrent.Client
 
                 if (peer.ID == Global.Instance.PeerId) return;
                 PeerConnectedCallback callback;
-                if (!innerDictionary.TryGetValue(handshake.InfoHash, out callback)) ClosePeerSocket(peer);
+                if (!InnerDictionary.TryGetValue(handshake.InfoHash, out callback)) ClosePeerSocket(peer);
                 else callback(peer);
             }
             else ClosePeerSocket(peer);

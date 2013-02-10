@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading;
+using Torrent.Client.Events;
 
 namespace Torrent.Client
 {
@@ -50,17 +51,24 @@ namespace Torrent.Client
 
         public void AddBlock(Block block, BlockWrittenDelegate callback, object state)
         {
-            //Wait(5000);
-            IEnumerable<BlockPartInfo> parts = GetParts(block.Info.Index, block.Info.Offset, block.Info.Length);
-            var totalLen = parts.Sum(p => p.Length);
-            BlockWriteState data = writeCache.Get().Init(callback, (int)totalLen, block, state);
-            Trace.Assert(parts.Any());
-            Interlocked.Increment(ref blocksToWrite);
-            foreach(BlockPartInfo part in parts)
+            try
             {
-                DiskIO.QueueWrite(part.FileStream, block.Data, part.FileOffset, part.DataOffset, part.Length,
-                                  EndAddBlock, data);
-                Interlocked.Increment(ref partsToWrite);
+                IEnumerable<BlockPartInfo> parts = GetParts(block.Info.Index, block.Info.Offset, block.Info.Length);
+                var totalLen = parts.Sum(p => p.Length);
+                BlockWriteState data = writeCache.Get().Init(callback, (int)totalLen, block, state);
+                Trace.Assert(parts.Any());
+                Interlocked.Increment(ref blocksToWrite);
+                foreach(BlockPartInfo part in parts)
+                {
+                    DiskIO.QueueWrite(part.FileStream, block.Data, part.FileOffset, part.DataOffset, part.Length,
+                                      EndAddBlock, data);
+                    Interlocked.Increment(ref partsToWrite);
+                }
+            }
+            catch(Exception e)
+            {
+                OnRaisedException(new TorrentException("Adding block failed", e));
+                callback(false, state);
             }
         }
 
@@ -71,14 +79,23 @@ namespace Torrent.Client
 
         public void GetBlock(int pieceIndex, int offset, int length, BlockReadDelegate callback, object state)
         {
-            IEnumerable<BlockPartInfo> parts = GetParts(pieceIndex, offset, length);
-            var buffer = new byte[length];
-            var block = new Block(buffer, pieceIndex, offset, length);
-            BlockReadState data = readCache.Get().Init(block, callback, length, state);
-            foreach(BlockPartInfo part in parts)
+            try
             {
-                DiskIO.QueueRead(part.FileStream, buffer, 0, part.FileOffset, part.Length, EndGetBlock, data);
+                IEnumerable<BlockPartInfo> parts = GetParts(pieceIndex, offset, length);
+                var buffer = new byte[length];
+                var block = new Block(buffer, pieceIndex, offset, length);
+                BlockReadState data = readCache.Get().Init(block, callback, length, state);
+                foreach(BlockPartInfo part in parts)
+                {
+                    DiskIO.QueueRead(part.FileStream, buffer, 0, part.FileOffset, part.Length, EndGetBlock, data);
+                }
             }
+            catch(Exception e)
+            {
+                OnRaisedException(new TorrentException("Getting block failed", e));
+                callback(false, null, state);
+            }
+            
         }
 
         private void EndAddBlock(bool success, int written, object state)
@@ -115,7 +132,7 @@ namespace Torrent.Client
 
             readCache.Put(data);
         }
-        
+
         private IEnumerable<BlockPartInfo> GetParts(int pieceIndex, int offset, int length)
         {
             var pieces = new List<BlockPartInfo>();
@@ -125,40 +142,58 @@ namespace Torrent.Client
             foreach(FileEntry file in torrentData.Files)
             {
                 if(remaining <= 0) break;
-                if(currentOffset+file.Length >= requestedOffset)
+                if(currentOffset + file.Length >= requestedOffset)
                 {
                     long relativePosition = requestedOffset - currentOffset;
                     long partLength = Math.Min(file.Length - relativePosition, remaining);
                     FileStream stream = GetStream(file);
-
+                    if(stream == null)
+                        throw new IOException("Stream is null.");
                     pieces.Add(new BlockPartInfo
-                                  {
-                                      FileStream = stream,
-                                      FileOffset = relativePosition,
-                                      Length = partLength,
-                                      DataOffset = length - (int)remaining
-                                  });
-                    Debug.Assert(relativePosition>=0);
-                    Debug.Assert(partLength>0);
+                                   {
+                                       FileStream = stream,
+                                       FileOffset = relativePosition,
+                                       Length = partLength,
+                                       DataOffset = length - (int)remaining
+                                   });
+                    Debug.Assert(relativePosition >= 0);
+                    Debug.Assert(partLength > 0);
                     remaining -= partLength;
                     requestedOffset += partLength;
                 }
                 currentOffset += file.Length;
             }
             return pieces.ToArray();
+
         }
 
         private FileStream GetStream(FileEntry file)
         {
-            string finalPath = Path.Combine(mainDir, file.Name);
-            FileStream stream;
-            if(openStreams.TryGetValue(finalPath, out stream)) return stream;
-            var dir = Path.GetDirectoryName(finalPath);
-            if(dir!=string.Empty && !Directory.Exists(dir))
-                Directory.CreateDirectory(dir);
-            stream = File.Open(finalPath, FileMode.OpenOrCreate, FileAccess.ReadWrite);
-            openStreams.TryAdd(finalPath, stream);
-            return stream;
+            const int tryCount = 5;
+            int tryTime = 0;
+            
+            while (true)
+            {
+                string finalPath = Path.Combine(mainDir, file.Name);
+                FileStream stream;
+                if(openStreams.TryGetValue(finalPath, out stream)) return stream;
+                lock(openStreams)
+                try
+                {
+                    var dir = Path.GetDirectoryName(finalPath);
+                    if(dir != string.Empty && !Directory.Exists(dir))
+                        Directory.CreateDirectory(dir);
+                    stream = File.Open(finalPath, FileMode.OpenOrCreate, FileAccess.ReadWrite);
+                    openStreams.TryAdd(finalPath, stream);
+                    return stream;
+                }
+                catch(Exception)
+                {
+                    tryTime++;
+                    if (tryTime > tryCount)
+                        throw;
+                }
+            }
         }
 
         private void Dispose(bool disposing)
@@ -261,6 +296,14 @@ namespace Torrent.Client
             {
                 Thread.Sleep(10);
             }
+        }
+
+        public event EventHandler<EventArgs<Exception>>  RaisedException;
+
+        public void OnRaisedException(Exception e)
+        {
+            EventHandler<EventArgs<Exception>> handler = RaisedException;
+            if(handler != null) handler(this, new EventArgs<Exception>(e));
         }
     }
 }

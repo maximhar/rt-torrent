@@ -13,6 +13,7 @@ namespace Torrent.Client
     /// </summary>
     public class TorrentTransfer
     {
+        private bool stopping;
         private readonly TrackerClient tracker;
         private volatile bool stop;
         private Timer statsReportTimer;
@@ -44,6 +45,7 @@ namespace Torrent.Client
             }
 
             tracker = new TrackerClient(Data.Announces);
+            statsReportTimer = new Timer(o => OnStatsReport());
         }
 
         /// <summary>
@@ -106,7 +108,6 @@ namespace Torrent.Client
             mode.AddEndpoints(endpoints);
             ChangeState(TorrentState.Downloading);
             Mode = mode;
-            statsReportTimer = new Timer(o => OnStatsReport());
             statsReportTimer.Change(0, 250);
         }
 
@@ -118,9 +119,11 @@ namespace Torrent.Client
 
         private void StopActions()
         {
+            OnStatsReport();
             ChangeState(TorrentState.NotRunning);
             statsReportTimer.Dispose();
-            Mode.Stop(true);
+            if(Mode!=null) 
+                Mode.Stop(true);
             stop = true;
             Running = false;
         }
@@ -148,6 +151,8 @@ namespace Torrent.Client
 
         private void OnRaisedException(Exception e)
         {
+            if(e.InnerException is IOException)
+                Stop();
             if (RaisedException != null)
             {
                 RaisedException(this, new EventArgs<Exception>(e));
@@ -159,32 +164,12 @@ namespace Torrent.Client
         /// </summary>
         public event EventHandler<EventArgs<Exception>> RaisedException;
 
-        /// <summary>
-        /// Fires just prior to the transfer's complete stop.
-        /// </summary>
-
-        public event EventHandler<EventArgs<Block>> WroteBlock;
-
-        public void OnWroteBlock(Block e)
-        {
-            EventHandler<EventArgs<Block>> handler = WroteBlock;
-            if(handler != null) handler(this, new EventArgs<Block>(e));
-        }
-
-        public event EventHandler<EventArgs<IEnumerable<PeerState>>> PeersChanged;
-
-        public void OnPeersChanged(IEnumerable<PeerState> e)
-        {
-            if (stop) return;
-
-            EventHandler<EventArgs<IEnumerable<PeerState>>> handler = PeersChanged;
-            if(handler != null) handler(this, new EventArgs<IEnumerable<PeerState>>(e));
-        }
-
         public event EventHandler<StatsEventArgs> ReportStats;
 
         public void OnStatsReport()
         {
+            if (Mode == null) return;
+
             var downloaded = Mode.Monitor.BytesWritten;
             var totalPeers = Mode.Peers.Count;
             var chokedBy = Mode.Peers.Count(p => p.Value.AmChoked);
@@ -195,7 +180,6 @@ namespace Torrent.Client
         }
 
         public event EventHandler<EventArgs<TorrentState>> StateChanged;
-        private bool stopping;
 
         public void OnStateChanged(TorrentState e)
         {

@@ -157,7 +157,6 @@
     <Compile Include="TrackerResponse.cs" />
     <Compile Include="Messages\UnchokeMessage.cs" />
     <Compile Include="TransferMonitor.cs" />
-    <Compile Include="TransferState.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Todos\Task 1.txt" />

@@ -18,27 +18,27 @@ namespace Torrent.Client
         private static readonly NetworkCallback EndReceiveHandshakeCallback = EndReceiveHandshake;
 
 
-        private static readonly Cache<SendMessageState> sendCache = new Cache<SendMessageState>();
-        private static readonly Cache<ReceiveMessageState> receiveCache = new Cache<ReceiveMessageState>();
-        private static readonly int MAX_LENGTH = 1024*17;
+        private static readonly Cache<SendMessageState> SendCache = new Cache<SendMessageState>();
+        private static readonly Cache<ReceiveMessageState> ReceiveCache = new Cache<ReceiveMessageState>();
+        private const int MaxMessageLength = 1024*17;
 
 
         public static void SendMessage(Socket socket, PeerMessage message, object state, MessageSentCallback callback)
         {
             byte[] buffer = message.ToBytes();
-            SendMessageState data = sendCache.Get().Init(socket, buffer, 0, buffer.Length, state, callback);
+            SendMessageState data = SendCache.Get().Init(socket, buffer, 0, buffer.Length, state, callback);
             SendMessageBase(data);
         }
 
         public static void ReceiveMessage(Socket socket, object state, MessageReceivedCallback callback)
         {
-            ReceiveMessageState data = receiveCache.Get().Init(socket, state, callback);
+            ReceiveMessageState data = ReceiveCache.Get().Init(socket, state, callback);
             ReceiveMessageBase(data);
         }
 
         public static void ReceiveHandshake(Socket socket, object state, MessageReceivedCallback callback)
         {
-            ReceiveMessageState data = receiveCache.Get().Init(socket, state, callback);
+            ReceiveMessageState data = ReceiveCache.Get().Init(socket, state, callback);
             HandshakeMessageBase(data);
         }
 
@@ -81,7 +81,7 @@ namespace Torrent.Client
             }
             finally
             {
-                receiveCache.Put(data);
+                ReceiveCache.Put(data);
             }
         }
 
@@ -89,7 +89,7 @@ namespace Torrent.Client
         {
             var data = (SendMessageState) state;
             data.Callback(success, sent, data.State);
-            sendCache.Put(data);
+            SendCache.Put(data);
         }
 
         private static void EndReceiveLength(bool success, int read, object state)
@@ -100,16 +100,16 @@ namespace Torrent.Client
                 if(success)
                 {
                     int messageLength = IPAddress.HostToNetworkOrder(BitConverter.ToInt32(data.Buffer, 0));
-                    if(messageLength > MAX_LENGTH)
+                    if(messageLength > MaxMessageLength)
                     {
                         data.Callback(false, null, data.State);
-                        receiveCache.Put(data);
+                        ReceiveCache.Put(data);
                         return;
                     }
                     if(messageLength == 0)
                     {
                         data.Callback(true, new KeepAliveMessage(), data.State);
-                        receiveCache.Put(data);
+                        ReceiveCache.Put(data);
                         return;
                     }
                     var newBuffer = new byte[read + messageLength];
@@ -120,13 +120,13 @@ namespace Torrent.Client
                 else
                 {
                     data.Callback(false, null, data.State);
-                    receiveCache.Put(data);
+                    ReceiveCache.Put(data);
                 }
             }
             catch (Exception e)
             {
                 data.Callback(false, null, data.State);
-                receiveCache.Put(data);
+                ReceiveCache.Put(data);
                 Debug.WriteLine(e, "MessageIO.EndReceiveLength");
             }
             
@@ -141,25 +141,25 @@ namespace Torrent.Client
                 if(!success)
                 {
                     data.Callback(false, null, data.State);
-                    receiveCache.Put(data);
+                    ReceiveCache.Put(data);
                     return;
                 }
                 try
                 {
                     PeerMessage message = PeerMessage.CreateFromBytes(data.Buffer, 0, read + 4);
                     data.Callback(true, message, data.State);
-                    receiveCache.Put(data);
+                    ReceiveCache.Put(data);
                 }
                 catch(Exception)
                 {
                     data.Callback(false, null, data.State);
-                    receiveCache.Put(data);
+                    ReceiveCache.Put(data);
                 }
             }
             catch (Exception e)
             {
                 data.Callback(false, null, data.State);
-                receiveCache.Put(data);
+                ReceiveCache.Put(data);
                 Debug.WriteLine(e, "MessageIO.EndReceive");
             }
             

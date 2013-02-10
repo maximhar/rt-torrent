@@ -23,12 +23,13 @@ namespace Torrent.Client
 
         protected TorrentMode(BlockManager manager, BlockStrategist strategist, TorrentData metadata, TransferMonitor monitor)
         {
-            this.Monitor = monitor;
-            this.BlockManager = manager;
-            this.BlockStrategist = strategist;
-            this.Metadata = metadata;
-            this.DefaultHandshake = new HandshakeMessage(Global.Instance.PeerId, new byte[8], Metadata.InfoHash, "BitTorrent protocol");
-            this.Peers = new ConcurrentDictionary<string, PeerState>();
+            Monitor = monitor;
+            BlockManager = manager;
+            BlockStrategist = strategist;
+            Metadata = metadata;
+            DefaultHandshake = new HandshakeMessage(Global.Instance.PeerId, new byte[8], Metadata.InfoHash, "BitTorrent protocol");
+            Peers = new ConcurrentDictionary<string, PeerState>();
+            manager.RaisedException += (s, e) => OnRaisedException(e.Value);
         }
 
         public virtual void Start()
@@ -116,7 +117,7 @@ namespace Torrent.Client
         protected virtual void ConnectPeer(IPEndPoint ep)
         {
             if (Stopping) return;
-            Socket peerSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            var peerSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             NetworkIO.Connect(peerSocket, ep, peerSocket, PeerConnected);
         }
 
@@ -233,6 +234,7 @@ namespace Torrent.Client
 
         public void OnRaisedException(Exception e)
         {
+            if (Stopping) return;
             EventHandler<EventArgs<Exception>> handler = RaisedException;
             if(handler != null) handler(this, new EventArgs<Exception>(e));
         }

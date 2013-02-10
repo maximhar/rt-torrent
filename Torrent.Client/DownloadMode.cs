@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using System.Diagnostics;
 using System.Timers;
 using Torrent.Client.Messages;
 
@@ -11,15 +9,13 @@ namespace Torrent.Client
     public class DownloadMode:TorrentMode
     {
         private const int RequestsQueueLength = 10;
-        private bool enableEndGame = true;
 
         public BitArray Bitfield { get; private set; }
 
         public DownloadMode(BlockManager manager, BlockStrategist strategist, TorrentData metadata, TransferMonitor monitor) :
                                 base(manager, strategist, metadata, monitor)
         {
-            Timer endGameTimer = new Timer(10000);
-            endGameTimer.Elapsed += (o, e) => enableEndGame = true;
+            Bitfield = new BitArray(Metadata.PieceCount);
         }
 
         protected override void HandleRequest(RequestMessage request, PeerState peer)
@@ -39,7 +35,6 @@ namespace Torrent.Client
                 BlockManager.AddBlock(block, BlockWritten, block);
             }
             peer.PendingBlocks--;
-            if (BlockStrategist.EndGame()) DoEndGame();
             SendBlockRequests(peer);
         }
 
@@ -75,19 +70,6 @@ namespace Torrent.Client
                     OnDownloadComplete();
                     return;
                 }
-            }
-        }
-
-        private void DoEndGame()
-        {
-            if (!enableEndGame) return;
-            enableEndGame = false;
-
-            foreach (var peerState in Peers.Values)
-            {
-                SendBlockRequests(peerState);
-                if(peerState.AmChoked)
-                    SendMessage(peerState, new InterestedMessage());
             }
         }
 

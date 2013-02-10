@@ -220,7 +220,6 @@ namespace Torrent.GuiTest
                 totalSize = Global.Instance.FileSizeFormat(filesSize);
 
                 torrent.RaisedException += torrent_RaisedException;
-                torrent.PeersChanged += torrent_PeersChanged;
                 torrent.ReportStats += torrent_ReportStatsChanged;
                 torrent.StateChanged += torrent_StateChanged;
                 torrent.Start();
