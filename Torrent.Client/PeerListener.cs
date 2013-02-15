@@ -9,6 +9,9 @@ namespace Torrent.Client
 {
     public delegate void PeerConnectedCallback(PeerState peer);
 
+    /// <summary>
+    /// Static class used for listening for incoming peer connections and redirecting them to the corresponding delegate.
+    /// </summary>
     public static class PeerListener
     {
         private static readonly ConcurrentDictionary<InfoHash, PeerConnectedCallback> InnerDictionary;

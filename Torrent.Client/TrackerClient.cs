@@ -51,7 +51,7 @@ namespace Torrent.Client
         /// <summary>
         /// Sends a HTTP request to the tracker and returns the response.
         /// </summary>
-        /// <param name="request">The data for the request that will be sent to the tracker.</param>
+        /// <param name="requestData">The data for the request that will be sent to the tracker.</param>
         /// <returns>The tracker's response.</returns>
         public TrackerResponse GetResponse(TrackerRequest requestData)
         {

@@ -48,7 +48,7 @@ namespace Torrent.Client
 
                 if (response["peers"] is BencodedList) // Peers Dictionary model 
                 {
-                    if (((BencodedList) response["peers"]).Count() == 0)
+                    if (!((BencodedList) response["peers"]).Any())
                         throw new TorrentException("Peers list is empty.");
 
                     Endpoints = new List<IPEndPoint>();
