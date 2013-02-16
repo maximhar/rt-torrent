@@ -54,6 +54,17 @@ namespace Torrent.Client
             }
         }
 
+        protected override bool AddPeer(PeerState peer)
+        {
+            SendBitfield(peer);
+            return base.AddPeer(peer);
+        }
+
+        private void SendBitfield(PeerState peer)
+        {
+            SendMessage(peer, new BitfieldMessage(BlockStrategist.Bitfield));
+        }
+
         private void SendBlockRequests(PeerState peer)
         {
             int count = RequestsQueueLength - peer.PendingBlocks;

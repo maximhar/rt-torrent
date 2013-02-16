@@ -44,7 +44,7 @@ namespace Torrent.Client.Messages
         /// </summary>
         public override int MessageLength
         {
-            get { return 4 + 1 + Bitfield.Length/8; }
+            get { return 4 + 1 + (int)Math.Ceiling(Bitfield.Length/8f); }
         }
 
         /// <summary>
@@ -72,7 +72,7 @@ namespace Torrent.Client.Messages
             var byteArray = new byte[(int) Math.Ceiling((double) Bitfield.Length/8)];
             Bitfield.CopyTo(byteArray, 0);
             int start = offset;
-            offset += Write(buffer, offset, 5);
+            offset += Write(buffer, offset, byteArray.Length+1);
             offset += Write(buffer, offset, (byte) 5);
             offset += Write(buffer, offset, byteArray);
             return offset - start;
