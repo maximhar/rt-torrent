@@ -118,6 +118,7 @@
     <Compile Include="Events\EventArgs.cs" />
     <Compile Include="Extensions\BitArrayExtensions.cs" />
     <Compile Include="Extensions\IEnumerableExtensions.cs" />
+    <Compile Include="HashingMode.cs" />
     <Compile Include="ICacheable.cs" />
     <Compile Include="InfoHash.cs" />
     <Compile Include="MessageIO.cs" />

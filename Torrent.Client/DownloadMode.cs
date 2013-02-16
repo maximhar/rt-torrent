@@ -10,12 +10,10 @@ namespace Torrent.Client
     {
         private const int RequestsQueueLength = 10;
 
-        public BitArray Bitfield { get; private set; }
-
         public DownloadMode(BlockManager manager, BlockStrategist strategist, TorrentData metadata, TransferMonitor monitor) :
                                 base(manager, strategist, metadata, monitor)
         {
-            Bitfield = new BitArray(Metadata.PieceCount);
+            strategist.HavePiece += (sender, args) => SendHaveMessages(args.Value);
         }
 
         protected override void HandleRequest(RequestMessage request, PeerState peer)
@@ -81,6 +79,15 @@ namespace Torrent.Client
                     OnDownloadComplete();
                     return;
                 }
+            }
+        }
+
+        private void SendHaveMessages(int piece)
+        {
+            foreach(var peer in Peers.Values)
+            {
+                if(!peer.Bitfield[piece])
+                    SendMessage(peer, new HaveMessage(piece));
             }
         }
 

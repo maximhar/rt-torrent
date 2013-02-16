@@ -6,6 +6,7 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
+using Torrent.Client.Events;
 using Torrent.Client.Extensions;
 
 namespace Torrent.Client
@@ -22,6 +23,24 @@ namespace Torrent.Client
         private readonly BlockAddressCollection<int> unavailable;
         private readonly int[] pieces;
         private int available = 0;
+
+        public BlockStrategist(TorrentData data, BitArray bitfield, int blockSize = 16*1024):this(data, blockSize)
+        {
+            bitfield.CopyTo(Bitfield, 0, 0, Bitfield.Count);
+            int block = 0;
+            for(int i = 0; i < Bitfield.Length; i++)
+            {
+                for(int j = 0;j<blocksPerPiece;j++)
+                {
+                    if(Bitfield[i])
+                    {
+                        unavailable.Remove(block);
+                        available++;
+                    }
+                    block++;
+                }
+            }
+        }
 
         public BlockStrategist(TorrentData data, int blockSize = 16*1024)
         {
@@ -40,7 +59,7 @@ namespace Torrent.Client
             {
                 pieces[i]= data.PieceLength;
             }
-            int lastLength = (int)(data.TotalLength - (data.PieceLength*data.PieceCount - 1));
+            int lastLength = (int)(data.TotalLength - (data.PieceLength*(data.PieceCount - 1)));
             pieces[pieces.Length - 1] = lastLength;
         }
 
@@ -95,13 +114,27 @@ namespace Torrent.Client
                     pieces[block.Index] -= block.Length;
                     if(pieces[block.Index]<=0)
                     {
-                        Bitfield.Set(block.Index, true);
+                        SetDownloaded(block.Index);
                     }
                     return true;
                 }
                 Debug.WriteLine("Unneeded block incoming:" + address);
                 return false;
             }
+        }
+
+        private void SetDownloaded(int piece)
+        {
+            Bitfield.Set(piece, true);
+            OnHavePiece(piece);
+        }
+
+        public event EventHandler<EventArgs<int>> HavePiece;
+
+        public void OnHavePiece(int e)
+        {
+            EventHandler<EventArgs<int>> handler = HavePiece;
+            if(handler != null) handler(this, new EventArgs<int>(e));
         }
     }
 
