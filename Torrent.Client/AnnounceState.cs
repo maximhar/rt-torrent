@@ -4,6 +4,7 @@ namespace Torrent.Client
     {
         None,
         Success,
-        Failure
+        Failure,
+        StartFailure
     }
 }

@@ -24,7 +24,7 @@ namespace Torrent.Client
         private readonly Cache<BlockReadState> readCache;
         private readonly TorrentData torrentData;
         private readonly Cache<BlockWriteState> writeCache;
-        
+        private readonly HashSet<string> NonexistingFiles = new HashSet<string>(); 
         private bool disposed;
         private int queuedWrites = 0;
 
@@ -167,7 +167,7 @@ namespace Torrent.Client
             while (true)
             {
                 string finalPath = Path.Combine(MainDirectory, file.Name);
-                if (!write && !File.Exists(finalPath)) return null;
+                if (!write && !FileExists(finalPath)) return null;
                 FileStream stream;
                 if(openStreams.TryGetValue(finalPath, out stream)) return stream;
                 lock(openStreams)
@@ -188,6 +188,17 @@ namespace Torrent.Client
                         throw;
                 }
             }
+        }
+
+        private bool FileExists(string finalPath)
+        {
+            if (NonexistingFiles.Contains(finalPath)) return false;
+            if(File.Exists(finalPath))
+            {
+                return true;
+            }
+            NonexistingFiles.Add(finalPath);
+            return false;
         }
 
         private void Dispose(bool disposing)

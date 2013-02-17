@@ -83,6 +83,7 @@ namespace Torrent.Client
         public void Stop()
         {
             stopping = true;
+            AnnounceManager.Stopped();
         }
 
         private void StartThread()
@@ -115,16 +116,22 @@ namespace Torrent.Client
 
         private void HashingComplete()
         {
-
+            ChangeState(TorrentState.Downloading);
             var mode = new DownloadMode((HashingMode)Mode);
             mode.RaisedException += (s, e) => OnRaisedException(e.Value);
             mode.FlushedToDisk += (s, e) => Stop();
-            mode.DownloadComplete += (s, e) => ChangeState(TorrentState.WaitingForDisk);
+            mode.DownloadComplete += (s, e) => DownloadCompleted();
             mode.Start();
 
             Mode = mode;
-            ChangeState(TorrentState.Downloading);
+            
             AnnounceManager.Started();
+        }
+
+        private void DownloadCompleted()
+        {
+            ChangeState(TorrentState.WaitingForDisk);
+            AnnounceManager.Completed();
         }
 
         private void StartActions()

@@ -73,9 +73,19 @@ namespace Torrent.Client
             {
                 foreach (var tracker in Trackers)
                 {
-                    if(tracker.LastAnnounced.Add(tracker.Period) < DateTime.Now && tracker.LastState != AnnounceState.None)
-                        tracker.Regular(Data.InfoHash, Monitor.BytesReceived,
-                                    Monitor.BytesSent, Monitor.TotalBytes - Monitor.BytesReceived);
+                    if (tracker.LastAnnounced.Add(tracker.Period) < DateTime.Now && tracker.LastState != AnnounceState.None)
+                    {
+                        if (tracker.LastState != AnnounceState.StartFailure)
+                        {
+                            tracker.Regular(Data.InfoHash, Monitor.BytesReceived,
+                                            Monitor.BytesSent, Monitor.TotalBytes - Monitor.BytesReceived);
+                        }
+                        else
+                        {
+                            tracker.Started(Data.InfoHash, Monitor.BytesReceived,
+                                            Monitor.BytesSent, Monitor.TotalBytes - Monitor.BytesReceived);
+                        }
+                    }
                 }
             });
         }
