@@ -1,6 +1,7 @@
 ﻿using Microsoft.Win32;
 using System.Linq;
 using System.Windows;
+using Torrent.Client;
 
 namespace Torrent.GuiTest
 {
@@ -57,6 +58,11 @@ namespace Torrent.GuiTest
         private void Quit_Click(object sender, RoutedEventArgs e)
         {
             model.AutoQuit = AutoQuitCheck.IsChecked;
+        }
+
+        private void About_Click(object sender, RoutedEventArgs e)
+        {
+            MessageBox.Show("RTorrent\nVersion: "+Global.Instance.Version+"\nCreated by: Maxim Harizanov & Dimitar Pankov\n2013", "About");
         }
     }
 }

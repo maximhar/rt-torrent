@@ -30,6 +30,8 @@ namespace Torrent.Client
             BindSocket();
         }
 
+        public string Version { get { return ID_HEAD.Trim('-').Trim('R').Trim('T'); } }
+
         public readonly int BlockSize;
 
         /// <summary>

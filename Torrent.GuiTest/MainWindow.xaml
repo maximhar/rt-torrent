@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:Torrent.GuiTest"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="d" x:Class="Torrent.GuiTest.MainWindow"
-        Title="Torrent Data" Width="850" AllowDrop="True" Drop="Window_Drop" Height="616">
+        Title="RTorrent" Width="850" AllowDrop="True" Drop="Window_Drop" Height="616">
     <StackPanel>
         <Grid Margin="3">
             <Grid.ColumnDefinitions>
@@ -21,11 +21,12 @@
                         <MenuItem Name="AutoShutdownCheck" Header="_Shutdown when Downloads complete" Click="Shutdown_Click" IsCheckable="True"/>
                     </MenuItem>
                 </MenuItem>
-                <MenuItem Header="_Help" >
+                <MenuItem Header="_Help">
                     <MenuItem Header="RTorrent _Help" />
                     <MenuItem Header="RTorrent _FAQ" />
                     <MenuItem Header="Show _Statistics" />
                     <MenuItem Header="Check for _Updates" />
+                    <MenuItem Header="_About" Click="About_Click"/>
                 </MenuItem>
             </Menu>
         </Grid>
