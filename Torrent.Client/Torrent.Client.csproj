@@ -105,6 +105,8 @@
     <Reference Include="System.Core" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AnnounceManager.cs" />
+    <Compile Include="AnnounceState.cs" />
     <Compile Include="Bencoding\BencodedDictionary.cs" />
     <Compile Include="Bencoding\BencodedInteger.cs" />
     <Compile Include="Bencoding\BencodedList.cs" />
@@ -154,6 +156,7 @@
     <Compile Include="TorrentState.cs" />
     <Compile Include="TorrentTransfer.cs" />
     <Compile Include="TrackerClient.cs" />
+    <Compile Include="TrackerInfo.cs" />
     <Compile Include="TrackerRequest.cs" />
     <Compile Include="TrackerResponse.cs" />
     <Compile Include="Messages\UnchokeMessage.cs" />

@@ -66,7 +66,6 @@ namespace Torrent.Client
             {
                 foreach (string url in Announces)
                 {
-                    Debug.WriteLine("Trying to connect to " + url);
                     if ((response = AttemptGet(requestData, url)) != null)
                     {
                         PreferredAnnounce = url;
@@ -75,11 +74,7 @@ namespace Torrent.Client
                 }
             }
 
-            if (response == null)
-                throw new TorrentException("Unable to connect to tracker.");
-
             return response;
-            Debug.WriteLine("Connected to tracker!");
         }
 
         private TrackerResponse AttemptGet(TrackerRequest requestData, string announceURL)

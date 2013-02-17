@@ -18,6 +18,9 @@ namespace Torrent.Client
         private volatile bool stop;
         private Timer statsReportTimer;
         private TrackerResponse trackerData;
+        private TransferMonitor monitor;
+
+        public AnnounceManager AnnounceManager { get; private set; }
 
         public TorrentMode Mode { get; private set; }
 
@@ -47,6 +50,10 @@ namespace Torrent.Client
 
             tracker = new TrackerClient(Data.Announces);
             statsReportTimer = new Timer(o => OnStatsReport());
+            monitor = new TransferMonitor(Data.InfoHash, Data.TotalLength);
+            AnnounceManager = new AnnounceManager(Data.Announces, monitor, Data);
+            AnnounceManager.PeersReceived += (sender, args) => { if(Mode != null) 
+                Mode.AddEndpoints(args.Value); };
         }
 
         /// <summary>
@@ -66,6 +73,7 @@ namespace Torrent.Client
             if (State != TorrentState.NotRunning) throw new TorrentException("Already started.");
 
             var torrentThread = new Thread(StartThread) {IsBackground = true};
+
             torrentThread.Start();
         }
 
@@ -97,7 +105,7 @@ namespace Torrent.Client
             
             ChangeState(TorrentState.Hashing);
             var hashingMode = new HashingMode(new BlockManager(Data, Data.Name),
-                                              new BlockStrategist(Data), Data, new TransferMonitor(Data.InfoHash));
+                                              new BlockStrategist(Data), Data, monitor);
             hashingMode.RaisedException += (s, e) => OnRaisedException(e.Value);
             hashingMode.HashingComplete += (sender, args) => HashingComplete();
             Mode = hashingMode;
@@ -116,10 +124,7 @@ namespace Torrent.Client
 
             Mode = mode;
             ChangeState(TorrentState.Downloading);
-            trackerData = tracker.AnnounceStart(Data.InfoHash, Global.Instance.PeerId,
-                                                Global.Instance.ListeningPort,
-                                                0, 0, Data.Files.Sum(f => f.Length));
-            mode.AddEndpoints(trackerData.Endpoints);
+            AnnounceManager.Started();
         }
 
         private void StartActions()
@@ -133,6 +138,8 @@ namespace Torrent.Client
             OnStatsReport();
             ChangeState(TorrentState.NotRunning);
             statsReportTimer.Dispose();
+            AnnounceManager.Stopped();
+            AnnounceManager.Dispose();
             if(Mode!=null) 
                 Mode.Stop(true);
             stop = true;

@@ -66,7 +66,7 @@ namespace Torrent.Client
             }
             catch(Exception e)
             {
-                OnRaisedException(new TorrentException("Adding block failed", e));
+                //OnRaisedException(new TorrentException("Adding block failed", e));
                 callback(false, state);
             }
         }
@@ -86,10 +86,9 @@ namespace Torrent.Client
             }
             catch(Exception e)
             {
-                OnRaisedException(new TorrentException("Getting block failed", e));
+                //OnRaisedException(new TorrentException("Getting block failed", e));
                 callback(false, null, state);
             }
-            
         }
 
         private void EndAddBlock(bool success, int written, object state)
@@ -133,6 +132,7 @@ namespace Torrent.Client
             long remaining = length;
             foreach(FileEntry file in torrentData.Files)
             {
+
                 if(remaining <= 0) break;
                 if(currentOffset + file.Length >= requestedOffset)
                 {
@@ -167,6 +167,7 @@ namespace Torrent.Client
             while (true)
             {
                 string finalPath = Path.Combine(MainDirectory, file.Name);
+                if (!write && !File.Exists(finalPath)) return null;
                 FileStream stream;
                 if(openStreams.TryGetValue(finalPath, out stream)) return stream;
                 lock(openStreams)
