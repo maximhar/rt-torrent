@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Win32;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -31,7 +32,12 @@ namespace Torrent.GuiTest
         private void Window_Drop(object sender, DragEventArgs e)
         {
             var str = (string[])e.Data.GetData(DataFormats.FileDrop);
-            TorrentPathTextBox.Text = str.FirstOrDefault();
+            OpenTorrent(str.FirstOrDefault());
+        }
+
+        private void OpenTorrent(string str)
+        {
+            TorrentPathTextBox.Text = str;
             model.GetPeers(TorrentPathTextBox.Text);
         }
 
@@ -40,6 +46,20 @@ namespace Torrent.GuiTest
             model.Stop();
         }
 
+        private void OpenTorrent_Click(object sender, RoutedEventArgs e)
+        {
+            var dlg = new OpenFileDialog(); 
+            dlg.DefaultExt = ".torrent"; 
+            dlg.Filter = "Torrent files (.torrent)|*.torrent"; // Filter files by extension 
+
+            if (dlg.ShowDialog() == true)
+                OpenTorrent(dlg.FileName);
+        }
+
+        private void CreateTorrent_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
         
 
     }

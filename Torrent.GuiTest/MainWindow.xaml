@@ -8,6 +8,31 @@
         <Grid Margin="3">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <Menu IsMainMenu="True">
+                <MenuItem Header="_File">
+                    <MenuItem Header="_Open torrent" Click="OpenTorrent_Click" />
+                    <MenuItem Header="_Create torrent" Click="CreateTorrent_Click" />
+                </MenuItem>
+                <MenuItem Header="_Options" >
+                    <MenuItem Header="_Preferences"/>
+                    <MenuItem Header="_Auto Shutdown">
+                        <MenuItem Header="S1" />
+                        <MenuItem Header="s2"/>
+                    </MenuItem>
+                </MenuItem>
+                <MenuItem Header="_Help" >
+                    <MenuItem Header="RTorrent _Help" />
+                    <MenuItem Header="RTorrent _FAQ" />
+                    <MenuItem Header="Show _Statistics" />
+                    <MenuItem Header="Check for _Updates" />
+                </MenuItem>
+            </Menu>
+        </Grid>
+        
+        <Grid Margin="3">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="6*" MinWidth="200"/>
             </Grid.ColumnDefinitions>
             <Label Grid.Column="0" Content="Torrent path:"/>
