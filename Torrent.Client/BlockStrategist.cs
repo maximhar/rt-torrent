@@ -22,9 +22,9 @@ namespace Torrent.Client
         private readonly int blockCount;
         private readonly BlockAddressCollection<int> unavailable;
         private readonly int[] pieces;
-        private int available = 0;
+        public int Available { get; private set; }
 
-        public BlockStrategist(TorrentData data, BitArray bitfield, int blockSize = 16*1024):this(data, blockSize)
+        public BlockStrategist(TorrentData data, BitArray bitfield):this(data)
         {
             bitfield.CopyTo(Bitfield, 0, 0, Bitfield.Count);
             int block = 0;
@@ -35,16 +35,16 @@ namespace Torrent.Client
                     if(Bitfield[i])
                     {
                         unavailable.Remove(block);
-                        available++;
+                        Available++;
                     }
                     block++;
                 }
             }
         }
 
-        public BlockStrategist(TorrentData data, int blockSize = 16*1024)
+        public BlockStrategist(TorrentData data)
         {
-            this.blockSize = blockSize;
+            this.blockSize = Global.Instance.BlockSize;
             pieceSize = data.PieceLength;
             blocksPerPiece = pieceSize/this.blockSize;
             totalSize = data.Files.Sum(f => f.Length);
@@ -65,7 +65,7 @@ namespace Torrent.Client
 
         public BlockInfo Next(BitArray bitfield)
         {
-            if (available == blockCount)
+            if (Available == blockCount)
                 return BlockInfo.Empty;
             BlockInfo block;
             int counter = 0;
@@ -110,7 +110,7 @@ namespace Torrent.Client
                 {
                     Debug.WriteLine("Needed block incoming:" + address);
                     unavailable.Remove(address);
-                    available++;
+                    Available++;
                     pieces[block.Index] -= block.Length;
                     if(pieces[block.Index]<=0)
                     {
@@ -131,7 +131,7 @@ namespace Torrent.Client
 
         public event EventHandler<EventArgs<int>> HavePiece;
 
-        public void OnHavePiece(int e)
+        private void OnHavePiece(int e)
         {
             EventHandler<EventArgs<int>> handler = HavePiece;
             if(handler != null) handler(this, new EventArgs<int>(e));

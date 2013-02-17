@@ -13,6 +13,7 @@ namespace Torrent.Client
         Downloading,
         Seeding,
         Finished,
+        Hashing,
         Failed
     }
 }

@@ -119,7 +119,7 @@ namespace Torrent.Client
             try
             {
                 state.Stream.Seek(state.StreamOffset, SeekOrigin.Begin);
-                int read = state.Stream.Read(state.Buffer, 0, (int)state.Length);
+                int read = state.Stream.Read(state.Buffer, state.BufferOffset, (int)state.Length);
                 if (read != state.Length) state.Callback(false, read, null, state.State);
                 else state.Callback(true, read, state.Buffer, state.State);
                 ReadCache.Put(state);

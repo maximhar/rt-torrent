@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Diagnostics;
+using System.Threading;
 using System.Timers;
 using Torrent.Client.Messages;
 
@@ -9,11 +10,37 @@ namespace Torrent.Client
     public class DownloadMode:TorrentMode
     {
         private const int RequestsQueueLength = 10;
+        private long pendingWrites = 0;
+
+        public DownloadMode(HashingMode hashMode):this(new BlockManager(hashMode.Metadata, hashMode.BlockManager.MainDirectory),
+            hashMode.BlockStrategist, hashMode.Metadata, hashMode.Monitor)
+        { 
+        }
 
         public DownloadMode(BlockManager manager, BlockStrategist strategist, TorrentData metadata, TransferMonitor monitor) :
                                 base(manager, strategist, metadata, monitor)
         {
             strategist.HavePiece += (sender, args) => SendHaveMessages(args.Value);
+        }
+
+        public override void Start()
+        {
+            base.Start();
+            if(BlockStrategist.Complete())
+            {
+                OnDownloadComplete();
+                OnFlushedToDisk();
+                Stop(true);
+                return;
+            }
+            
+            PeerListener.Register(Metadata.InfoHash, peer => SendHandshake(peer, DefaultHandshake));
+        }
+
+        public override void Stop(bool closeStreams)
+        {
+            base.Stop(closeStreams);
+            PeerListener.Deregister(Metadata.InfoHash);
         }
 
         protected override void HandleRequest(RequestMessage request, PeerState peer)
@@ -29,13 +56,13 @@ namespace Torrent.Client
             var blockInfo = new BlockInfo(piece.Index, piece.Offset, piece.Data.Length);
             if(BlockStrategist.Received(blockInfo))
             {
-                var block = new Block(piece.Data, piece.Index, piece.Offset, piece.Data.Length);
-                BlockManager.AddBlock(block, BlockWritten, block);
+                WriteBlock(piece);
             }
             peer.PendingBlocks--;
             SendBlockRequests(peer);
         }
 
+        
         protected override void HandleUnchoke(UnchokeMessage unchoke, PeerState peer)
         {
             base.HandleUnchoke(unchoke, peer);
@@ -91,11 +118,29 @@ namespace Torrent.Client
             }
         }
 
+        private void WriteBlock(PieceMessage piece)
+        {
+            try
+            {
+                var block = new Block(piece.Data, piece.Index, piece.Offset, piece.Data.Length);
+                BlockManager.AddBlock(block, BlockWritten, block);
+                Interlocked.Add(ref pendingWrites, piece.Data.Length);
+            }
+            catch(Exception e)
+            {
+                OnRaisedException(e);
+            }
+        }
+
         private void BlockWritten(bool success, object state)
         {
             var block = (Block)state;
-            if(success) Monitor.Written(block.Info.Length);
-            if (Monitor.BytesWritten >= Metadata.TotalLength)
+            if(success)
+            {
+                Monitor.Written(block.Info.Length);
+                Interlocked.Add(ref pendingWrites, -block.Info.Length);
+            }
+            if (BlockStrategist.Complete() && pendingWrites==0)
                 AllWrittenToDisk();
         }
 

@@ -36,16 +36,14 @@ namespace Torrent.Client
         {
             if (!Stopping) return;
             Stopping = false;
-            PeerListener.Register(Metadata.InfoHash, peer => SendHandshake(peer, DefaultHandshake));
         }
 
-        public virtual void Stop(bool force)
+        public virtual void Stop(bool closeStreams)
         {
             if (Stopping) return;
             Stopping = true;
             Peers.Clear();
-            PeerListener.Deregister(Metadata.InfoHash);
-            if(force)
+            if(closeStreams)
                 BlockManager.Dispose();
         }
 

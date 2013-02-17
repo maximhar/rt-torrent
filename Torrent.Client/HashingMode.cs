@@ -1,72 +1,111 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 using Torrent.Client.Messages;
 
 namespace Torrent.Client
 {
-    class HashingMode:TorrentMode
+    public class HashingMode:TorrentMode
     {
+        private readonly SHA1 hasher = new SHA1Cng();
+        private int remainingPieces;
+
         public HashingMode(BlockManager manager, BlockStrategist strategist, TorrentData metadata, TransferMonitor monitor) :
                                 base(manager, strategist, metadata, monitor)
+        {}
+
+        public override void Start()
         {
-            int lastPieceLength = (int)(Metadata.TotalLength - (Metadata.PieceLength * (Metadata.PieceCount - 1)));
-            for(int i=0;i<Metadata.PieceCount-1;i++)
+            base.Start();
+            Task.Factory.StartNew(StartTask);
+        }
+
+        private void StartTask()
+        {
+            remainingPieces = Metadata.PieceCount;
+            int lastPieceLength = (int) (Metadata.TotalLength - (Metadata.PieceLength*(Metadata.PieceCount - 1)));
+
+            for(int i = 0; i < Metadata.PieceCount - 1; i++)
             {
+                if(Stopping) return;
                 try
                 {
-                    BlockManager.GetBlock(i,0,Metadata.PieceLength,PieceRead,i);
+                    BlockManager.GetBlock(i, 0, Metadata.PieceLength, PieceRead, i);
                 }
                 catch
                 {
-                    MarkUnavailable(i);
+                    Trace.Write("Block " + i + " unavailable (catch)");
                 }
             }
             try
             {
                 BlockManager.GetBlock(Metadata.PieceCount - 1, 0, lastPieceLength, PieceRead, Metadata.PieceCount - 1);
             }
-            catch(Exception)
+            catch
             {
-                MarkUnavailable(Metadata.PieceCount-1);
+                Trace.Write("Block " + (Metadata.PieceCount-1) + " unavailable (catch)");
             }
-            
-        }
-
-        private void MarkUnavailable(int piece)
-        {
-            throw new NotImplementedException();
         }
 
         private void PieceRead(bool success, Block block, object state)
         {
+            if (Stopping) return;
+            Interlocked.Decrement(ref remainingPieces);
             int piece = (int)state;
-            if(!success)
+            if (success)
             {
-                MarkUnavailable(piece);
+                if(HashCheck(block))
+                {
+                    MarkAvailable(piece);
+                }
+                else
+                {
+                    Trace.Write("Block " + piece + " unavailable (hash)");
+                }
             }
             else
             {
-                HashCheck(block);
+                Trace.Write("Block "+piece+" unavailable (!success)");
+            }
+
+            if(remainingPieces == 0)
+            {
+                Stop(true);
+                OnHashingComplete();
             }
         }
 
-        private void HashCheck(Block block)
+        private bool HashCheck(Block block)
         {
-            throw new NotImplementedException();
+            var hash = hasher.ComputeHash(block.Data);
+            return hash.SequenceEqual(Metadata.Checksums[block.Info.Index]);
         }
 
         private void MarkAvailable(int piece)
         {
-            throw new NotImplementedException();
+            int blocksPerPiece = Metadata.PieceLength/Global.Instance.BlockSize;
+            int blockSize = Global.Instance.BlockSize;
+            for(int i=0;i<blocksPerPiece;i++)
+            {
+                BlockStrategist.Received(new BlockInfo(piece, blockSize*i, blockSize));
+            }
         }
-
 
         protected override void HandleRequest(RequestMessage request, PeerState peer) {}
 
         protected override void HandlePiece(PieceMessage piece, PeerState peer) {}
 
+        public event EventHandler HashingComplete;
 
+        private void OnHashingComplete()
+        {
+            EventHandler handler = HashingComplete;
+            if(handler != null) handler(this, new EventArgs());
+        }
     }
 }

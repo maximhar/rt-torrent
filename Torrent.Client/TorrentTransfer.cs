@@ -17,6 +17,7 @@ namespace Torrent.Client
         private readonly TrackerClient tracker;
         private volatile bool stop;
         private Timer statsReportTimer;
+        private TrackerResponse trackerData;
 
         public TorrentMode Mode { get; private set; }
 
@@ -93,22 +94,32 @@ namespace Torrent.Client
 
         private void StartTransfer()
         {
-            ChangeState(TorrentState.WaitingForTracker);
-            TrackerResponse info = tracker.AnnounceStart(Data.InfoHash, Global.Instance.PeerId,
-                                                         Global.Instance.ListeningPort,
-                                                         0, 0, Data.Files.Sum(f => f.Length));
-            var endpoints = info.Endpoints;
+            
+            ChangeState(TorrentState.Hashing);
+            var hashingMode = new HashingMode(new BlockManager(Data, Data.Name),
+                                              new BlockStrategist(Data), Data, new TransferMonitor(Data.InfoHash));
+            hashingMode.RaisedException += (s, e) => OnRaisedException(e.Value);
+            hashingMode.HashingComplete += (sender, args) => HashingComplete();
+            Mode = hashingMode;
+            statsReportTimer.Change(0, 250);
+            Mode.Start();
+        }
 
-            var mode = new DownloadMode(new BlockManager(Data, Data.Name),
-                new BlockStrategist(Data), Data, new TransferMonitor(Data.InfoHash));            
+        private void HashingComplete()
+        {
+
+            var mode = new DownloadMode((HashingMode)Mode);
             mode.RaisedException += (s, e) => OnRaisedException(e.Value);
             mode.FlushedToDisk += (s, e) => Stop();
             mode.DownloadComplete += (s, e) => ChangeState(TorrentState.WaitingForDisk);
             mode.Start();
-            mode.AddEndpoints(endpoints);
-            ChangeState(TorrentState.Downloading);
+
             Mode = mode;
-            statsReportTimer.Change(0, 250);
+            ChangeState(TorrentState.Downloading);
+            trackerData = tracker.AnnounceStart(Data.InfoHash, Global.Instance.PeerId,
+                                                Global.Instance.ListeningPort,
+                                                0, 0, Data.Files.Sum(f => f.Length));
+            mode.AddEndpoints(trackerData.Endpoints);
         }
 
         private void StartActions()
@@ -170,7 +181,7 @@ namespace Torrent.Client
         {
             if (Mode == null) return;
 
-            var downloaded = Mode.Monitor.BytesWritten;
+            var downloaded = Mode.BlockStrategist.Available*Global.Instance.BlockSize;
             var totalPeers = Mode.Peers.Count;
             var chokedBy = Mode.Peers.Count(p => p.Value.AmChoked);
 

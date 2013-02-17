@@ -295,7 +295,7 @@ namespace Torrent.Client
 
         private List<byte[]> GetRawChecksums(BencodedDictionary info, BencodedInteger pieceLength)
         {
-            byte[] rawChecksums = Encoding.ASCII.GetBytes(info["pieces"] as BencodedString);
+            byte[] rawChecksums = (info["pieces"] as BencodedString).Select(c=>(byte)c).ToArray();
             if (pieceLength == null || rawChecksums == null || rawChecksums.Length%ChecksumSize != 0)
                 throw new TorrentException(
                     string.Format(

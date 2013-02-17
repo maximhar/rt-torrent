@@ -22,11 +22,15 @@ namespace Torrent.Client
         private Global()
         {
             ListeningPort = LISTEN_PORT;
+            BlockSize = 1024*16;
             int seed = DateTime.Now.Millisecond + DateTime.Now.Minute + DateTime.Now.Day + ID_HEAD.Length;
             random = new Random(seed);
             PeerId = new string(GeneratePeerId().Select(b => (char) b).ToArray());
+
             BindSocket();
         }
+
+        public readonly int BlockSize;
 
         /// <summary>
         /// The current peer ID.

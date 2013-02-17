@@ -15,7 +15,8 @@ namespace Torrent.Client
 
     public class BlockManager : IDisposable
     {
-        public readonly int BlockSize = 1024*16;
+        public readonly int BlockSize = Global.Instance.BlockSize;
+        public string MainDirectory { get; private set; }
 
         private readonly int pieceSize;
         private readonly ConcurrentDictionary<string, FileStream> openStreams;
@@ -23,7 +24,7 @@ namespace Torrent.Client
         private readonly Cache<BlockReadState> readCache;
         private readonly TorrentData torrentData;
         private readonly Cache<BlockWriteState> writeCache;
-        private readonly string mainDir;
+        
         private bool disposed;
         private int queuedWrites = 0;
 
@@ -36,7 +37,7 @@ namespace Torrent.Client
             openStreams = new ConcurrentDictionary<string, FileStream>();
             torrentData = data;
             pieceSize = data.PieceLength;
-            this.mainDir = mainDir;
+            MainDirectory = mainDir;
         }
 
         #region IDisposable Members
@@ -53,7 +54,7 @@ namespace Torrent.Client
         {
             try
             {
-                IEnumerable<BlockPartInfo> parts = GetParts(block.Info.Index, block.Info.Offset, block.Info.Length);
+                IEnumerable<BlockPartInfo> parts = GetParts(block.Info.Index, block.Info.Offset, block.Info.Length, true);
                 var totalLen = parts.Sum(p => p.Length);
                 BlockWriteState data = writeCache.Get().Init(callback, (int)totalLen, block, state);
                 Trace.Assert(parts.Any());
@@ -81,13 +82,13 @@ namespace Torrent.Client
         {
             try
             {
-                IEnumerable<BlockPartInfo> parts = GetParts(pieceIndex, offset, length);
+                IEnumerable<BlockPartInfo> parts = GetParts(pieceIndex, offset, length, false);
                 var buffer = new byte[length];
                 var block = new Block(buffer, pieceIndex, offset, length);
                 BlockReadState data = readCache.Get().Init(block, callback, length, state);
                 foreach(BlockPartInfo part in parts)
                 {
-                    DiskIO.QueueRead(part.FileStream, buffer, 0, part.FileOffset, part.Length, EndGetBlock, data);
+                    DiskIO.QueueRead(part.FileStream, buffer, part.DataOffset, part.FileOffset, part.Length, EndGetBlock, data);
                 }
             }
             catch(Exception e)
@@ -133,7 +134,7 @@ namespace Torrent.Client
             readCache.Put(data);
         }
 
-        private IEnumerable<BlockPartInfo> GetParts(int pieceIndex, int offset, int length)
+        private IEnumerable<BlockPartInfo> GetParts(int pieceIndex, int offset, int length, bool write)
         {
             var pieces = new List<BlockPartInfo>();
             long requestedOffset = Block.GetAbsoluteAddress(pieceIndex, offset, pieceSize);
@@ -146,7 +147,7 @@ namespace Torrent.Client
                 {
                     long relativePosition = requestedOffset - currentOffset;
                     long partLength = Math.Min(file.Length - relativePosition, remaining);
-                    FileStream stream = GetStream(file);
+                    FileStream stream = GetStream(file, write);
                     if(stream == null)
                         throw new IOException("Stream is null.");
                     pieces.Add(new BlockPartInfo
@@ -167,14 +168,14 @@ namespace Torrent.Client
 
         }
 
-        private FileStream GetStream(FileEntry file)
+        private FileStream GetStream(FileEntry file, bool write)
         {
             const int tryCount = 5;
             int tryTime = 0;
             
             while (true)
             {
-                string finalPath = Path.Combine(mainDir, file.Name);
+                string finalPath = Path.Combine(MainDirectory, file.Name);
                 FileStream stream;
                 if(openStreams.TryGetValue(finalPath, out stream)) return stream;
                 lock(openStreams)
@@ -183,7 +184,8 @@ namespace Torrent.Client
                     var dir = Path.GetDirectoryName(finalPath);
                     if(dir != string.Empty && !Directory.Exists(dir))
                         Directory.CreateDirectory(dir);
-                    stream = File.Open(finalPath, FileMode.OpenOrCreate, FileAccess.ReadWrite);
+                    stream = File.Open(finalPath, write?FileMode.OpenOrCreate : FileMode.Open,
+                        write?FileAccess.ReadWrite : FileAccess.Read);
                     openStreams.TryAdd(finalPath, stream);
                     return stream;
                 }
