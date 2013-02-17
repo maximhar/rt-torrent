@@ -2,19 +2,12 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.IO;
-using System.Linq;
-using System.Security.Cryptography;
-using System.Text;
-using System.Threading.Tasks;
+using System.Diagnostics;
 using System.Windows;
 using Torrent.Client;
 using System.Windows.Threading;
-using System.Net;
 using Torrent.Client.Events;
 using Torrent.Client.Extensions;
-using Torrent.Client.Messages;
-using System.Globalization;
 
 namespace Torrent.GuiTest
 {
@@ -45,6 +38,9 @@ namespace Torrent.GuiTest
         private DateTime past;
         private DateTime begin = DateTime.Now;
         private string totalTime;
+
+        public bool AutoQuit { get; set; }
+        public bool AutoShutdown { get; set; }
 
         /// <summary>
         /// Gets or sets an ObservableCollection of FileEntries representing the files in the the torrent.
@@ -235,6 +231,8 @@ namespace Torrent.GuiTest
         void torrent_StateChanged(object sender, EventArgs<TorrentState> e)
         {
             dispatcher.Invoke(new Action(() => AddMessage("State: " + e.Value)));
+            if (AutoQuit) Quit();
+            if (AutoShutdown) Shutdown();
         }
 
         private void torrent_ReportStatsChanged(object sender, StatsEventArgs e)
@@ -304,6 +302,18 @@ namespace Torrent.GuiTest
         void torrent_RaisedException(object sender, EventArgs<Exception> e)
         {
             dispatcher.Invoke(new Action(() => HandleException(e.Value)));
+        }
+
+        private void Shutdown()
+        {
+            if (torrent.State == TorrentState.Finished) // checks if all torrents are downloaded
+                Process.Start("shutdown", "/s /t 0");
+        }
+
+        private void Quit()
+        {
+            if (torrent.State == TorrentState.Finished) // checks if all torrents are downloaded
+                Environment.Exit(0);
         }
 
         private void OnPropertyChanged(string name)

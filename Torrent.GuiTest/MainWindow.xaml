@@ -3,13 +3,13 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:Torrent.GuiTest"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="d" x:Class="Torrent.GuiTest.MainWindow"
-        Title="Torrent Data" Width="850" AllowDrop="True" Drop="Window_Drop" Height="590">
+        Title="Torrent Data" Width="850" AllowDrop="True" Drop="Window_Drop" Height="616">
     <StackPanel>
         <Grid Margin="3">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
-            <Menu IsMainMenu="True">
+            <Menu IsMainMenu="True" Background="White">
                 <MenuItem Header="_File">
                     <MenuItem Header="_Open torrent" Click="OpenTorrent_Click" />
                     <MenuItem Header="_Create torrent" Click="CreateTorrent_Click" />
@@ -17,8 +17,8 @@
                 <MenuItem Header="_Options" >
                     <MenuItem Header="_Preferences"/>
                     <MenuItem Header="_Auto Shutdown">
-                        <MenuItem Header="S1" />
-                        <MenuItem Header="s2"/>
+                        <MenuItem Name="AutoQuitCheck" Header="_Quit when Downloads complete" Click="Quit_Click" IsCheckable="True"/>
+                        <MenuItem Name="AutoShutdownCheck" Header="_Shutdown when Downloads complete" Click="Shutdown_Click" IsCheckable="True"/>
                     </MenuItem>
                 </MenuItem>
                 <MenuItem Header="_Help" >
@@ -29,7 +29,7 @@
                 </MenuItem>
             </Menu>
         </Grid>
-        
+        <Separator/>
         <Grid Margin="3">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
