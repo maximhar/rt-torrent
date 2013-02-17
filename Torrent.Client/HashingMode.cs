@@ -70,14 +70,6 @@ namespace Torrent.Client
                 {
                     MarkAvailable(piece);
                 }
-                else
-                {
-                    Trace.Write("Block " + piece + " unavailable (hash)");
-                }
-            }
-            else
-            {
-                Trace.Write("Block "+piece+" unavailable (!success)");
             }
 
             if(remainingPieces == 0)
