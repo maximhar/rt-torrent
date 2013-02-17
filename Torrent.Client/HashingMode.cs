@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
@@ -27,6 +28,12 @@ namespace Torrent.Client
 
         private void StartTask()
         {
+            if(!Directory.Exists(Metadata.Name))
+            {
+                Stop(true);
+                OnHashingComplete();
+                return;
+            }
             remainingPieces = Metadata.PieceCount;
             int lastPieceLength = (int) (Metadata.TotalLength - (Metadata.PieceLength*(Metadata.PieceCount - 1)));
 
