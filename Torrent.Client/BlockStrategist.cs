@@ -13,32 +13,21 @@ namespace Torrent.Client
 {
     public class BlockStrategist
     {
-        public BitArray Bitfield { get; private set; }
-        private object syncRoot = new object();
         private readonly int blockSize;
         private readonly int pieceSize;
-        private readonly int blocksPerPiece;
         private readonly long totalSize;
         private readonly int blockCount;
         private readonly BlockAddressCollection<int> unavailable;
         private readonly int[] pieces;
-        public int Available { get; private set; }
 
-        public BlockStrategist(TorrentData data, BitArray bitfield):this(data)
+        public BitArray Bitfield { get; private set; }
+        public int Available { get; private set; }
+        public bool Complete
         {
-            bitfield.CopyTo(Bitfield, 0, 0, Bitfield.Count);
-            int block = 0;
-            for(int i = 0; i < Bitfield.Length; i++)
+            get
             {
-                for(int j = 0;j<blocksPerPiece;j++)
-                {
-                    if(Bitfield[i])
-                    {
-                        unavailable.Remove(block);
-                        Available++;
-                    }
-                    block++;
-                }
+                lock (unavailable)
+                    return !unavailable.Any();
             }
         }
 
@@ -46,7 +35,6 @@ namespace Torrent.Client
         {
             this.blockSize = Global.Instance.BlockSize;
             pieceSize = data.PieceLength;
-            blocksPerPiece = pieceSize/this.blockSize;
             totalSize = data.Files.Sum(f => f.Length);
             blockCount = (int)Math.Ceiling((float)totalSize/blockSize);
             pieces = new int[data.PieceCount];
@@ -88,17 +76,6 @@ namespace Torrent.Client
 
             Debug.WriteLine("Strategist requested block " + block.Index);
             return block;
-        }
-
-        public bool Complete()
-        {
-            lock (unavailable)
-                return !unavailable.Any();
-        }
-
-        public bool EndGame()
-        {
-            return unavailable.Count < (blockCount/100);
         }
 
         public bool Received(BlockInfo block)
@@ -145,6 +122,4 @@ namespace Torrent.Client
             return item;
         }
     }
-
-    
 }

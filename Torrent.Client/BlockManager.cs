@@ -58,12 +58,10 @@ namespace Torrent.Client
                 var totalLen = parts.Sum(p => p.Length);
                 BlockWriteState data = writeCache.Get().Init(callback, (int)totalLen, block, state);
                 Trace.Assert(parts.Any());
-                Interlocked.Increment(ref blocksToWrite);
                 foreach(BlockPartInfo part in parts)
                 {
                     DiskIO.QueueWrite(part.FileStream, block.Data, part.FileOffset, part.DataOffset, part.Length,
                                       EndAddBlock, data);
-                    Interlocked.Increment(ref partsToWrite);
                 }
             }
             catch(Exception e)
@@ -72,11 +70,6 @@ namespace Torrent.Client
                 callback(false, state);
             }
         }
-
-        private int writtenBlocks;
-        private int blocksToWrite;
-        private int writtenParts;
-        private int partsToWrite;
 
         public void GetBlock(int pieceIndex, int offset, int length, BlockReadDelegate callback, object state)
         {
@@ -106,12 +99,10 @@ namespace Torrent.Client
             lock(state)
             if(success)
             {
-                Interlocked.Increment(ref writtenParts);
                 data.Remaining -= written;
                 if(data.Remaining <= 0)
                 {
                     data.Callback(true, data.State);
-                    Interlocked.Increment(ref writtenBlocks);
                 }
             }
             else data.Callback(false, data.State);

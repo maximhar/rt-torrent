@@ -26,7 +26,7 @@ namespace Torrent.Client
         public override void Start()
         {
             base.Start();
-            if(BlockStrategist.Complete())
+            if(BlockStrategist.Complete)
             {
                 OnDownloadComplete();
                 OnFlushedToDisk();
@@ -101,7 +101,7 @@ namespace Torrent.Client
                     SendMessage(peer, new RequestMessage(block.Index, block.Offset, block.Length));
                     peer.PendingBlocks++;
                 }
-                else if (BlockStrategist.Complete())
+                else if (BlockStrategist.Complete)
                 {
                     OnDownloadComplete();
                     return;
@@ -140,7 +140,7 @@ namespace Torrent.Client
                 Monitor.Written(block.Info.Length);
                 Interlocked.Add(ref pendingWrites, -block.Info.Length);
             }
-            if (BlockStrategist.Complete() && pendingWrites==0)
+            if (BlockStrategist.Complete && pendingWrites==0)
                 AllWrittenToDisk();
         }
 
