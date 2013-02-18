@@ -36,6 +36,9 @@ namespace Torrent.Client
         public static void QueueRead(Stream stream, byte[] buffer, int bufferOffset, long streamOffset, long length,
                                      DiskIOReadCallback callback, object state)
         {
+            while (ReadQueue.Count > 10000) 
+                Thread.Sleep(10);
+
             DiskIOReadState readData = ReadCache.Get().Init(stream, buffer, bufferOffset, streamOffset, length, callback,
                                                             state);
             ReadQueue.Enqueue(readData);
@@ -45,6 +48,9 @@ namespace Torrent.Client
         public static void QueueWrite(Stream stream, byte[] data, long fileOffset, int dataOffset, long length, DiskIOWriteCallback callback,
                                       object state)
         {
+            while(WriteQueue.Count > 10000) 
+                Thread.Sleep(10);
+
             DiskIOWriteState writeData = WriteCache.Get().Init(stream, data, fileOffset, dataOffset, length, callback, state);
             WriteQueue.Enqueue(writeData);
             if(WriteQueue.Count>1000) IOHandle.Set();
