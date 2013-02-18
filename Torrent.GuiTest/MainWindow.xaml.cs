@@ -1,4 +1,5 @@
-﻿using Microsoft.Win32;
+﻿using System;
+using Microsoft.Win32;
 using System.Linq;
 using System.Windows;
 using Torrent.Client;
@@ -64,7 +65,14 @@ namespace Torrent.GuiTest
 
         private void About_Click(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show("RTorrent\nVersion: "+Global.Instance.Version+"\nCreated by: Maxim Harizanov & Dimitar Pankov\n2013", "About");
+            MessageBox.Show(
+                "RTorrent\nVersion: " + Global.Instance.Version +
+                "\nCreated by: Maxim Harizanov & Dimitar Pankov\n2013\n\t THE GAME", "About");
+        }
+
+        private void Exit_Click(object sender, RoutedEventArgs e)
+        {
+            Environment.Exit(0);
         }
     }
 }

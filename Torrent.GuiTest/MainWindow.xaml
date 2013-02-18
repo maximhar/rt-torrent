@@ -14,6 +14,8 @@
                 <MenuItem Header="_File">
                     <MenuItem Header="_Open torrent" Click="OpenTorrent_Click" />
                     <MenuItem Header="_Create torrent" Click="CreateTorrent_Click" />
+                    <Separator/>
+                    <MenuItem Header="E_xit" Click="Exit_Click" />
                 </MenuItem>
                 <MenuItem Header="_Options" >
                     <MenuItem Header="_Preferences"/>

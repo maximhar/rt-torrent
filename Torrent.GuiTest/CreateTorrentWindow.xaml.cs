@@ -45,7 +45,7 @@ namespace Torrent.GuiTest
 
         private void Close_Click(object sender, RoutedEventArgs e)
         {
-            throw new NotImplementedException();
+            this.Close();
         }
     }
 }
