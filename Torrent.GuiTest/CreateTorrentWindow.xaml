@@ -1,0 +1,49 @@
+﻿<Window x:Class="Torrent.GuiTest.CreateTorrentWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Create New Torrent" Height="410" Width="480" Topmost="True">
+    <Grid Background="LightGray">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="3*"/>
+            <RowDefinition Height="4*"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <GroupBox Header="Select Source" Grid.Row="0">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="2*"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <ListBox Grid.Row="0" ItemsSource="{Binding FilesToAdd}" FontFamily="Courier New" BorderThickness="1px" Margin="5,5,5,0"/>
+                <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top" Height="25px" Margin="10,10,5,0">
+                    <Button Width="100px" Margin="10,0,0,0" Click="AddFiles_Click">Add Files</Button>
+                    <Button Width="100px" Margin="10,0,0,0" Click="AddDirectory_Click">Add Directory</Button>
+                    <Button Width="100px" Margin="10,0,0,0" Click="Remove_Click">Remove</Button>
+                </StackPanel>
+            </Grid>
+        </GroupBox>
+        <GroupBox Header="Torrent Properties" Grid.Row="1">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="3*"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="2*"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <Label Grid.Column="0" Grid.Row="0" VerticalAlignment="Center">Trackers:</Label>
+                <TextBox Grid.Column="1" Grid.Row="0" Margin="0,5,5,5"/>
+                <Label Grid.Column="0" Grid.Row="1" VerticalAlignment="Center">Comment:</Label>
+                <TextBox Grid.Column="1" Grid.Row="1" Margin="0,5,5,5"/>
+                <Label Grid.Column="0" Grid.Row="2" VerticalAlignment="Center">Piece size:</Label>
+                <ComboBox Grid.Column="1" Grid.Row="2" Height="25px" Width="150px" HorizontalAlignment="Right" Margin="0,5,5,0"></ComboBox>
+            </Grid>
+        </GroupBox>
+        <Grid Grid.Row="2">
+            <Button Width="150px" Height="25px" HorizontalAlignment="Left" Margin="10,0,10,0" Click="CreateAndSaveAs_Click">Create and save as...</Button>
+            <Button Width="150px" Height="25px" HorizontalAlignment="Right" Margin="0,0,10,0" Click="Close_Click">Close</Button>
+        </Grid>
+    </Grid>
+</Window>

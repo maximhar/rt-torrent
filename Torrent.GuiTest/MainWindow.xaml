@@ -3,13 +3,13 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:Torrent.GuiTest"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="d" x:Class="Torrent.GuiTest.MainWindow"
-        Title="RTorrent" Width="850" AllowDrop="True" Drop="Window_Drop" Height="616">
-    <StackPanel>
+        Title="RTorrent" Width="850" AllowDrop="True" Drop="Window_Drop" Height="620">
+    <StackPanel Background="LightGray">
         <Grid Margin="3">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
-            <Menu IsMainMenu="True" Background="White">
+            <Menu IsMainMenu="True" Background="LightGray">
                 <MenuItem Header="_File">
                     <MenuItem Header="_Open torrent" Click="OpenTorrent_Click" />
                     <MenuItem Header="_Create torrent" Click="CreateTorrent_Click" />
