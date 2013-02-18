@@ -24,7 +24,7 @@ namespace Torrent.Client
         private readonly Cache<BlockReadState> readCache;
         private readonly TorrentData torrentData;
         private readonly Cache<BlockWriteState> writeCache;
-        
+        private readonly HashSet<string> NonexistingFiles = new HashSet<string>(); 
         private bool disposed;
         private int queuedWrites = 0;
 
@@ -66,7 +66,7 @@ namespace Torrent.Client
             }
             catch(Exception e)
             {
-                OnRaisedException(new TorrentException("Adding block failed", e));
+                //OnRaisedException(new TorrentException("Adding block failed", e));
                 callback(false, state);
             }
         }
@@ -86,10 +86,9 @@ namespace Torrent.Client
             }
             catch(Exception e)
             {
-                OnRaisedException(new TorrentException("Getting block failed", e));
+                //OnRaisedException(new TorrentException("Getting block failed", e));
                 callback(false, null, state);
             }
-            
         }
 
         private void EndAddBlock(bool success, int written, object state)
@@ -133,6 +132,7 @@ namespace Torrent.Client
             long remaining = length;
             foreach(FileEntry file in torrentData.Files)
             {
+
                 if(remaining <= 0) break;
                 if(currentOffset + file.Length >= requestedOffset)
                 {
@@ -167,6 +167,7 @@ namespace Torrent.Client
             while (true)
             {
                 string finalPath = Path.Combine(MainDirectory, file.Name);
+                if (!write && !FileExists(finalPath)) return null;
                 FileStream stream;
                 if(openStreams.TryGetValue(finalPath, out stream)) return stream;
                 lock(openStreams)
@@ -187,6 +188,17 @@ namespace Torrent.Client
                         throw;
                 }
             }
+        }
+
+        private bool FileExists(string finalPath)
+        {
+            if (NonexistingFiles.Contains(finalPath)) return false;
+            if(File.Exists(finalPath))
+            {
+                return true;
+            }
+            NonexistingFiles.Add(finalPath);
+            return false;
         }
 
         private void Dispose(bool disposing)

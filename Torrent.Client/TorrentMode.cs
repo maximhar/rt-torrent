@@ -8,6 +8,7 @@ using System.Net.Sockets;
 using Torrent.Client.Events;
 using Torrent.Client.Messages;
 using Torrent.Client.Extensions;
+using System.Linq;
 namespace Torrent.Client
 {
     public abstract class TorrentMode
@@ -51,7 +52,8 @@ namespace Torrent.Client
         {
             foreach(var ep in endpoints)
             {
-                ConnectPeer(ep);
+                if(!Peers.Values.Any(p=>p.EndPoint.Equals(ep)))
+                    ConnectPeer(ep);
             }
         }
 

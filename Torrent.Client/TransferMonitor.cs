@@ -31,9 +31,12 @@ namespace Torrent.Client
             get { return bytesRead; }
         }
 
-        public TransferMonitor(InfoHash hash)
+        public long TotalBytes { get; private set; }
+
+        public TransferMonitor(InfoHash hash, long totalBytes)
         {
             TorrentHash = hash;
+            TotalBytes = totalBytes;
         }
 
         public void Received(int count)
