@@ -39,10 +39,17 @@
                   Description="A simple, yet elegant BitTorrent client."
                   Target="[APPLICATIONROOTDIRECTORY]Torrent.GuiTest.exe"
                   WorkingDirectory="APPLICATIONROOTDIRECTORY"/>
+        <Shortcut Id="UninstallProduct"             
+                  Name="Uninstall RTorrent"
+                  Description="Uninstalls RTorrent"
+                  Target="[System64Folder]msiexec.exe"
+                  Arguments="/x [ProductCode]"/>
         <RemoveFolder Id="ApplicationProgramsFolder" On="uninstall"/>
         <RegistryValue Root="HKCU" Key="Software\Microsoft\RTorrent" Name="installed" Type="integer" Value="1" KeyPath="yes"/>
     </Component>
-</DirectoryRef>
-  
+  </DirectoryRef>
+
+    
+
 	</Product>
 </Wix>
