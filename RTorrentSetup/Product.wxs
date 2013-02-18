@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+	<Product Id="*" 
+           Name="RTorrent" 
+           Language="1033" 
+           Version="1.1.1.1" 
+           Manufacturer="RTorrent Devs" 
+           UpgradeCode="117f918f-6b89-4be5-bfb6-a827b547ea89">
+		<Package InstallerVersion="300" Compressed="yes" InstallScope="perMachine" />
+    <Media Id="1" Cabinet="media1.cab" EmbedCab="yes" />
+		<MajorUpgrade DowngradeErrorMessage="A newer version of RTorrent is already installed." />
+
+    
+    <Directory Id="TARGETDIR" Name="SourceDir">
+			<Directory Id="ProgramFilesFolder">
+				<Directory Id="INSTALLFOLDER" Name="RTorrent" />
+			</Directory>
+		</Directory>
+    
+    <DirectoryRef Id="INSTALLFOLDER">
+      <Component Id="torrent.guitest.exe" Guid="54240B87-9668-4FF3-B5AD-5C590A087462">
+        <File Id="torrent.guitest.exe" Source="C:\Users\Dimitar\Documents\GitHub\rt-torrent\Torrent.GuiTest\bin\Release\Torrent.GuiTest.exe" KeyPath="yes" Checksum="yes"/>
+      </Component>
+      <Component Id="torrent.client.dll" Guid="1585AC6A-A852-4772-B6E8-543C8E04E59C">
+        <File Id="torrent.client.dll" Source="C:\Users\Dimitar\Documents\GitHub\rt-torrent\Torrent.GuiTest\bin\Release\Torrent.Client.dll" KeyPath="yes"/>
+      </Component>
+    </DirectoryRef>
+    
+		<Feature Id="RTorrent" Title="RTorrent" Level="1">
+			<ComponentRef Id="torrent.guitest.exe" />
+      <ComponentRef Id="torrent.client.dll" />
+		</Feature>
+	</Product>
+</Wix>

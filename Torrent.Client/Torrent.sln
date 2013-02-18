@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Torrent.ConsoleTest", "..\T
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Torrent.GuiTest", "..\Torrent.GuiTest\Torrent.GuiTest.csproj", "{8F7DBB17-4100-4756-977C-CD34AA2D096E}"
 EndProject
+Project("{930C7802-8A8C-48F9-8165-68863BCCD9DD}") = "RTorrentSetup", "..\RTorrentSetup\RTorrentSetup.wixproj", "{7E4280D0-2D73-4CE5-9A8C-5DEB1710C106}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -47,6 +49,16 @@ Global
 		{8F7DBB17-4100-4756-977C-CD34AA2D096E}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
 		{8F7DBB17-4100-4756-977C-CD34AA2D096E}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{8F7DBB17-4100-4756-977C-CD34AA2D096E}.Release|x86.ActiveCfg = Release|Any CPU
+		{7E4280D0-2D73-4CE5-9A8C-5DEB1710C106}.Debug|Any CPU.ActiveCfg = Debug|x86
+		{7E4280D0-2D73-4CE5-9A8C-5DEB1710C106}.Debug|Mixed Platforms.ActiveCfg = Debug|x86
+		{7E4280D0-2D73-4CE5-9A8C-5DEB1710C106}.Debug|Mixed Platforms.Build.0 = Debug|x86
+		{7E4280D0-2D73-4CE5-9A8C-5DEB1710C106}.Debug|x86.ActiveCfg = Debug|x86
+		{7E4280D0-2D73-4CE5-9A8C-5DEB1710C106}.Debug|x86.Build.0 = Debug|x86
+		{7E4280D0-2D73-4CE5-9A8C-5DEB1710C106}.Release|Any CPU.ActiveCfg = Release|x86
+		{7E4280D0-2D73-4CE5-9A8C-5DEB1710C106}.Release|Mixed Platforms.ActiveCfg = Release|x86
+		{7E4280D0-2D73-4CE5-9A8C-5DEB1710C106}.Release|Mixed Platforms.Build.0 = Release|x86
+		{7E4280D0-2D73-4CE5-9A8C-5DEB1710C106}.Release|x86.ActiveCfg = Release|x86
+		{7E4280D0-2D73-4CE5-9A8C-5DEB1710C106}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
