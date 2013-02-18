@@ -48,6 +48,7 @@ namespace Torrent.GuiTest
         private void CreateTorrent_Click(object sender, RoutedEventArgs e)
         {
             var createTorrentWindow = new CreateTorrentWindow();
+            createTorrentWindow.Owner = this;
             createTorrentWindow.Show();
         }
 
