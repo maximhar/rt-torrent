@@ -306,13 +306,13 @@ namespace Torrent.GuiTest
 
         private void Shutdown()
         {
-            if (torrent.State == TorrentState.Finished) // checks if all torrents are downloaded
+            if (torrent.State == TorrentState.NotRunning) // checks if all torrents are downloaded
                 Process.Start("shutdown", "/s /t 0");
         }
 
         private void Quit()
         {
-            if (torrent.State == TorrentState.Finished) // checks if all torrents are downloaded
+            if (torrent.State == TorrentState.NotRunning) // checks if all torrents are downloaded
                 Environment.Exit(0);
         }
 
