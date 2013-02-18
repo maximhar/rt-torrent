@@ -29,6 +29,20 @@
 		<Feature Id="RTorrent" Title="RTorrent" Level="1">
 			<ComponentRef Id="torrent.guitest.exe" />
       <ComponentRef Id="torrent.client.dll" />
+      <ComponentRef Id="ApplicationShortcut" />  
 		</Feature>
+    
+  <DirectoryRef Id="INSTALLFOLDER">
+    <Component Id="ApplicationShortcut" Guid="17D2E73C-AD1C-4FD3-A258-F644E9C431EE">
+        <Shortcut Id="ApplicationStartMenuShortcut" 
+                  Name="RTorrent"
+                  Description="A simple, yet elegant BitTorrent client."
+                  Target="[APPLICATIONROOTDIRECTORY]Torrent.GuiTest.exe"
+                  WorkingDirectory="APPLICATIONROOTDIRECTORY"/>
+        <RemoveFolder Id="ApplicationProgramsFolder" On="uninstall"/>
+        <RegistryValue Root="HKCU" Key="Software\Microsoft\RTorrent" Name="installed" Type="integer" Value="1" KeyPath="yes"/>
+    </Component>
+</DirectoryRef>
+  
 	</Product>
 </Wix>
