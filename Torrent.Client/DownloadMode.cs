@@ -78,6 +78,13 @@ namespace Torrent.Client
             }
         }
 
+        protected override void HandleInterested(InterestedMessage interested, PeerState peer)
+        {
+            base.HandleInterested(interested, peer);
+            peer.IsChoked = false;
+            SendMessage(peer, new UnchokeMessage());
+        }
+
         protected override bool AddPeer(PeerState peer)
         {
             SendBitfield(peer);

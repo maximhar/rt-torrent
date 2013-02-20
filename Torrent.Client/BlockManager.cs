@@ -171,7 +171,13 @@ namespace Torrent.Client
                 string finalPath = Path.Combine(MainDirectory, file.Name);
                 if (!write && !FileExists(finalPath)) return null;
                 FileStream stream;
-                if(openStreams.TryGetValue(finalPath, out stream)) return stream;
+                if(openStreams.TryGetValue(finalPath, out stream))
+                {
+                    if (!write) return stream;
+                    if (stream.CanWrite) return stream;
+                    openStreams.TryRemove(finalPath, out stream);
+                }
+                
                 lock(openStreams)
                 try
                 {

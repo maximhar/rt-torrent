@@ -195,7 +195,7 @@ namespace Torrent.Client
         {
             if (Mode == null) return;
 
-            var downloaded = Mode.BlockStrategist.Available*Global.Instance.BlockSize;
+            var downloaded = (long)Mode.BlockStrategist.Available*Global.Instance.BlockSize;
             var totalPeers = Mode.Peers.Count;
             var chokedBy = Mode.Peers.Count(p => p.Value.AmChoked);
 

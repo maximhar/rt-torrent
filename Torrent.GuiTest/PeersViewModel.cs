@@ -247,7 +247,7 @@ namespace Torrent.GuiTest
         {
             speed =
                 Global.Instance.FileSizeFormat(
-                    (long)((double)(downloadedBytes - oldSize)/(DateTime.Now - past).TotalSeconds)) + "/s";
+                    (long)((downloadedBytes - oldSize)/(DateTime.Now - past).TotalSeconds)) + "/s";
             past = DateTime.Now;
             oldSize = downloadedBytes;
             Downloaded = Global.Instance.FileSizeFormat(downloadedBytes);
