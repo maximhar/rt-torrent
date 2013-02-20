@@ -70,7 +70,7 @@ namespace Torrent.Client
                 callback(false, state);
             }
         }
-
+        List<BlockReadState> reads = new List<BlockReadState>(); 
         public void GetBlock(byte[] buffer, int pieceIndex, int offset, int length, BlockReadDelegate callback, object state)
         {
             try
@@ -98,25 +98,24 @@ namespace Torrent.Client
             
             var data = (BlockWriteState)state;
             lock(state)
-            if(success)
-            {
-                data.Remaining -= written;
-                if(data.Remaining <= 0)
+                if (success)
                 {
-                    data.Callback(true, data.State);
+                    if(data.SubstractRemaining(written) <= 0)
+                    {
+                        data.Callback(true, data.State);
+                    }
                 }
-            }
-            else data.Callback(false, data.State);
+                else data.Callback(false, data.State);
             writeCache.Put(data);
         }
 
         private void EndGetBlock(bool success, int read, byte[] pieceData, object state)
         {
             var data = (BlockReadState)state;
+
             if(success)
             {
-                data.Remaining -= read;
-                if(data.Remaining == 0)
+                if(data.SubstractRemaining(read) <= 0)
                 {
                     data.Callback(true, data.Block, data.State);
                 }
@@ -168,32 +167,35 @@ namespace Torrent.Client
             
             while (true)
             {
-                string finalPath = Path.Combine(MainDirectory, file.Name);
-                if (!write && !FileExists(finalPath)) return null;
-                FileStream stream;
-                if(openStreams.TryGetValue(finalPath, out stream))
+                lock (openStreams)
                 {
-                    if (!write) return stream;
-                    if (stream.CanWrite) return stream;
-                    openStreams.TryRemove(finalPath, out stream);
-                }
-                
-                lock(openStreams)
-                try
-                {
-                    var dir = Path.GetDirectoryName(finalPath);
-                    if(dir != string.Empty && !Directory.Exists(dir))
-                        Directory.CreateDirectory(dir);
-                    stream = File.Open(finalPath, write?FileMode.OpenOrCreate : FileMode.Open,
-                        write?FileAccess.ReadWrite : FileAccess.Read);
-                    openStreams.TryAdd(finalPath, stream);
-                    return stream;
-                }
-                catch(Exception)
-                {
-                    tryTime++;
-                    if (tryTime > tryCount)
-                        throw;
+                    string finalPath = Path.Combine(MainDirectory, file.Name);
+                    if(!write && !FileExists(finalPath)) return null;
+
+                    FileStream stream;
+                    if(openStreams.TryGetValue(finalPath, out stream))
+                    {
+                        if(!write) return stream;
+                        if(stream.CanWrite) return stream;
+                        openStreams.TryRemove(finalPath, out stream);
+                    }
+
+                    try
+                    {
+                        var dir = Path.GetDirectoryName(finalPath);
+                        if(dir != string.Empty && !Directory.Exists(dir))
+                            Directory.CreateDirectory(dir);
+                        stream = File.Open(finalPath, write ? FileMode.OpenOrCreate : FileMode.Open,
+                                           write ? FileAccess.ReadWrite : FileAccess.Read);
+                        openStreams.TryAdd(finalPath, stream);
+                        return stream;
+                    }
+                    catch(Exception)
+                    {
+                        tryTime++;
+                        if(tryTime > tryCount)
+                            throw;
+                    }
                 }
             }
         }
@@ -247,10 +249,16 @@ namespace Torrent.Client
 
         public class BlockReadState : ICacheable
         {
+            private int remaining;
             public Block Block { get; private set; }
             public BlockReadDelegate Callback { get; private set; }
             public object State { get; private set; }
-            public int Remaining { get; internal set; }
+
+            public int Remaining
+            {
+                get { return remaining; }
+                set { remaining = value; }
+            }
 
             #region ICacheable Members
 
@@ -269,6 +277,10 @@ namespace Torrent.Client
                 Remaining = remaining;
                 return this;
             }
+            public int SubstractRemaining(int number)
+            {
+                return Interlocked.Add(ref remaining, -number);
+            }
         }
 
         #endregion
@@ -277,9 +289,14 @@ namespace Torrent.Client
 
         public class BlockWriteState : ICacheable
         {
+            private int remaining;
             public BlockWrittenDelegate Callback { get; private set; }
             public object State { get; private set; }
-            public int Remaining { get; internal set; }
+            public int Remaining
+            {
+                get { return remaining; }
+                set { remaining = value; }
+            }
             public Block Block { get; private set; }
 
             #region ICacheable Members
@@ -298,6 +315,11 @@ namespace Torrent.Client
                 Remaining = remaining;
                 Block = block;
                 return this;
+            }
+
+            public int SubstractRemaining(int number)
+            {
+                return Interlocked.Add(ref remaining, -number);
             }
         }
 

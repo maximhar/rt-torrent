@@ -11,6 +11,7 @@ namespace Torrent.Client
     {
         private const int RequestsQueueLength = 10;
         private long pendingWrites = 0;
+        private const int MaxConnectedPeers = 100;
 
         public DownloadMode(HashingMode hashMode):this(new BlockManager(hashMode.Metadata, hashMode.BlockManager.MainDirectory),
             hashMode.BlockStrategist, hashMode.Metadata, hashMode.Monitor)
@@ -87,6 +88,8 @@ namespace Torrent.Client
 
         protected override bool AddPeer(PeerState peer)
         {
+            if (Peers.Count >= MaxConnectedPeers) return false;
+
             SendBitfield(peer);
             return base.AddPeer(peer);
         }

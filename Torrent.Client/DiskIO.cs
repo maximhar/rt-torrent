@@ -98,7 +98,7 @@ namespace Torrent.Client
                 }
                 catch(Exception e)
                 {
-                    Debug.WriteLine("DiskIO", e);
+                    Trace.WriteLine(e);
                 }
             }
         }
@@ -130,7 +130,8 @@ namespace Torrent.Client
                 {
                     state.Stream.Seek(state.StreamOffset, SeekOrigin.Begin);
                     int read = state.Stream.Read(state.Buffer, state.BufferOffset, (int)state.Length);
-                    if(read != state.Length) state.Callback(false, read, null, state.State);
+                    if(read != state.Length) 
+                        state.Callback(false, read, null, state.State);
                     else state.Callback(true, read, state.Buffer, state.State);
                     ReadCache.Put(state);
                 }

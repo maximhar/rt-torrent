@@ -171,8 +171,14 @@ namespace Torrent.Client
 
         protected virtual void MessageSent(bool success, int sent, object state)
         {
+            var peer = (PeerState)state;
             if (Stopping) return;
             if (success) Monitor.Sent(sent);
+            else
+            {
+                CloseSocket(peer);
+                ConnectPeer(peer.EndPoint);
+            }
         }
 
         protected virtual void ReceiveMessage(PeerState peer)
