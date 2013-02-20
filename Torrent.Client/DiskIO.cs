@@ -108,10 +108,13 @@ namespace Torrent.Client
         {
             try
             {
-                state.Stream.Seek(state.FileOffset, SeekOrigin.Begin);
-                state.Stream.Write(state.Data, state.DataOffset, (int)state.Length);
-                state.Callback(true, (int)state.Length, state.State);
-                WriteCache.Put(state);
+                lock (state.Data)
+                {
+                    state.Stream.Seek(state.FileOffset, SeekOrigin.Begin);
+                    state.Stream.Write(state.Data, state.DataOffset, (int)state.Length);
+                    state.Callback(true, (int)state.Length, state.State);
+                    WriteCache.Put(state);
+                }
             }
             catch (Exception)
             {
@@ -124,11 +127,14 @@ namespace Torrent.Client
         {
             try
             {
-                state.Stream.Seek(state.StreamOffset, SeekOrigin.Begin);
-                int read = state.Stream.Read(state.Buffer, state.BufferOffset, (int)state.Length);
-                if (read != state.Length) state.Callback(false, read, null, state.State);
-                else state.Callback(true, read, state.Buffer, state.State);
-                ReadCache.Put(state);
+                lock (state.Buffer)
+                {
+                    state.Stream.Seek(state.StreamOffset, SeekOrigin.Begin);
+                    int read = state.Stream.Read(state.Buffer, state.BufferOffset, (int)state.Length);
+                    if(read != state.Length) state.Callback(false, read, null, state.State);
+                    else state.Callback(true, read, state.Buffer, state.State);
+                    ReadCache.Put(state);
+                }
             }
             catch (Exception)
             {

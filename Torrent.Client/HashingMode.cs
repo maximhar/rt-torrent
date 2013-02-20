@@ -14,6 +14,7 @@ namespace Torrent.Client
     public class HashingMode:TorrentMode
     {
         private readonly SHA1 hasher = new SHA1Cng();
+        private byte[] pieceBuffer;
         private int remainingPieces;
 
         public HashingMode(BlockManager manager, BlockStrategist strategist, TorrentData metadata, TransferMonitor monitor) :
@@ -34,6 +35,7 @@ namespace Torrent.Client
                 OnHashingComplete();
                 return;
             }
+            pieceBuffer = new byte[Metadata.PieceLength];
             remainingPieces = Metadata.PieceCount;
             int lastPieceLength = (int) (Metadata.TotalLength - (Metadata.PieceLength*(Metadata.PieceCount - 1)));
 
@@ -42,7 +44,7 @@ namespace Torrent.Client
                 if(Stopping) return;
                 try
                 {
-                    BlockManager.GetBlock(i, 0, Metadata.PieceLength, PieceRead, i);
+                    BlockManager.GetBlock(pieceBuffer, i, 0, Metadata.PieceLength, PieceRead, i);
                 }
                 catch
                 {
@@ -51,7 +53,7 @@ namespace Torrent.Client
             }
             try
             {
-                BlockManager.GetBlock(Metadata.PieceCount - 1, 0, lastPieceLength, PieceRead, Metadata.PieceCount - 1);
+                BlockManager.GetBlock(pieceBuffer, Metadata.PieceCount - 1, 0, lastPieceLength, PieceRead, Metadata.PieceCount - 1);
             }
             catch
             {
@@ -81,7 +83,7 @@ namespace Torrent.Client
 
         private bool HashCheck(Block block)
         {
-            var hash = hasher.ComputeHash(block.Data);
+            var hash = hasher.ComputeHash(block.Data, 0, block.Info.Length);
             return hash.SequenceEqual(Metadata.Checksums[block.Info.Index]);
         }
 

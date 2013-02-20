@@ -45,9 +45,9 @@ namespace Torrent.Client
 
         protected override void HandleRequest(RequestMessage request, PeerState peer)
         {
-            if(!peer.IsChoked)
+            if(!peer.IsChoked && request.Length <= Global.Instance.BlockSize)
             {
-                BlockManager.GetBlock(request.Index, request.Offset, request.Length, BlockRead, peer);
+                BlockManager.GetBlock(new byte[request.Length], request.Index, request.Offset, request.Length, BlockRead, peer);
             }
         }
 

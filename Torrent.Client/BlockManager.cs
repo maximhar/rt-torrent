@@ -71,12 +71,11 @@ namespace Torrent.Client
             }
         }
 
-        public void GetBlock(int pieceIndex, int offset, int length, BlockReadDelegate callback, object state)
+        public void GetBlock(byte[] buffer, int pieceIndex, int offset, int length, BlockReadDelegate callback, object state)
         {
             try
             {
                 IEnumerable<BlockPartInfo> parts = GetParts(pieceIndex, offset, length, false);
-                var buffer = new byte[length];
                 var block = new Block(buffer, pieceIndex, offset, length);
                 BlockReadState data = readCache.Get().Init(block, callback, length, state);
                 foreach(BlockPartInfo part in parts)

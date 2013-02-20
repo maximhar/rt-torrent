@@ -48,6 +48,8 @@
         /// </summary>
         public byte[] Data { get; private set; }
 
+        public int DataLength { get; private set; }
+
         /// <summary>
         /// The length of the PieceMessage.
         /// </summary>
@@ -80,11 +82,11 @@
         public override int ToBytes(byte[] buffer, int offset)
         {
             int start = offset;
-            offset += Write(buffer, offset, 5);
+            offset += Write(buffer, offset, 9 + DataLength);
             offset += Write(buffer, offset, (byte) 7);
             offset += Write(buffer, offset, Index);
             offset += Write(buffer, offset, Offset);
-            offset += Write(buffer, offset, Data);
+            offset += Write(buffer, offset, Data, DataLength);
             return offset - start;
         }
 

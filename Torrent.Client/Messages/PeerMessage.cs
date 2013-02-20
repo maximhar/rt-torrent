@@ -223,6 +223,11 @@ namespace Torrent.Client.Messages
             return Write(buffer, offset, value, 0, value.Length);
         }
 
+        protected static int Write(byte[] buffer, int offset, byte[] value, int length)
+        {
+            return Write(buffer, offset, value, 0,length);
+        }
+
         protected static int WriteAscii(byte[] buffer, int offset, string text)
         {
             for (int i = 0; i < text.Length; i++)
