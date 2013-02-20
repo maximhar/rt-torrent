@@ -61,7 +61,6 @@ namespace Torrent.Client
             peer.PendingBlocks--;
             SendBlockRequests(peer);
         }
-
         
         protected override void HandleUnchoke(UnchokeMessage unchoke, PeerState peer)
         {

@@ -78,6 +78,9 @@ namespace Torrent.Client
                 IEnumerable<BlockPartInfo> parts = GetParts(pieceIndex, offset, length, false);
                 var block = new Block(buffer, pieceIndex, offset, length);
                 BlockReadState data = readCache.Get().Init(block, callback, length, state);
+                if(parts.Count() > 1)
+                    Trace.WriteLine(pieceIndex + " is split between " + parts.Count() + " files.");
+
                 foreach(BlockPartInfo part in parts)
                 {
                     DiskIO.QueueRead(part.FileStream, buffer, part.DataOffset, part.FileOffset, part.Length, EndGetBlock, data);

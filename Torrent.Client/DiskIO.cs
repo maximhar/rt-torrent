@@ -85,14 +85,13 @@ namespace Torrent.Client
                         read = ReadQueue.TryDequeue(out result);
                         if (read) readList.Add(result);
                     }
-                    var orderedReads = readList.OrderBy(r => r.Stream.Length).ThenBy(r => r.StreamOffset).ToList();
-                    foreach(var readState in orderedReads)
+
+                    foreach(var readState in readList)
                     {
                         Read(readState);
                     }
 
-                    var orderedWrites = writeList.OrderBy(r => r.Stream.Length).ThenBy(r => r.FileOffset).ToList();
-                    foreach (var writeState in orderedWrites)
+                    foreach (var writeState in writeList)
                     {
                         Write(writeState);
                     }

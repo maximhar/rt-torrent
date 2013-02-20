@@ -48,7 +48,7 @@ namespace Torrent.Client
                 }
                 catch
                 {
-                    Trace.Write("Block " + i + " unavailable (catch)");
+                    Trace.WriteLine("Block " + i + " unavailable (catch)");
                 }
             }
             try
@@ -57,7 +57,7 @@ namespace Torrent.Client
             }
             catch
             {
-                Trace.Write("Block " + (Metadata.PieceCount-1) + " unavailable (catch)");
+                Trace.WriteLine("Block " + (Metadata.PieceCount-1) + " unavailable (catch)");
             }
         }
 
@@ -68,10 +68,19 @@ namespace Torrent.Client
             int piece = (int)state;
             if (success)
             {
+                lock(block.Data)
                 if(HashCheck(block))
                 {
                     MarkAvailable(piece);
                 }
+                else
+                {
+                    Trace.WriteLine("Block " + piece + " unavailable (hash)");
+                }
+            }
+            else
+            {
+                Trace.WriteLine("Block " + piece + " unavailable (!success)");
             }
 
             if(remainingPieces == 0)
