@@ -16,7 +16,7 @@
                     <RowDefinition Height="2*"/>
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
-                <ListBox Grid.Row="0" ItemsSource="{Binding FilesToAdd}" FontFamily="Courier New" BorderThickness="1px" Margin="5,5,5,0"/>
+                <ListBox Name="FilesToAddListBox" Grid.Row="0" ItemsSource="{Binding FilesToAdd}" FontFamily="Courier New" BorderThickness="1px" Margin="5,5,5,0" SelectionMode="Multiple"/>
                 <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top" Height="25px" Margin="10,10,5,0">
                     <Button Width="100px" Margin="10,0,0,0" Click="AddFiles_Click">Add Files</Button>
                     <Button Width="100px" Margin="10,0,0,0" Click="AddDirectory_Click">Add Directory</Button>
@@ -31,16 +31,19 @@
                     <ColumnDefinition Width="3*"/>
                 </Grid.ColumnDefinitions>
                 <Grid.RowDefinitions>
+                    <RowDefinition Height="*"/>
                     <RowDefinition Height="2*"/>
                     <RowDefinition Height="*"/>
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
-                <Label Grid.Column="0" Grid.Row="0" VerticalAlignment="Center">Trackers:</Label>
-                <TextBox Grid.Column="1" Grid.Row="0" Margin="0,5,5,5"/>
-                <Label Grid.Column="0" Grid.Row="1" VerticalAlignment="Center">Comment:</Label>
-                <TextBox Grid.Column="1" Grid.Row="1" Margin="0,5,5,5"/>
-                <Label Grid.Column="0" Grid.Row="2" VerticalAlignment="Center">Piece size:</Label>
-                <ComboBox Grid.Column="1" Grid.Row="2" Height="25px" Width="150px" HorizontalAlignment="Right" Margin="0,5,5,0"></ComboBox>
+                <Label Grid.Column="0" Grid.Row="0" VerticalAlignment="Center">Name:</Label>
+                <TextBox Name="TorrentName" Grid.Column="1" Grid.Row="0" Margin="0,5,5,5"/>
+                <Label Grid.Column="0" Grid.Row="1" VerticalAlignment="Center">Trackers:</Label>
+                <TextBox Name="Announces" Grid.Column="1" Grid.Row="1" Margin="0,5,5,5"/>
+                <Label Grid.Column="0" Grid.Row="2" VerticalAlignment="Center">Comment:</Label>
+                <TextBox Grid.Column="1" Grid.Row="2" Margin="0,5,5,5"/>
+                <Label Grid.Column="0" Grid.Row="3" VerticalAlignment="Center">Piece size:</Label>
+                <ComboBox Name="PieceSizes" Grid.Column="1" Grid.Row="3" Height="25px" Width="150px" HorizontalAlignment="Right" Margin="0,5,5,0"></ComboBox>
             </Grid>
         </GroupBox>
         <Grid Grid.Row="2">

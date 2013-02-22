@@ -100,10 +100,9 @@ namespace Torrent.Client
         /// <param name="announceList">A list of announce URLs.</param>
         /// <param name="pieceLength">The number of bytes in each piece.</param>
         /// <param name="pieces">A list of strings consisting of the concatenation of all 20-byte SHA1 hash values.</param>
-        /// <param name="savePath">A path to save the .torrent file to.</param>
         /// <returns>A string representig the content of the .torrent file.</returns>
         public static string Create(string name, List<FileEntry> inputFiles, string filesDir, string announce,
-                                    List<string> announceList, int pieceLength, List<byte[]> pieces, string savePath)
+                                    List<string> announceList, int pieceLength, List<byte[]> pieces)
         {
             Contract.Requires(name != null);
             Contract.Requires(inputFiles != null);
@@ -111,7 +110,7 @@ namespace Torrent.Client
             Contract.Requires(announce != null);
             Contract.Requires(pieces != null);
 
-            string clientVersion = "0200";
+            var clientVersion = Global.Instance.Version;
             var res = new BencodedDictionary();
             res.Add("announce", new BencodedString(announce));
             var alist = new BencodedList();
@@ -199,7 +198,7 @@ namespace Torrent.Client
             TotalLength = Files.Sum(f => f.Length);
         }
 
-        private IEnumerable<string> CreateAnnouces(string AnnounceURL, ReadOnlyCollection<string> AnnounceList)
+        private IEnumerable<string> CreateAnnouces(string AnnounceURL, IEnumerable<string> AnnounceList)
         {
             var list = new List<string>();
 
