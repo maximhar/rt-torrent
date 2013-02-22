@@ -66,7 +66,7 @@ namespace Torrent.Client
             }
             catch(Exception e)
             {
-                //OnRaisedException(new TorrentException("Adding block failed", e));
+                OnRaisedException(new TorrentException("Adding block failed", e));
                 callback(false, state);
             }
         }
@@ -88,7 +88,7 @@ namespace Torrent.Client
             }
             catch(Exception e)
             {
-                //OnRaisedException(new TorrentException("Getting block failed", e));
+                OnRaisedException(new TorrentException("Getting block failed", e));
                 callback(false, null, state);
             }
         }

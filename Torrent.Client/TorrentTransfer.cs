@@ -103,7 +103,11 @@ namespace Torrent.Client
 
         private void StartTransfer()
         {
-            
+            EnterHashingMode();
+        }
+
+        private void EnterHashingMode()
+        {
             ChangeState(TorrentState.Hashing);
             var hashingMode = new HashingMode(new BlockManager(Data, Data.Name),
                                               new BlockStrategist(Data), Data, monitor);
@@ -116,16 +120,31 @@ namespace Torrent.Client
 
         private void HashingComplete()
         {
+            if(!Mode.BlockStrategist.Complete)
+            {
+                EnterDownloadMode();
+            }
+            else
+            {
+                Stop();
+            }
+        }
+
+        private void EnterDownloadMode()
+        {
             ChangeState(TorrentState.Downloading);
             var mode = new DownloadMode((HashingMode)Mode);
             mode.RaisedException += (s, e) => OnRaisedException(e.Value);
-            mode.FlushedToDisk += (s, e) => Stop();
+            mode.FlushedToDisk += (s, e) => FlushedToDisk();
             mode.DownloadComplete += (s, e) => DownloadCompleted();
             mode.Start();
-
             Mode = mode;
-            
             AnnounceManager.Started();
+        }
+
+        private void FlushedToDisk()
+        {
+            EnterHashingMode();
         }
 
         private void DownloadCompleted()
