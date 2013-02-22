@@ -109,7 +109,7 @@ namespace Torrent.Client
         private void EnterHashingMode()
         {
             ChangeState(TorrentState.Hashing);
-            var hashingMode = new HashingMode(new BlockManager(Data, Data.Name),
+            var hashingMode = new HashingMode(new BlockManager(Data, Path.Combine(Global.Instance.DownloadFolder, Data.Name)),
                                               new BlockStrategist(Data), Data, monitor);
             hashingMode.RaisedException += (s, e) => OnRaisedException(e.Value);
             hashingMode.HashingComplete += (sender, args) => HashingComplete();
@@ -195,8 +195,7 @@ namespace Torrent.Client
 
         private void OnRaisedException(Exception e)
         {
-            if(e.InnerException is IOException)
-                Stop();
+            Stop();
             if (RaisedException != null)
             {
                 RaisedException(this, new EventArgs<Exception>(e));

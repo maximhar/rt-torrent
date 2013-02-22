@@ -8,6 +8,7 @@ using Torrent.Client;
 using System.Windows.Threading;
 using Torrent.Client.Events;
 using Torrent.Client.Extensions;
+using System.Windows.Forms;
 
 namespace Torrent.GuiTest
 {
@@ -186,6 +187,22 @@ namespace Torrent.GuiTest
 
             mainWindow = window;
             dispatcher = window.Dispatcher;
+
+            SelectDownloadFolder();
+        }
+
+        private void SelectDownloadFolder()
+        {
+            var browser = new FolderBrowserDialog();
+            browser.Description = "Select a download folder.";
+            if(browser.ShowDialog() == DialogResult.OK)
+            {
+                Global.Instance.DownloadFolder = browser.SelectedPath;
+            }
+            else
+            {
+                Global.Instance.DownloadFolder = Environment.CurrentDirectory;
+            }
         }
 
         public void GetPeers(string path)
@@ -224,7 +241,7 @@ namespace Torrent.GuiTest
             catch (Exception e)
             {
                 HandleException(e);
-                MessageBox.Show("Damn: " + e);
+                System.Windows.MessageBox.Show("Damn: " + e);
             }
         }
 
