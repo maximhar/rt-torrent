@@ -148,6 +148,7 @@
     <Compile Include="BlockManager.cs" />
     <Compile Include="BlockStrategist.cs" />
     <Compile Include="Events\StatsEventArgs.cs" />
+    <Compile Include="SeedMode.cs" />
     <Compile Include="TorrentData.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TorrentException.cs" />
@@ -167,6 +168,9 @@
     <Content Include="Todos\Task 2.txt" />
     <Content Include="Todos\Task 3.txt" />
     <Content Include="Todos\Task 4.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="ClassDiagram1.cd" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

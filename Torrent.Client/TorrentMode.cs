@@ -13,7 +13,7 @@ namespace Torrent.Client
 {
     public abstract class TorrentMode
     {
-        public ConcurrentDictionary<string, PeerState> Peers { get; private set; }
+        public ConcurrentDictionary<string, PeerState> Peers { get; protected set; }
         public BlockManager BlockManager { get; private set; }
         public BlockStrategist BlockStrategist { get; private set; }
         public TorrentData Metadata { get; private set; }

@@ -126,8 +126,18 @@ namespace Torrent.Client
             }
             else
             {
-                Stop();
+                EnterSeedMode();
             }
+        }
+
+        private void EnterSeedMode()
+        {
+            ChangeState(TorrentState.Seeding);
+            var mode = new SeedMode(Mode);
+            mode.RaisedException += (s, e) => OnRaisedException(e.Value);
+            mode.Start();
+            Mode = mode;
+            AnnounceManager.Started();
         }
 
         private void EnterDownloadMode()

@@ -1,2 +1,109 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<ClassDiagram /> 
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Interface Name="Torrent.Client.ICacheable" Collapsed="true">
+    <Position X="30.75" Y="8" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAAAAAA=</HashCode>
+      <FileName>ICacheable.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="Torrent.Client.Bencoding.IBencodedElement" Collapsed="true">
+    <Position X="29" Y="8" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAA=</HashCode>
+      <FileName>Bencoding\IBencodedElement.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="Torrent.Client.Messages.IPeerMessage" Collapsed="true">
+    <Position X="32.5" Y="8" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAACAAAAAAAAAAABAAAAAAAAAAEAAAAAAAAAAAAA=</HashCode>
+      <FileName>Messages\IPeerMessage.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Enum Name="Torrent.Client.AnnounceState" Collapsed="true">
+    <Position X="29" Y="9" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAEAAAAAAAAAgAAAACAAAAAAAEAAAA=</HashCode>
+      <FileName>AnnounceState.cs</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Enum Name="Torrent.Client.EventType" Collapsed="true">
+    <Position X="32.5" Y="9" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAIAAAIAAAAAAAAAAAIAAAAAAAAAAAEAAAA=</HashCode>
+      <FileName>EventType.cs</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Enum Name="Torrent.Client.TorrentState" Collapsed="true">
+    <Position X="34.25" Y="9" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAIAAAAAAAAAgDAQAAAAAAAAAAAAAABAAQAAQAAA=</HashCode>
+      <FileName>TorrentState.cs</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Enum Name="Torrent.Client.Bencoding.BencodedNodeType" Collapsed="true">
+    <Position X="30.75" Y="9" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAQAAAAAAAAAAABgAAAAAAAAAAAAI=</HashCode>
+      <FileName>Bencoding\BencodingParser.cs</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Delegate Name="Torrent.Client.BlockReadDelegate" Collapsed="true">
+    <Position X="29" Y="10" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAgAAAAAAAAAAAAAAAAAAABAgAAAAAAAAAAAA=</HashCode>
+      <FileName>BlockManager.cs</FileName>
+    </TypeIdentifier>
+  </Delegate>
+  <Delegate Name="Torrent.Client.BlockWrittenDelegate" Collapsed="true">
+    <Position X="30.75" Y="10" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgA=</HashCode>
+      <FileName>BlockManager.cs</FileName>
+    </TypeIdentifier>
+  </Delegate>
+  <Delegate Name="Torrent.Client.DiskIOReadCallback" Collapsed="true">
+    <Position X="32.5" Y="10" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAgAAAAAAAAAAAAAAACAAAAAAACAAEAAAAAAA=</HashCode>
+      <FileName>DiskIO.cs</FileName>
+    </TypeIdentifier>
+  </Delegate>
+  <Delegate Name="Torrent.Client.DiskIOWriteCallback" Collapsed="true">
+    <Position X="34.25" Y="10" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAgAAAAAAAAAAAAAAAAAAABAAACAAAAAAAAAA=</HashCode>
+      <FileName>DiskIO.cs</FileName>
+    </TypeIdentifier>
+  </Delegate>
+  <Delegate Name="Torrent.Client.MessageSentCallback" Collapsed="true">
+    <Position X="37.75" Y="10" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAgAAAAAAAAAAAAAAAAAAABAAACAAAAAAAAAA=</HashCode>
+      <FileName>MessageIO.cs</FileName>
+    </TypeIdentifier>
+  </Delegate>
+  <Delegate Name="Torrent.Client.MessageReceivedCallback" Collapsed="true">
+    <Position X="36" Y="10" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAgAAAAAAAAAAAAAAAAAAABAgAAAAAAAAAAAA=</HashCode>
+      <FileName>MessageIO.cs</FileName>
+    </TypeIdentifier>
+  </Delegate>
+  <Delegate Name="Torrent.Client.NetworkCallback" Collapsed="true">
+    <Position X="29" Y="10.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAgAAAAAAAAAAAAAAAAAAABAAACAAAAAAAAAA=</HashCode>
+      <FileName>NetworkIO.cs</FileName>
+    </TypeIdentifier>
+  </Delegate>
+  <Delegate Name="Torrent.Client.PeerConnectedCallback" Collapsed="true">
+    <Position X="30.75" Y="10.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAAAAA=</HashCode>
+      <FileName>PeerListener.cs</FileName>
+    </TypeIdentifier>
+  </Delegate>
+  <Font Name="Segoe UI" Size="9" />
+</ClassDiagram>
