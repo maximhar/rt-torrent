@@ -1,5 +1,6 @@
 using System;
-
+using System.Collections.Generic;
+using System.Linq;
 namespace Torrent.Client.Events
 {
     public class StatsEventArgs:EventArgs
@@ -14,6 +15,8 @@ namespace Torrent.Client.Events
             this.TotalPeers = totalPeers;
             this.ChokedBy = chokedBy;
             this.QueuedRequests = queued;
+            IEnumerable<string> list = new List<string> { "cat", "dog", "frog" };
+            foreach (var animal in list.Reverse()) ;
         }
     }
 }
