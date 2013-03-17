@@ -24,12 +24,19 @@ namespace Torrent.Client
 
         protected TorrentMode(BlockManager manager, BlockStrategist strategist, TorrentData metadata, TransferMonitor monitor)
         {
+            //инициализация на обект за следене на пренесените данни
             Monitor = monitor;
+            //обект за управляване на записа на парчета върху файловата система
             BlockManager = manager;
+            //обект за управление на заявките на парчета към пиърите
             BlockStrategist = strategist;
+            //обект, съдържаш метаданните на торента
             Metadata = metadata;
+            //съобщение за здрависване, което се използва от този TorrentMode
             DefaultHandshake = new HandshakeMessage(Global.Instance.PeerId, new byte[8], Metadata.InfoHash, "BitTorrent protocol");
+            //конкурентен речник за съхранение на състоянието на активните пиъри
             Peers = new ConcurrentDictionary<string, PeerState>();
+            //прикачане на събитието за изключения на BlockManager-а
             manager.RaisedException += (s, e) => OnRaisedException(e.Value);
         }
 
@@ -41,9 +48,13 @@ namespace Torrent.Client
 
         public virtual void Stop(bool closeStreams)
         {
+            //ако вече спираме, не можем да спрем отново
             if (Stopping) return;
             Stopping = true;
+            //изчистване на речника с пиъри
             Peers.Clear();
+            //ако closeStreams е true, освобождаваме BlockManager,
+            //което затваря отворените файлове
             if(closeStreams)
                 BlockManager.Dispose();
         }
@@ -58,7 +69,7 @@ namespace Torrent.Client
         }
 
         protected virtual void HandleMessage(PeerMessage message, PeerState peer)
-        {
+        {   //проверка на типа съобщение и извикване на съответния обработващ метод
             if (message is HandshakeMessage) HandleHandshake((HandshakeMessage)message, peer);
             else if (message is ChokeMessage) HandleChoke((ChokeMessage)message, peer);
             else if (message is UnchokeMessage) HandleUnchoke((UnchokeMessage)message, peer);
@@ -68,7 +79,7 @@ namespace Torrent.Client
             else if (message is HaveMessage) HandleHave((HaveMessage)message, peer);
             else if (message is PieceMessage) HandlePiece((PieceMessage)message, peer);
             else if (message is RequestMessage) HandleRequest((RequestMessage)message, peer);
-
+            //приемане на следващото съобщение от пиъра
             ReceiveMessage(peer);
         }
 

@@ -41,16 +41,18 @@ namespace Torrent.Client
         {
             Contract.Requires(torrentStream != null);
 
-            using (torrentStream)
+            using (torrentStream) //разкодиране на метаданните
             using (var reader = new BinaryReader(torrentStream))
             {
                 byte[] bytes = reader.ReadBytes((int) reader.BaseStream.Length);
                 Data = new TorrentData(bytes);
             }
-
-            tracker = new TrackerClient(Data.Announces);
-            statsReportTimer = new Timer(o => OnStatsReport());
-            monitor = new TransferMonitor(Data.InfoHash, Data.TotalLength);
+            //създаване на класове за комуникация с тракера,
+            //отчитане на състояние
+            tracker = new TrackerClient(Data.Announces); 
+            statsReportTimer = new Timer(o => OnStatsReport()); //таймер за отчитане на състоянието
+            monitor = new TransferMonitor(Data.InfoHash, Data.TotalLength); 
+          
             AnnounceManager = new AnnounceManager(Data.Announces, monitor, Data);
             AnnounceManager.PeersReceived += (sender, args) => { if(Mode != null) 
                 Mode.AddEndpoints(args.Value); };
@@ -141,14 +143,18 @@ namespace Torrent.Client
         }
 
         private void EnterDownloadMode()
-        {
+        {   //промяна на състоянието - информира потребителския интерфейс
             ChangeState(TorrentState.Downloading);
             var mode = new DownloadMode((HashingMode)Mode);
+            //прикачане на обработваш код към събитията за получено изключение,
+            //завършено изтегляне, и приключило записване на диска
             mode.RaisedException += (s, e) => OnRaisedException(e.Value);
             mode.FlushedToDisk += (s, e) => FlushedToDisk();
             mode.DownloadComplete += (s, e) => DownloadCompleted();
+            //стартиране на режима
             mode.Start();
             Mode = mode;
+            //информиране на тракера
             AnnounceManager.Started();
         }
 
@@ -171,11 +177,17 @@ namespace Torrent.Client
 
         private void StopActions()
         {
+            //последно съобщаване за състоянието
             OnStatsReport();
+            //информиране на интерфейса, че трансферът е спрян
             ChangeState(TorrentState.NotRunning);
+            //освобождаване на таймера за състояние
             statsReportTimer.Dispose();
+            //съобщаване на тракера, че трансферът е спрян
             AnnounceManager.Stopped();
+            //освобождаване на обекта, управляващ тракер комуникацията
             AnnounceManager.Dispose();
+            //спиране на текущо изпълняващия се режим
             if(Mode!=null) 
                 Mode.Stop(true);
             stop = true;
