@@ -15,8 +15,6 @@ namespace Torrent.Client.Events
             this.TotalPeers = totalPeers;
             this.ChokedBy = chokedBy;
             this.QueuedRequests = queued;
-            IEnumerable<string> list = new List<string> { "cat", "dog", "frog" };
-            foreach (var animal in list.Reverse()) ;
         }
     }
 }
