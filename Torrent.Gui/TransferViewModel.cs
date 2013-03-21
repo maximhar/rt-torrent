@@ -67,7 +67,7 @@ namespace Torrent.Gui
 
         void transfer_ReportStats(object sender, Client.Events.StatsEventArgs e)
         {
-            Progress = e.BytesCompleted / transfer.Data.TotalLength;
+            Progress = e.BytesCompleted * 1000 / transfer.Data.TotalLength;
         }
 
         void transfer_StateChanged(object sender, Client.Events.EventArgs<TorrentState> e)

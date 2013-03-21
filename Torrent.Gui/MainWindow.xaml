@@ -19,6 +19,7 @@
                             <Grid.RowDefinitions>
                                 <RowDefinition/>
                                 <RowDefinition/>
+                                <RowDefinition/>
                             </Grid.RowDefinitions>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition/>
@@ -30,6 +31,7 @@
                                 <Button Command="{Binding StartCommand}">Start</Button>
                                 <Button Command="{Binding StopCommand}">Stop</Button>
                             </StackPanel>
+                            <ProgressBar Maximum="1000" Height="12" Grid.Row="2" Value="{Binding Progress}"/>
                         </Grid>
                     </Border>
                 </DataTemplate>
