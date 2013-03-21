@@ -14,7 +14,7 @@ namespace Torrent.Client
     public class TorrentTransfer
     {
         private bool stopping;
-        private readonly TrackerClient tracker;
+        private TrackerClient tracker;
         private volatile bool stop;
         private Timer statsReportTimer;
         private TrackerResponse trackerData;
@@ -56,13 +56,7 @@ namespace Torrent.Client
             }
             //създаване на класове за комуникация с тракера,
             //отчитане на състояние
-            tracker = new TrackerClient(Data.Announces); 
-            statsReportTimer = new Timer(o => OnStatsReport()); //таймер за отчитане на състоянието
-            monitor = new TransferMonitor(Data.InfoHash, Data.TotalLength);
             DownloadFolder = downloadPath;
-            AnnounceManager = new AnnounceManager(Data.Announces, monitor, Data);
-            AnnounceManager.PeersReceived += (sender, args) => { if(Mode != null) 
-                Mode.AddEndpoints(args.Value); };
         }
 
         /// <summary>
@@ -181,7 +175,17 @@ namespace Torrent.Client
         private void StartActions()
         {
             stop = false;
+            stopping = false;
             Running = true;
+            tracker = new TrackerClient(Data.Announces);
+            statsReportTimer = new Timer(o => OnStatsReport()); //таймер за отчитане на състоянието
+            monitor = new TransferMonitor(Data.InfoHash, Data.TotalLength);
+            AnnounceManager = new AnnounceManager(Data.Announces, monitor, Data);
+            AnnounceManager.PeersReceived += (sender, args) =>
+            {
+                if (Mode != null)
+                    Mode.AddEndpoints(args.Value);
+            };
         }
 
         private void StopActions()

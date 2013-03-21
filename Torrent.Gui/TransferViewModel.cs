@@ -28,12 +28,12 @@ namespace Torrent.Gui
             this.transfer.ReportStats += transfer_ReportStats;
             this.Mode = Mode.Idle;
             this.Name = transfer.Data.Name;
-            StartCommand = new RelayCommand(Start);
-            StopCommand = new RelayCommand(Stop);
+            StartCommand = new RelayCommand(Start, () => Mode == Mode.Idle || Mode == Mode.Stopped || Mode == Mode.Completed);
+            StopCommand = new RelayCommand(Stop, () => Mode == Mode.Hash || Mode == Mode.Download || Mode == Mode.Seed);
         }
 
-        public ICommand StartCommand { get; private set; }
-        public ICommand StopCommand { get; private set; }
+        public RelayCommand StartCommand { get; private set; }
+        public RelayCommand StopCommand { get; private set; }
 
         public float Speed
         {
@@ -86,6 +86,8 @@ namespace Torrent.Gui
 
         void transfer_StateChanged(object sender, Client.Events.EventArgs<TorrentState> e)
         {
+            lastDownloaded = 0;
+            lastTimeReported = DateTime.Now;
             switch (e.Value)
             {
                 case TorrentState.Hashing:
@@ -104,6 +106,8 @@ namespace Torrent.Gui
                         Mode = Mode.Stopped;
                     break;
             }
+            StartCommand.RaiseCanExecuteChanged();
+            StopCommand.RaiseCanExecuteChanged();
         }
 
     }

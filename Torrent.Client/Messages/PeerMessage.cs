@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Net;
 using System.Text;
 
@@ -65,6 +66,7 @@ namespace Torrent.Client.Messages
 
             
             byte id = buffer[offset + 4];
+            Trace.WriteLine(id);
             if (!messages.ContainsKey(id))
                 throw new TorrentException("Unknown message.");
 

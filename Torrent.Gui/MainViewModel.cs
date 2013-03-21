@@ -32,7 +32,5 @@ namespace Torrent.Gui
                 Transfers.Add(new Transfer(new TorrentTransfer(filePath, saveFolder)));
         }
 
-
-
     }
 }
