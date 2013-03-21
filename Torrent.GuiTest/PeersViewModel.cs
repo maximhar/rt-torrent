@@ -254,7 +254,7 @@ namespace Torrent.GuiTest
 
         private void torrent_ReportStatsChanged(object sender, StatsEventArgs e)
         {
-            DownloadedBytes(e.DownloadedBytes);
+            DownloadedBytes(e.BytesCompleted);
             chokedBy = e.ChokedBy;
             totalPeers = e.TotalPeers;
             queued = e.QueuedRequests;

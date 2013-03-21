@@ -20,6 +20,8 @@ namespace Torrent.Client
         private TrackerResponse trackerData;
         private TransferMonitor monitor;
 
+        public string DownloadFolder { get; private set; }
+
         public AnnounceManager AnnounceManager { get; private set; }
 
         public TorrentMode Mode { get; private set; }
@@ -28,7 +30,7 @@ namespace Torrent.Client
         /// Initialize a torrent transfer with metadata from a file on the filesystem.
         /// </summary>
         /// <param name="torrentPath">Path to the torrent file.</param>
-        public TorrentTransfer(string torrentPath) : this(File.OpenRead(torrentPath))
+        public TorrentTransfer(string torrentPath, string downloadPath) : this(File.OpenRead(torrentPath), downloadPath)
         {
             Contract.Requires(torrentPath != null);
         }
@@ -37,7 +39,7 @@ namespace Torrent.Client
         /// Initialize a torrent transfer with metadata read from the specified stream.
         /// </summary>
         /// <param name="torrentStream">The stream to read the torrent metadata from.</param>
-        public TorrentTransfer(Stream torrentStream)
+        public TorrentTransfer(Stream torrentStream, string downloadPath)
         {
             Contract.Requires(torrentStream != null);
 
@@ -51,8 +53,8 @@ namespace Torrent.Client
             //отчитане на състояние
             tracker = new TrackerClient(Data.Announces); 
             statsReportTimer = new Timer(o => OnStatsReport()); //таймер за отчитане на състоянието
-            monitor = new TransferMonitor(Data.InfoHash, Data.TotalLength); 
-          
+            monitor = new TransferMonitor(Data.InfoHash, Data.TotalLength);
+            DownloadFolder = downloadPath;
             AnnounceManager = new AnnounceManager(Data.Announces, monitor, Data);
             AnnounceManager.PeersReceived += (sender, args) => { if(Mode != null) 
                 Mode.AddEndpoints(args.Value); };
@@ -111,7 +113,7 @@ namespace Torrent.Client
         private void EnterHashingMode()
         {
             ChangeState(TorrentState.Hashing);
-            var hashingMode = new HashingMode(new BlockManager(Data, Path.Combine(Global.Instance.DownloadFolder, Data.Name)),
+            var hashingMode = new HashingMode(new BlockManager(Data, Path.Combine(DownloadFolder, Data.Name)),
                                               new BlockStrategist(Data), Data, monitor);
             hashingMode.RaisedException += (s, e) => OnRaisedException(e.Value);
             hashingMode.HashingComplete += (sender, args) => HashingComplete();

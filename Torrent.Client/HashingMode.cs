@@ -29,7 +29,7 @@ namespace Torrent.Client
 
         private void StartTask()
         {
-            if(!Directory.Exists(Path.Combine(Global.Instance.DownloadFolder, Metadata.Name)))
+            if(!Directory.Exists(Path.Combine(BlockManager.MainDirectory, Metadata.Name)))
             {
                 Stop(true);
                 OnHashingComplete();
