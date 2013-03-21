@@ -38,8 +38,7 @@ namespace Torrent.Client
         /// <returns></returns>
         public override string ToString()
         {
-            string size = Global.Instance.FileSizeFormat(Length);
-            return String.Format("{0} | {1}", Name, size);
+            return String.Format("{0} | {1}", Name, Length);
         }
     }
 }

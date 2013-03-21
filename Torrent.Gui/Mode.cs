@@ -13,6 +13,7 @@ namespace Torrent.Gui
         Download,
         Hash,
         Stopped,
+        Completed,
         Idle
     }
 }

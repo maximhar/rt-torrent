@@ -3,6 +3,9 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:Torrent.Gui"
         Title="MainWindow" Height="350" Width="525">
+    <Window.Resources>
+        <local:FloatToSpeedConverter x:Key="FloatToSpeedConverter"/>
+    </Window.Resources>
     <Grid AllowDrop="True" Drop="Drop">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -14,7 +17,7 @@
         <ListBox Grid.Row="1" ItemsSource="{Binding Transfers}" HorizontalContentAlignment="Stretch">
             <ListBox.ItemTemplate>
                 <DataTemplate DataType="local:Transfer">
-                    <Border BorderThickness="2" BorderBrush="Black">
+                    <Border BorderThickness="2" BorderBrush="Black" Padding="2">
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition/>
@@ -27,11 +30,12 @@
                             </Grid.ColumnDefinitions>
                             <Label Grid.Row="0" Content="{Binding Name}"/>
                             <Label Grid.Row="1" Content="{Binding Mode}"/>
-                            <StackPanel Orientation="Vertical" VerticalAlignment="Stretch" Grid.Column="1" Grid.RowSpan="2">
-                                <Button Command="{Binding StartCommand}">Start</Button>
-                                <Button Command="{Binding StopCommand}">Stop</Button>
+                            <StackPanel Width="100" Orientation="Vertical" VerticalAlignment="Stretch" Grid.Column="1" Grid.RowSpan="2">
+                                <Button Margin="2" Command="{Binding StartCommand}">Start</Button>
+                                <Button Margin="2" Command="{Binding StopCommand}">Stop</Button>
                             </StackPanel>
-                            <ProgressBar Maximum="1000" Height="12" Grid.Row="2" Value="{Binding Progress}"/>
+                            <ProgressBar Margin="4,0,0,0" Maximum="1" Height="12" Grid.Row="2" Value="{Binding Progress}"/>
+                            <Label Content="{Binding Speed, Converter={StaticResource FloatToSpeedConverter}}"  Grid.Row="2" Grid.Column="1"/>
                         </Grid>
                     </Border>
                 </DataTemplate>

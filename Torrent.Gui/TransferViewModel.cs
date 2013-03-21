@@ -1,4 +1,5 @@
-﻿using GalaSoft.MvvmLight.Command;
+﻿using GalaSoft.MvvmLight;
+using GalaSoft.MvvmLight.Command;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -9,13 +10,16 @@ using Torrent.Client;
 
 namespace Torrent.Gui
 {
-    class Transfer:INotifyPropertyChanged
+    class Transfer : ViewModelBase, INotifyPropertyChanged
     {
         private string name;
         private float progress;
         private Mode mode;
         private ICollection<string> files = new List<string>();
         private TorrentTransfer transfer;
+        private float speed;
+        private long lastDownloaded;
+        private DateTime lastTimeReported;
 
         public Transfer(TorrentTransfer transfer)
         {
@@ -30,6 +34,12 @@ namespace Torrent.Gui
 
         public ICommand StartCommand { get; private set; }
         public ICommand StopCommand { get; private set; }
+
+        public float Speed
+        {
+            get { return speed; }
+            set { speed = value; RaisePropertyChanged("Speed"); }
+        }
 
         public string Name
         {
@@ -67,7 +77,11 @@ namespace Torrent.Gui
 
         void transfer_ReportStats(object sender, Client.Events.StatsEventArgs e)
         {
-            Progress = e.BytesCompleted * 1000 / transfer.Data.TotalLength;
+            Progress = (float)e.BytesCompleted / (float)transfer.Data.TotalLength;
+            Speed = (e.BytesCompleted - lastDownloaded) / (float)(DateTime.Now - lastTimeReported).TotalSeconds;
+
+            lastTimeReported = DateTime.Now;
+            lastDownloaded = e.BytesCompleted;
         }
 
         void transfer_StateChanged(object sender, Client.Events.EventArgs<TorrentState> e)
@@ -84,18 +98,13 @@ namespace Torrent.Gui
                     Mode = Mode.Seed;
                     break;
                 case TorrentState.NotRunning:
-                    Mode = Mode.Stopped;
+                    if (transfer.Complete)
+                        Mode = Mode.Completed;
+                    else
+                        Mode = Mode.Stopped;
                     break;
             }
         }
 
-
-        private void RaisePropertyChanged(string name)
-        {
-            if(PropertyChanged!=null)
-                PropertyChanged(this, new PropertyChangedEventArgs(name));
-        }
-
-        public event PropertyChangedEventHandler PropertyChanged;
     }
 }

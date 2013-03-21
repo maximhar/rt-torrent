@@ -20,6 +20,11 @@ namespace Torrent.Client
         private TrackerResponse trackerData;
         private TransferMonitor monitor;
 
+        public bool Complete
+        {
+            get { return Mode != null ? Mode.BlockStrategist.Complete : false; }
+        }
+
         public string DownloadFolder { get; private set; }
 
         public AnnounceManager AnnounceManager { get; private set; }
@@ -89,6 +94,8 @@ namespace Torrent.Client
             stopping = true;
             AnnounceManager.Stopped();
         }
+
+        
 
         private void StartThread()
         {

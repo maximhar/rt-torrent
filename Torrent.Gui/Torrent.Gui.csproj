@@ -67,6 +67,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="FloatToSpeedConverter.cs" />
     <Compile Include="IOService.cs" />
     <Compile Include="Mode.cs" />
     <Compile Include="TransferViewModel.cs" />
