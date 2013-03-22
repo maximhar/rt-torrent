@@ -86,7 +86,11 @@ namespace Torrent.Client
                     if (part.FileStream != null)
                         DiskIO.QueueRead(part.FileStream, buffer, part.DataOffset, part.FileOffset, part.Length, EndGetBlock, data);
                     else
+                    {
+                        OnRaisedException(new TorrentException("Stream is null."));
+                        callback(false, null, state);
                         return;
+                    }
                 }
             }
             catch(Exception e)
@@ -103,29 +107,37 @@ namespace Torrent.Client
             lock(state)
                 if (success)
                 {
-                    if(data.SubstractRemaining(written) <= 0)
+                    if (data.SubstractRemaining(written) <= 0)
                     {
                         data.Callback(true, data.State);
+                        writeCache.Put(data);
                     }
                 }
-                else data.Callback(false, data.State);
-            writeCache.Put(data);
+                else
+                {
+                    data.Callback(false, data.State);
+                    writeCache.Put(data);
+                }
+            
         }
 
         private void EndGetBlock(bool success, int read, byte[] pieceData, object state)
         {
             var data = (BlockReadState)state;
 
-            if(success)
+            if (success)
             {
-                if(data.SubstractRemaining(read) <= 0)
+                if (data.SubstractRemaining(read) <= 0)
                 {
                     data.Callback(true, data.Block, data.State);
+                    readCache.Put(data);
                 }
             }
-            else data.Callback(false, null, data.State);
-
-            readCache.Put(data);
+            else
+            {
+                data.Callback(false, null, data.State);
+                readCache.Put(data);
+            }
         }
 
         private IEnumerable<BlockPartInfo> GetParts(int pieceIndex, int offset, int length, bool write)
