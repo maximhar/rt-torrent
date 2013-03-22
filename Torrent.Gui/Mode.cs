@@ -14,6 +14,7 @@ namespace Torrent.Gui
         Hash,
         Stopped,
         Completed,
+        Error,
         Idle
     }
 }

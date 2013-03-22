@@ -56,7 +56,7 @@ namespace Torrent.Client
             }
             //създаване на класове за комуникация с тракера,
             //отчитане на състояние
-            DownloadFolder = downloadPath;
+            DownloadFolder = Path.Combine(downloadPath, Data.Name);
         }
 
         /// <summary>
@@ -114,7 +114,7 @@ namespace Torrent.Client
         private void EnterHashingMode()
         {
             ChangeState(TorrentState.Hashing);
-            var hashingMode = new HashingMode(new BlockManager(Data, Path.Combine(DownloadFolder, Data.Name)),
+            var hashingMode = new HashingMode(new BlockManager(Data, DownloadFolder),
                                               new BlockStrategist(Data), Data, monitor);
             hashingMode.RaisedException += (s, e) => OnRaisedException(e.Value);
             hashingMode.HashingComplete += (sender, args) => HashingComplete();
@@ -244,11 +244,11 @@ namespace Torrent.Client
 
         public event EventHandler<StatsEventArgs> ReportStats;
 
-        public void OnStatsReport()
+        private void OnStatsReport()
         {
             if (Mode == null) return;
 
-            var downloaded = (long)Mode.BlockStrategist.Available*Global.Instance.BlockSize;
+            var downloaded = (long)Math.Min(Mode.BlockStrategist.Available * Global.Instance.BlockSize, Data.TotalLength);
             var totalPeers = Mode.Peers.Count;
             var chokedBy = Mode.Peers.Count(p => p.Value.AmChoked);
 
@@ -259,7 +259,7 @@ namespace Torrent.Client
 
         public event EventHandler<EventArgs<TorrentState>> StateChanged;
 
-        public void OnStateChanged(TorrentState e)
+        private void OnStateChanged(TorrentState e)
         {
             EventHandler<EventArgs<TorrentState>> handler = StateChanged;
             if(handler != null) handler(this, new EventArgs<TorrentState>(e));

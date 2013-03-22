@@ -109,6 +109,8 @@ namespace Torrent.Client
             {
                 lock (state.Data)
                 {
+                    if (!state.Stream.CanWrite) throw new TorrentException("Stream unwritable.");
+                    
                     state.Stream.Seek(state.FileOffset, SeekOrigin.Begin);
                     state.Stream.Write(state.Data, state.DataOffset, (int)state.Length);
                     state.Callback(true, (int)state.Length, state.State);
@@ -128,6 +130,7 @@ namespace Torrent.Client
             {
                 lock (state.Buffer)
                 {
+                    if (!state.Stream.CanRead) throw new TorrentException("Stream unreadable.");
                     state.Stream.Seek(state.StreamOffset, SeekOrigin.Begin);
                     int read = state.Stream.Read(state.Buffer, state.BufferOffset, (int)state.Length);
                     if(read != state.Length) 

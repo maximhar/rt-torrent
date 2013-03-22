@@ -56,7 +56,10 @@ namespace Torrent.Client
             LastAnnounced = DateTime.Now;
             if(response == null || response.FailureReason != null)
             {
-                LastState = AnnounceState.Success;
+                if (request.Event == EventType.Started)
+                    LastState = AnnounceState.StartFailure;
+                else
+                    LastState = AnnounceState.Failure;
                 Period = TimeSpan.FromSeconds(20);
             }
             else

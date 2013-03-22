@@ -41,9 +41,10 @@ namespace Torrent.Gui
             throw new NotImplementedException();
         }
 
-        public string OpenFolder()
+        public string OpenFolder(string title)
         {
             var dialog = new System.Windows.Forms.FolderBrowserDialog();
+            dialog.Description = title;
             var result = dialog.ShowDialog();
             if (result == System.Windows.Forms.DialogResult.OK)
                 return dialog.SelectedPath;
@@ -53,7 +54,14 @@ namespace Torrent.Gui
         private void Drop(object sender, DragEventArgs e)
         {
             var str = (string[])e.Data.GetData(DataFormats.FileDrop);
-            (this.DataContext as MainViewModel).AddTransferCommand.Execute(str.FirstOrDefault());
+            foreach(var file in str)
+                (this.DataContext as MainViewModel).AddTransferCommand.Execute(file);
+        }
+
+
+        public void ShowErrorMessage(string title, string content)
+        {
+            MessageBox.Show(content, title, MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 }

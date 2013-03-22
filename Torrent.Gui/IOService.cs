@@ -9,6 +9,7 @@ namespace Torrent.Gui
     {
         string OpenFile(string filter);
         string SaveFile();
-        string OpenFolder();
+        string OpenFolder(string title);
+        void ShowErrorMessage(string title, string content);
     }
 }

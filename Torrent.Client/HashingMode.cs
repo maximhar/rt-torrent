@@ -46,19 +46,13 @@ namespace Torrent.Client
                 {   //асинхронна заявка за прочитане на блок от файловата система
                     BlockManager.GetBlock(pieceBuffer, i, 0, Metadata.PieceLength, PieceRead, i);
                 }
-                catch
-                {
-                    Trace.WriteLine("Block " + i + " unavailable (catch)");
-                }
+                catch { }
             }
             try
             {
                 BlockManager.GetBlock(pieceBuffer, Metadata.PieceCount - 1, 0, lastPieceLength, PieceRead, Metadata.PieceCount - 1);
             }
-            catch
-            {
-                Trace.WriteLine("Block " + (Metadata.PieceCount-1) + " unavailable (catch)");
-            }
+            catch { }
         }
 
         private void PieceRead(bool success, Block block, object state)
@@ -73,14 +67,6 @@ namespace Torrent.Client
                 {   //ако хеш проверката мине, блока се маркира като наличен
                     MarkAvailable(piece);
                 }
-                else
-                {   //в противен случай, на trace изхода се извежда съобщение
-                    Trace.WriteLine("Block " + piece + " unavailable (hash)");
-                }
-            }
-            else
-            {
-                Trace.WriteLine("Block " + piece + " unavailable (!success)");
             }
             //ако остават 0 парчета за проверяване, процесът е завършил
             //спиране и съобщение за приключване
@@ -106,6 +92,12 @@ namespace Torrent.Client
             {
                 BlockStrategist.Received(new BlockInfo(piece, blockSize*i, blockSize));
             }
+        }
+
+        protected override void HandleException(Exception e)
+        {
+            Stop(true);
+            OnHashingComplete();
         }
 
         protected override void HandleRequest(RequestMessage request, PeerState peer) {}

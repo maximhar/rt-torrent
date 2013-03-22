@@ -137,7 +137,7 @@ namespace Torrent.Client
             }
             catch(Exception e)
             {
-                OnRaisedException(e);
+                HandleException(e);
             }
         }
 
@@ -166,7 +166,7 @@ namespace Torrent.Client
             }
             catch(Exception e)
             {
-                OnRaisedException(e);
+                HandleException(e);
             }
         }
 

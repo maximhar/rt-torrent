@@ -66,7 +66,6 @@ namespace Torrent.Client.Messages
 
             
             byte id = buffer[offset + 4];
-            Trace.WriteLine(id);
             if (!messages.ContainsKey(id))
                 throw new TorrentException("Unknown message.");
 

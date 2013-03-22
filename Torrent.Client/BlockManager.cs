@@ -83,7 +83,10 @@ namespace Torrent.Client
 
                 foreach(BlockPartInfo part in parts)
                 {
-                    DiskIO.QueueRead(part.FileStream, buffer, part.DataOffset, part.FileOffset, part.Length, EndGetBlock, data);
+                    if (part.FileStream != null)
+                        DiskIO.QueueRead(part.FileStream, buffer, part.DataOffset, part.FileOffset, part.Length, EndGetBlock, data);
+                    else
+                        return;
                 }
             }
             catch(Exception e)

@@ -10,6 +10,8 @@ namespace Torrent.Gui
     {
         public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
         {
+            if (parameter is bool)
+                if (!(bool)parameter) return string.Empty;
             if (value is float)
                 return FileSizeFormat((long)(float)value) + "/s";
             return null;
@@ -20,7 +22,7 @@ namespace Torrent.Gui
             throw new NotImplementedException();
         }
 
-        private string FileSizeFormat(long size)
+        public static string FileSizeFormat(long size)
         {
             const int KB = 1024;
             const int MB = 1048576;

@@ -72,7 +72,7 @@ namespace Torrent.Client
             }
             catch (Exception e)
             {
-                OnRaisedException(e);
+                HandleException(e);
             }
         }
 

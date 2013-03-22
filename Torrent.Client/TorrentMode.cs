@@ -37,7 +37,7 @@ namespace Torrent.Client
             //конкурентен речник за съхранение на състоянието на активните пиъри
             Peers = new ConcurrentDictionary<string, PeerState>();
             //прикачане на събитието за изключения на BlockManager-а
-            manager.RaisedException += (s, e) => OnRaisedException(e.Value);
+            manager.RaisedException += (s, e) => HandleException(e.Value);
         }
 
         public virtual void Start()
@@ -247,9 +247,15 @@ namespace Torrent.Client
             Peers.TryRemove(id, out removed);
         }
 
+        protected virtual void HandleException(Exception e)
+        {
+            OnRaisedException(e);
+        }
+
         public event EventHandler<EventArgs<Exception>> RaisedException;
 
-        public void OnRaisedException(Exception e)
+
+        private void OnRaisedException(Exception e)
         {
             if (Stopping) return;
             EventHandler<EventArgs<Exception>> handler = RaisedException;
