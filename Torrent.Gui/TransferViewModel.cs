@@ -182,6 +182,7 @@ private  bool receivedAny;
                             Mode = Mode.Stopped;
                     break;
             }
+            RaisePropertyChanged("ReceivedAny");
             RaisePropertyChanged("CanStart");
             RaisePropertyChanged("CanStop");
             RaisePropertyChanged("CanDelete");
