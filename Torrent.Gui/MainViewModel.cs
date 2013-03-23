@@ -44,7 +44,10 @@ namespace Torrent.Gui
             try
             {
                 string filePath = path == null ? IOService.OpenFile("Torrent files|*.torrent") : path;
-                string saveFolder = IOService.OpenFolder(Path.GetFileName(path));
+                string saveFolder = null;
+                if(filePath != null) 
+                    saveFolder = IOService.OpenFolder(Path.GetFileName(path));
+
                 if (filePath != null && saveFolder != null)
                 {
                     var transfer = new Transfer(new TorrentTransfer(filePath, saveFolder));

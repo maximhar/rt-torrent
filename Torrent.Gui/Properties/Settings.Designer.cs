@@ -22,5 +22,16 @@ namespace Torrent.Gui.Properties {
                 return defaultInstance;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        public global::System.Collections.Specialized.StringCollection TorrentPaths {
+            get {
+                return ((global::System.Collections.Specialized.StringCollection)(this["TorrentPaths"]));
+            }
+            set {
+                this["TorrentPaths"] = value;
+            }
+        }
     }
 }

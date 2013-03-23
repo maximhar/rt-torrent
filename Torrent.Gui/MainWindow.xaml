@@ -147,7 +147,7 @@
                                         <Label Content="{Binding NumericProgress, Converter={StaticResource NumericProgressToStringConverter}}" Grid.Row="2"/>
                                         <Label MinWidth="80" Padding="6,0" HorizontalContentAlignment="Right" Content="{Binding Speed, Converter={StaticResource FloatToSpeedConverter}}" 
                                    Visibility="{Binding CanStop, Converter={StaticResource BooleanToVisibilityConverter}}" Grid.Row="3" Grid.Column="1"/>
-                                        <TextBlock FontWeight="Bold" Margin="4" HorizontalAlignment="Left" Grid.Row="3" MaxWidth="300" Grid.ColumnSpan="3" Text="{Binding Error}" Foreground="Red"/>
+                                        <TextBlock FontWeight="Bold" Margin="4" HorizontalAlignment="Left" Grid.Row="3" Grid.ColumnSpan="3" Text="{Binding Error}" Foreground="Red"/>
                                     </Grid>
                                 </Border>
                             </ControlTemplate>
