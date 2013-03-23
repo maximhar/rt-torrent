@@ -14,6 +14,9 @@ namespace Torrent.Client
 
     internal static class DiskIO
     {
+        private const int MaxPendingOps = 2500;
+        private const int MinPendingOps = 1000;
+
         private static readonly ConcurrentQueue<DiskIOReadState> ReadQueue;
         private static readonly ConcurrentQueue<DiskIOWriteState> WriteQueue;
 
@@ -36,24 +39,24 @@ namespace Torrent.Client
         public static void QueueRead(Stream stream, byte[] buffer, int bufferOffset, long streamOffset, long length,
                                      DiskIOReadCallback callback, object state)
         {
-            while (ReadQueue.Count > 10000) 
+            while (ReadQueue.Count > MaxPendingOps) 
                 Thread.Sleep(10);
 
             DiskIOReadState readData = ReadCache.Get().Init(stream, buffer, bufferOffset, streamOffset, length, callback,
                                                             state);
             ReadQueue.Enqueue(readData);
-            if (ReadQueue.Count > 1000) IOHandle.Set();
+            if (ReadQueue.Count > MinPendingOps) IOHandle.Set();
         }
 
         public static void QueueWrite(Stream stream, byte[] data, long fileOffset, int dataOffset, long length, DiskIOWriteCallback callback,
                                       object state)
         {
-            while(WriteQueue.Count > 10000) 
+            while(WriteQueue.Count > MaxPendingOps) 
                 Thread.Sleep(10);
 
             DiskIOWriteState writeData = WriteCache.Get().Init(stream, data, fileOffset, dataOffset, length, callback, state);
             WriteQueue.Enqueue(writeData);
-            if(WriteQueue.Count>1000) IOHandle.Set();
+            if(WriteQueue.Count>MinPendingOps) IOHandle.Set();
         }
 
         private static void StartDiskThread()
