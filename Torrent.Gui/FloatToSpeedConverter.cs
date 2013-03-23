@@ -34,15 +34,15 @@ namespace Torrent.Gui
             }
             else if (size < MB)
             {
-                return string.Format("{0:0.00} KB", ((float)size / KB));
+                return string.Format("{0:0.00} KiB", ((float)size / KB));
             }
             else if (size < GB)
             {
-                return string.Format("{0:0.00} MB", ((float)size / MB));
+                return string.Format("{0:0.00} MiB", ((float)size / MB));
             }
             else
             {
-                return string.Format("{0:0.00} GB", ((float)size / GB));
+                return string.Format("{0:0.00} GiB", ((float)size / GB));
             }
         }
     }
