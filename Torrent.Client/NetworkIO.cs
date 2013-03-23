@@ -143,7 +143,7 @@ namespace Torrent.Client
                 data.Socket.EndConnect(ar);
                 data.Callback(true, 0, data.State);
             }
-            catch (Exception)
+            catch (Exception e)
             {
                 data.Callback(false, 0, data.State);
             }
