@@ -40,14 +40,11 @@ namespace Torrent.Client
             Peers = new ConcurrentDictionary<string, PeerState>();
             //прикачане на събитието за изключения на BlockManager-а
             manager.RaisedException += (s, e) => HandleException(e.Value);
+            //инициализация на теймера за изпращане на KeepAlive съобщения
             KeepAliveTimer = new Timer(SendKeepAlives);
         }
 
-        protected virtual void SendKeepAlives(object state)
-        {
-            foreach (var peer in Peers.Values)
-                SendMessage(peer, new KeepAliveMessage());
-        }
+
 
         public virtual void Start()
         {
@@ -62,9 +59,10 @@ namespace Torrent.Client
             Stopping = true;
             //изчистване на речника с пиъри
             Peers.Clear();
+            //освобождаване на таймера за изпращане на KeepAlive 
+            KeepAliveTimer.Dispose();
             //ако closeStreams е true, освобождаваме BlockManager,
             //което затваря отворените файлове
-            KeepAliveTimer.Dispose();
             if(closeStreams)
                 BlockManager.Dispose();
         }
@@ -78,13 +76,18 @@ namespace Torrent.Client
             }
         }
 
+        protected virtual void SendKeepAlives(object state)
+        {
+            foreach (var peer in Peers.Values)
+                SendMessage(peer, new KeepAliveMessage());
+        }
+
         protected virtual void HandleMessage(PeerMessage message, PeerState peer)
         {   //проверка на типа съобщение и извикване на съответния обработващ метод
             if (message is HandshakeMessage) HandleHandshake((HandshakeMessage)message, peer);
             else if (message is ChokeMessage) HandleChoke((ChokeMessage)message, peer);
             else if (message is UnchokeMessage) HandleUnchoke((UnchokeMessage)message, peer);
-            else if (message is InterestedMessage) 
-                HandleInterested((InterestedMessage)message, peer);
+            else if (message is InterestedMessage) HandleInterested((InterestedMessage)message, peer);
             else if (message is NotInterestedMessage) HandleNotInterested((NotInterestedMessage)message, peer);
             else if (message is BitfieldMessage) HandleBitfield((BitfieldMessage)message, peer);
             else if (message is HaveMessage) HandleHave((HaveMessage)message, peer);
