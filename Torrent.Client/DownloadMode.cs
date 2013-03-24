@@ -55,11 +55,14 @@ namespace Torrent.Client
         protected override void HandlePiece(PieceMessage piece, PeerState peer)
         {
             var blockInfo = new BlockInfo(piece.Index, piece.Offset, piece.Data.Length);
+            //съобщаваме на BlockStrategistът, че сме получили блок, а той ни казва дали ни е нужен
             if(BlockStrategist.Received(blockInfo))
-            {
+            {   //ако блока е нужен, записваме го
                 WriteBlock(piece);
             }
+            //понижаване на брояча за блоковете в изчакване
             peer.PendingBlocks--;
+            //изпращане на нова заявка за блок към пиъра
             SendBlockRequests(peer);
         }
         
@@ -70,11 +73,11 @@ namespace Torrent.Client
         }
 
         protected override void HandleBitfield(BitfieldMessage bitfield, PeerState peer)
-        {
+        {   //първо викаме имплементацията в TorrentMode
             base.HandleBitfield(bitfield, peer);
-
+            //ако пиъра няма никакви налични блокове, тогава не ни трябва   
             if(!peer.NoBlocks)
-            {
+            {   //ако пиъра има налични блокове, казваме му, че се интересуваме от него
                 SendMessage(peer, new InterestedMessage());
             }
         }
@@ -100,18 +103,20 @@ namespace Torrent.Client
         }
 
         private void SendBlockRequests(PeerState peer)
-        {
+        {   //изчисляване на броя на нужните блокове
             int count = RequestsQueueLength - peer.PendingBlocks;
             for(int i=0;i<count;i++)
-            {
+            {   //поискване на нов блок от BlockStrategistа
                 var block = BlockStrategist.Next(peer.Bitfield);
                 if (block != BlockInfo.Empty) 
-                {
+                {   //ако адреса на блока е валиден - тоест, има нужда от нов блок, изпраща се съобщение
                     SendMessage(peer, new RequestMessage(block.Index, block.Offset, block.Length));
+                    //увеличаване на броя на изчакващите блокове
                     peer.PendingBlocks++;
                 }
                 else if (BlockStrategist.Complete)
-                {
+                {   //ако адреса на блока е невалиден, и всички блокове са свалени
+                    //сигнализираме приключено изтегляне
                     OnDownloadComplete();
                     return;
                 }

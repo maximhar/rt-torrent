@@ -79,7 +79,7 @@ namespace Torrent.Client
         }
 
         public bool Received(BlockInfo block)
-        {
+        {   //изчисляване на адреса на блока
             int address = (int)(Block.GetAbsoluteAddress(block.Index, block.Offset, pieceSize)/blockSize);
             lock (unavailable)
             {

@@ -49,7 +49,7 @@ namespace Torrent.Client
                 catch { }
             }
             try
-            {
+            {   //обработка на последния блок
                 BlockManager.GetBlock(pieceBuffer, Metadata.PieceCount - 1, 0, lastPieceLength, PieceRead, Metadata.PieceCount - 1);
             }
             catch { }
