@@ -45,7 +45,7 @@ namespace Torrent.Gui
             {
                 string filePath = path == null ? IOService.OpenFile("Torrent files|*.torrent") : path;
                 string saveFolder = null;
-                if(filePath != null) 
+                if(!string.IsNullOrEmpty(filePath)) 
                     saveFolder = IOService.OpenFolder(Path.GetFileName(path));
 
                 if (filePath != null && saveFolder != null)
