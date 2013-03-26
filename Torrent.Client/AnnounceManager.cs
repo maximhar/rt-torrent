@@ -20,13 +20,16 @@ namespace Torrent.Client
         public TorrentData Data { get; private set; }
 
         public AnnounceManager(IEnumerable<string> announceUrls, TransferMonitor monitor, TorrentData data)
-        {
+        {   //иницализация на списъка с тракери, състоящ се от класове TrackerInfo, които осигуряват
+            //връзка с отделни тракери и заявки до тях
             trackers = new List<TrackerInfo>();
+            //прибавяне на HTTP тракерите от подадения списък с адреси
             trackers.AddRange(announceUrls.Where(u=>u.StartsWith("http")).Select(u=>new TrackerInfo(u)));
+            //прикачане на събитието PeersReceived към всеки от тракерите (TrackerInfo)
             trackers.ForEach(t => t.PeersReceived += (sender, args) => OnPeersReceived(args.Value));
-
             Monitor = monitor;
             Data = data;
+            //инициализация на таймер за проверка на състоянието на всеки тракер
             regularTimer = new Timer(Regular);
             regularTimer.Change(1000, 5000);
         }
@@ -68,20 +71,20 @@ namespace Torrent.Client
         }
 
         private void Regular(object o)
-        {
+        {   //стартиране на нова асинхронна задача
             Task.Factory.StartNew(() =>
-            {
+            {   //итериране през всички налични тракери
                 foreach (var tracker in Trackers)
-                {
+                {   //ако периодът, в който тракерът иска повторно да се свържем с него, е изтекъл, продължаваме
                     if (tracker.LastAnnounced.Add(tracker.Period) < DateTime.Now && tracker.LastState != AnnounceState.None)
-                    {
+                    {   //ако последния статус на тракера не е бил StartFailure, правим обикновена регулярна заявка
                         if (tracker.LastState != AnnounceState.StartFailure)
                         {
                             tracker.Regular(Data.InfoHash, Monitor.BytesReceived,
                                             Monitor.BytesSent, Monitor.TotalBytes - Monitor.BytesReceived);
                         }
-                        else
-                        {
+                        else //в противен случай, повтаряме заявката Started, докато тя не стане успешна
+                        {    //по подразбиране, периодът на повтаряне на 20 секунди
                             tracker.Started(Data.InfoHash, Monitor.BytesReceived,
                                             Monitor.BytesSent, Monitor.TotalBytes - Monitor.BytesReceived);
                         }

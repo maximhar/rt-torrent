@@ -164,8 +164,6 @@ namespace Torrent.Client
                                        Length = partLength,
                                        DataOffset = length - (int)remaining
                                    });
-                    Debug.Assert(relativePosition >= 0);
-                    Debug.Assert(partLength > 0);
                     remaining -= partLength;
                     requestedOffset += partLength;
                 }
